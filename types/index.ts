@@ -7,14 +7,28 @@ export type { ApiErrorResponse, DjangoPaginatedResponse } from './api';
 export type {
   User,
   SubscriptionTier,
-  AuthState
+  AuthState,
+  SUBSCRIPTION_TIERS
 } from './auth';
-export { SUBSCRIPTION_TIERS } from './auth';
-
-// Placeholder for form field config - customize as needed
 export interface FormFieldConfig {
-  name: string;
-  type: string;
-  required?: boolean;
-  [key: string]: any;
+  key: string
+  label: string
+  type: 'string' | 'number' | 'date' | 'boolean' | 'select' | 'textarea' | 'email' | 'url' | 'password' | 'file'
+  required?: boolean
+  placeholder?: string
+  description?: string
+  options?: Array<{ value: string | number; label: string }>
+  validation?: (value: unknown) => boolean | string
+  defaultValue?: unknown
+  disabled?: boolean
+  readOnly?: boolean
+  permissions?: {
+    create?: boolean
+    update?: boolean
+    read?: boolean
+    delete?: boolean
+  }
+  relationshipType?: 'one-to-one' | 'many-to-one' | 'one-to-many' | 'many-to-many'
+  condition?: (formData: Record<string, unknown>) => boolean
+  accept?: string // For file inputs - MIME types or file extensions
 }

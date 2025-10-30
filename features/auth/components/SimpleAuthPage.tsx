@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Logo } from '@/components/logo';
 import {  Loader2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 // import authManager
 
 
@@ -28,6 +30,7 @@ export function AuthPage({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading } = useAuth();
+  const isMobile = useIsMobile();
 
 const handleLogin = async (email: string, password: string) => {
     const isAuthenticated = await login(email, password);
@@ -120,7 +123,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   {/* Test User Buttons */}
                   <div className="space-y-2 border-t pt-4">
                     <p className="text-sm text-gray-600 text-center">Quick Test Login:</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                       <Button
                         type="button"
                         variant="outline"

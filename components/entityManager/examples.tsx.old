@@ -1,0 +1,282 @@
+import React from 'react'
+import { EntityManager } from './EntityManager/components/EntityManager'
+import { getEntityConfig } from './EntityManager/api/config'
+
+// ===== USAGE EXAMPLES =====
+
+// Example 1: Basic usage with full configuration
+const userConfig: UnifiedEntityConfig = {
+  name: 'user',
+  namePlural: 'users',
+  displayName: 'User',
+  fields: [
+    {
+      name: 'id',
+      label: 'ID',
+      type: 'uuid',
+      required: true,
+      hidden: true,
+    },
+    {
+      name: 'firstName',
+      label: 'First Name',
+      type: 'string',
+      required: true,
+      minLength: 2,
+      maxLength: 50,
+      searchable: true,
+      sortable: true,
+    },
+    {
+      name: 'lastName',
+      label: 'Last Name',
+      type: 'string',
+      required: true,
+      minLength: 2,
+      maxLength: 50,
+      searchable: true,
+      sortable: true,
+    },
+    {
+      name: 'email',
+      label: 'Email',
+      type: 'email',
+      required: true,
+      searchable: true,
+      filterable: true,
+    },
+    {
+      name: 'role',
+      label: 'Role',
+      type: 'select',
+      required: true,
+      options: [
+        { value: 'admin', label: 'Administrator' },
+        { value: 'manager', label: 'Manager' },
+        { value: 'user', label: 'User' },
+      ],
+      filterable: true,
+    },
+    {
+      name: 'isActive',
+      label: 'Active',
+      type: 'boolean',
+      defaultValue: true,
+      filterable: true,
+    },
+    {
+      name: 'createdAt',
+      label: 'Created',
+      type: 'date',
+      sortable: true,
+      displayFormat: (value: unknown) => new Date(value as string).toLocaleDateString(),
+    },
+  ],
+  endpoints: {
+    list: '/api/users',
+    create: '/api/users',
+    update: '/api/users',
+    delete: '/api/users',
+  },
+  listView: {
+    enableSearch: true,
+    enableFilters: true,
+    enableSorting: true,
+    enablePagination: true,
+    enableSelection: true,
+    enableBulkActions: true,
+    enableExport: true,
+    variant: 'table',
+    pageSize: 10,
+  },
+  formView: {
+    layout: 'grid',
+    columns: 2,
+    fieldSpacing: 'md',
+    submitButtonText: 'Save User',
+    cancelButtonText: 'Cancel',
+    validateOnChange: true,
+    validateOnBlur: true,
+    showProgress: false,
+  },
+  permissions: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+    export: true,
+  },
+}
+
+export const UserManager: React.FC = () => {
+  const config = getEntityConfig('user')
+  if (!config) return <div>Configuration not found</div>
+
+  const handleModeChange = (mode: string, item: any) => {
+    console.log('Mode changed:', mode, item)
+  }
+
+  const handleAction = (action: string, data: any) => {
+    console.log('Action performed:', action, data)
+  }
+
+  return (
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">User Management</h1>
+      <EntityManager
+        config={config}
+        onModeChange={handleModeChange}
+        onAction={handleAction}
+      />
+    </div>
+  )
+}
+
+// Example 2: Integration with existing EntityForm variations
+const productVariation = {
+  fields: [
+    { name: 'name', label: 'Product Name', type: 'text', required: true },
+    { name: 'price', label: 'Price', type: 'number', required: true, min: 0 },
+    { name: 'category', label: 'Category', type: 'select', required: true, options: [] },
+    { name: 'description', label: 'Description', type: 'textarea' },
+  ],
+  layout: 'grid',
+  columns: 2,
+}
+
+const productConfig = createEntityManagerConfigFromVariation(
+  productVariation,
+  'Product',
+  {
+    list: '/api/products',
+    create: '/api/products',
+    update: '/api/products',
+    delete: '/api/products',
+  }
+)
+
+export const ProductManager: React.FC = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Product Management</h1>
+      <UnifiedEntityManager
+        config={productConfig}
+      />
+    </div>
+  )
+}
+
+// Example 3: Advanced configuration with custom actions and rendering
+const advancedConfig: UnifiedEntityConfig = {
+  name: 'order',
+  namePlural: 'orders',
+  displayName: 'Order',
+  fields: [
+    { name: 'id', label: 'Order ID', type: 'string', required: true },
+    { name: 'customer', label: 'Customer', type: 'string', required: true, searchable: true },
+    { name: 'total', label: 'Total', type: 'number', required: true, displayFormat: (value: unknown) => `$${value}` },
+    { name: 'status', label: 'Status', type: 'select', required: true, options: [
+      { value: 'pending', label: 'Pending' },
+      { value: 'processing', label: 'Processing' },
+      { value: 'shipped', label: 'Shipped' },
+      { value: 'delivered', label: 'Delivered' },
+    ], filterable: true },
+    { name: 'orderDate', label: 'Order Date', type: 'date', sortable: true },
+  ],
+  endpoints: {
+    list: '/api/orders',
+    create: '/api/orders',
+    update: '/api/orders',
+    delete: '/api/orders',
+  },
+  listView: {
+    enableSearch: true,
+    enableFilters: true,
+    enableSorting: true,
+    enablePagination: true,
+    enableSelection: true,
+    enableBulkActions: true,
+    enableExport: true,
+    variant: 'table',
+    pageSize: 20,
+  },
+  formView: {
+    layout: 'grid',
+    columns: 1,
+    fieldSpacing: 'lg',
+  },
+  permissions: {
+    create: true,
+    read: true,
+    update: true,
+    delete: false, // Orders cannot be deleted once created
+    export: true,
+  },
+}
+
+export const OrderManager: React.FC = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Order Management</h1>
+      <UnifiedEntityManager
+        config={advancedConfig}
+      />
+    </div>
+  )
+}
+
+// Example 4: Card view variant for content management
+const articleConfig: UnifiedEntityConfig = {
+  name: 'article',
+  namePlural: 'articles',
+  displayName: 'Article',
+  fields: [
+    { name: 'id', label: 'ID', type: 'uuid', hidden: true },
+    { name: 'title', label: 'Title', type: 'string', required: true, searchable: true },
+    { name: 'excerpt', label: 'Excerpt', type: 'textarea', maxLength: 200 },
+    { name: 'author', label: 'Author', type: 'string', required: true, filterable: true },
+    { name: 'published', label: 'Published', type: 'boolean', defaultValue: false },
+    { name: 'publishDate', label: 'Publish Date', type: 'date' },
+    { name: 'tags', label: 'Tags', type: 'array', multiple: true },
+  ],
+  endpoints: {
+    list: '/api/articles',
+    create: '/api/articles',
+    update: '/api/articles',
+    delete: '/api/articles',
+  },
+  listView: {
+    enableSearch: true,
+    enableFilters: true,
+    enableSorting: true,
+    enablePagination: true,
+    enableSelection: true,
+    enableBulkActions: true,
+    enableExport: true,
+    variant: 'card', // Use card view for better content preview
+    pageSize: 12,
+  },
+  formView: {
+    layout: 'vertical',
+    columns: 1,
+    fieldSpacing: 'md',
+  },
+  permissions: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+    export: true,
+  },
+}
+
+export const ArticleManager: React.FC = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Article Management</h1>
+      <UnifiedEntityManager
+        config={articleConfig}
+      />
+    </div>
+  )
+}

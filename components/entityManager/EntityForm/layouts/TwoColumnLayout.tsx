@@ -1,0 +1,144 @@
+'use client'
+
+import React from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { FormFieldRenderer } from '../components/FormFieldRenderer'
+import { FormHeader } from '../components/FormHeader'
+import { FormActions } from '../components/FormActions'
+import { FormMessages } from '../components/FormMessages'
+import { BulkImportDialog } from '../components/BulkImportDialog'
+import { EntityFormConfig, FormState, BulkImportState, FormField } from '../types'
+
+export interface TwoColumnLayoutProps {
+  config: EntityFormConfig
+  formState: FormState
+  bulkImportState: BulkImportState
+  visibleFields: FormField[]
+  showBulkImport: boolean
+  submitSuccess: boolean
+  submitError: string | null
+  isFormDisabled: boolean
+  isViewMode: boolean
+  canSubmit: boolean
+  canImport: boolean
+  onFieldChange: (fieldName: string, value: unknown) => void
+  onFieldBlur: (fieldName: string) => void
+  onSubmit: (e: React.FormEvent) => void
+  onCancel: () => void
+  onBulkImportClick: () => void
+  onBulkImport: (data: Record<string, unknown>[]) => Promise<void>
+  onBulkImportClose: () => void
+}
+
+export const TwoColumnLayout: React.FC<TwoColumnLayoutProps> = ({
+  config,
+  formState,
+  bulkImportState,
+  visibleFields,
+  showBulkImport,
+  submitSuccess,
+  submitError,
+  isFormDisabled,
+  isViewMode,
+  canSubmit,
+  canImport,
+  onFieldChange,
+  onFieldBlur,
+  onSubmit,
+  onCancel,
+  onBulkImportClick,
+  onBulkImport,
+  onBulkImportClose,
+}) => {
+  const fieldSpacingClass = config.fieldSpacing === 'sm' ? 'gap-2' : config.fieldSpacing === 'lg' ? 'gap-6' : 'gap-4'
+  const columns = config.columns || 2
+
+  return (
+    <div className={`space-y-6 ${config.className || ''}`}>
+      {/* Form Header */}
+      <FormHeader
+        mode={config.mode}
+        canImport={canImport}
+        isFormDisabled={isFormDisabled}
+        onBulkImportClick={onBulkImportClick}
+      />
+
+      {/* Progress Indicator */}
+      {config.showProgress && formState.isSubmitting && (
+        <Progress value={100} className="w-full" />
+      )}
+
+      {/* Success/Error Messages */}
+      <FormMessages
+        successMessage="Form submitted successfully!"
+        errorMessage={submitError}
+        showSuccess={submitSuccess}
+        showError={!!submitError}
+      />
+
+      {/* Form */}
+      <Card>
+        <CardContent className="p-6">
+          <form onSubmit={onSubmit} className="space-y-6">
+            {/* Form Fields - Two Columns (responsive) */}
+            <div className={`grid grid-cols-1 md:grid-cols-${columns} ${fieldSpacingClass}`}>
+              {visibleFields.map((field) => {
+                // Check if field should span full width
+                const spanFullWidth = field.type === 'textarea' || field.type === 'json'
+                
+                return (
+                  <div
+                    key={field.name}
+                    className={spanFullWidth ? `md:col-span-${columns}` : ''}
+                  >
+                    <FormFieldRenderer
+                      field={field}
+                      value={formState.data[field.name]}
+                      onChange={(value: unknown) => onFieldChange(field.name, value)}
+                      onBlur={() => onFieldBlur(field.name)}
+                      error={formState.errors[field.name]}
+                      touched={formState.touched[field.name]}
+                      disabled={isFormDisabled || field.disabled}
+                      required={field.required}
+                      layout={config.layout}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Form Actions */}
+            {!isViewMode && canSubmit && (
+              <FormActions
+                onCancel={config.onCancel ? onCancel : undefined}
+                isSubmitting={formState.isSubmitting}
+                isDisabled={isFormDisabled}
+                isValid={formState.isValid}
+                submitButtonText={config.submitButtonText}
+                cancelButtonText={config.cancelButtonText}
+                buttonSize={config.buttonSize}
+                buttonVariant={config.buttonVariant}
+                showCancel={!!config.onCancel}
+              />
+            )}
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Import Dialog */}
+      {canImport && (
+        <BulkImportDialog
+          open={showBulkImport}
+          onOpenChange={onBulkImportClose}
+          formats={config.bulkImportFormats || []}
+          fields={config.fields}
+          onImport={onBulkImport}
+          importState={bulkImportState}
+        />
+      )}
+    </div>
+  )
+}
+
+export default TwoColumnLayout
