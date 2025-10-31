@@ -29,7 +29,7 @@ export const metadata: Metadata = {
       { url: '/apple-touch-icon-light.png', sizes: '180x180', type: 'image/png' },
     ],
   },
-  manifest: '/manifest.json',
+  manifest: '/manifest-light.json',
 };
 
 export default function RootLayout({

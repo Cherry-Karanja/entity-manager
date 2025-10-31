@@ -1,1 +1,0 @@
-export { useEntityManager } from '../EntityManager/hooks/useEntityManager'

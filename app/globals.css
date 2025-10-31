@@ -141,3 +141,38 @@
     animation: fade-in 0.3s ease-out;
   }
 }
+
+/* EntityManager Demo Styles */
+.example-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.example-section h1,
+.example-section h2,
+.example-section h3 {
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+
+.activity-log {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--muted);
+  border-radius: var(--radius);
+}
+
+.activity-log-content {
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.activity-log-content div {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+}

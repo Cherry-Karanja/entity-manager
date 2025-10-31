@@ -27,33 +27,10 @@ export function DynamicFavicon() {
       appleTouchIcon.setAttribute('href', isDark ? '/apple-touch-icon-dark.png' : '/apple-touch-icon-light.png');
     }
     
-    // Update Android chrome icons
+    // Update Android chrome icons and manifest
     const manifest = document.querySelector('link[rel="manifest"]');
     if (manifest) {
-      // Create dynamic manifest
-      const manifestData = {
-        name: "App Name",
-        short_name: "App",
-        icons: [
-          {
-            src: isDark ? "/android-chrome-dark-192x192.png" : "/android-chrome-light-192x192.png",
-            sizes: "192x192",
-            type: "image/png"
-          },
-          {
-            src: isDark ? "/android-chrome-dark-512x512.png" : "/android-chrome-light-512x512.png",
-            sizes: "512x512",
-            type: "image/png"
-          }
-        ],
-        theme_color: isDark ? "#0a0a0a" : "#ffffff",
-        background_color: isDark ? "#0a0a0a" : "#ffffff",
-        display: "standalone"
-      };
-      
-      const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
-      const manifestURL = URL.createObjectURL(blob);
-      manifest.setAttribute('href', manifestURL);
+      manifest.setAttribute('href', isDark ? '/manifest-dark.json' : '/manifest-light.json');
     }
     
   }, [theme, systemTheme]);

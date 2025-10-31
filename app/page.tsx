@@ -2,13 +2,15 @@
 
 import React from 'react';
 import EntityFormExamples from '@/components/entityManager/EntityForm/examples';
+import { AdvancedEntityListExample } from '@/components/entityManager/EntityList/examples';
+import EntityViewExamples from '@/components/entityManager/EntityView/examples';
 
 const HomePage = () => {
-  
+
   return (
     <div>
-      <h1>Home Page</h1>
-      <EntityFormExamples />
+      <h1>Entity Manager Demo</h1>
+          <EntityFormExamples />
     </div>
   );
 };
