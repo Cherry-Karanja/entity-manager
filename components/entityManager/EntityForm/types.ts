@@ -26,6 +26,7 @@ export interface EntityFormConfig {
   onCancel?: () => void
   submitButtonText?: string
   cancelButtonText?: string
+  submitSuccessMessage?: string
 
   // Bulk import
   enableBulkImport?: boolean

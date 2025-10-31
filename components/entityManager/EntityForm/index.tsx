@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { toast } from 'sonner'
 import { EntityFormConfig, EntityFormProps, FormState, BulkImportState } from './types'
 import { DEFAULT_FORM_CONFIG, DEFAULT_BULK_IMPORT_FORMATS } from './types'
 import { validateField, validateForm } from './utils/validation'
@@ -49,7 +50,6 @@ export const EntityForm: React.FC<EntityFormProps> = ({
   // UI state
   const [showBulkImport, setShowBulkImport] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [submitSuccess, setSubmitSuccess] = useState(false)
 
   // Initialize form data when data prop changes
   useEffect(() => {
@@ -165,7 +165,6 @@ export const EntityForm: React.FC<EntityFormProps> = ({
     }
 
     setSubmitError(null)
-    setSubmitSuccess(false)
 
     try {
       setFormState(prev => ({ ...prev, isSubmitting: true }))
@@ -191,7 +190,8 @@ export const EntityForm: React.FC<EntityFormProps> = ({
       // Call success hook
       mergedConfig.hooks?.onSubmitSuccess?.(submitData)
 
-      setSubmitSuccess(true)
+      // Show success toast
+      toast.success(mergedConfig.submitSuccessMessage || 'Form submitted successfully!')
 
       // Reset form if in create mode
       if (mergedConfig.mode === 'create') {
@@ -277,7 +277,6 @@ export const EntityForm: React.FC<EntityFormProps> = ({
     bulkImportState,
     visibleFields,
     showBulkImport,
-    submitSuccess,
     submitError: submitError || null,
     isFormDisabled,
     isViewMode,

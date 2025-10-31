@@ -406,7 +406,7 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   // Memoized action state for external access
   const actionState = useMemo(() => actionStateRef.current, [])
 
-  const entityActions: EntityActions<TEntity, TFormData> = {
+  const entityActions: EntityActions<TEntity, TFormData> = useMemo(() => ({
     handleCreate,
     handleEdit,
     handleView,
@@ -437,7 +437,38 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
     handleClearError,
     handleUndoLastAction,
     actionState
-  }
+  }), [
+    handleCreate,
+    handleEdit,
+    handleView,
+    handleBackToList,
+    handleSelectItem,
+    handleSelectAll,
+    handleDeselectAll,
+    handleToggleSelection,
+    handleSetSelectedIds,
+    handleSave,
+    handleUpdate,
+    handleDelete,
+    handleConfirmDelete,
+    handleRefreshData,
+    handleBatchDelete,
+    handleBatchUpdate,
+    handleSort,
+    handleFilter,
+    handleSearch,
+    handlePageChange,
+    handlePageSizeChange,
+    handleExport,
+    handleOpenDeleteDialog,
+    handleCloseDeleteDialog,
+    handleOpenBatchDeleteDialog,
+    handleCloseBatchDeleteDialog,
+    handleRetryLastAction,
+    handleClearError,
+    handleUndoLastAction,
+    actionState
+  ])
 
   return entityActions
 }

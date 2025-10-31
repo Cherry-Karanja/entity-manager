@@ -154,7 +154,7 @@ export function useEntityForm<TEntity extends BaseEntity, TFormData extends Reco
   }, [config.fields])
 
   // Transform entity config to form config with related data
-  const baseFormFields = useMemo(() => transformEntityFieldsToFormFields(config.fields), [config.fields])
+  const baseFormFields = useMemo(() => transformEntityFieldsToFormFields(config.fields, { mode }), [config.fields, mode])
 
   // Enhance fields with related data
   const enhancedFormFields = useMemo(() => baseFormFields.map(field => {

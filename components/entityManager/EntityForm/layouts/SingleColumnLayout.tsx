@@ -16,7 +16,6 @@ export interface SingleColumnLayoutProps {
   bulkImportState: BulkImportState
   visibleFields: FormField[]
   showBulkImport: boolean
-  submitSuccess: boolean
   submitError: string | null
   isFormDisabled: boolean
   isViewMode: boolean
@@ -37,7 +36,6 @@ export const SingleColumnLayout: React.FC<SingleColumnLayoutProps> = ({
   bulkImportState,
   visibleFields,
   showBulkImport,
-  submitSuccess,
   submitError,
   isFormDisabled,
   isViewMode,
@@ -70,9 +68,7 @@ export const SingleColumnLayout: React.FC<SingleColumnLayoutProps> = ({
 
       {/* Success/Error Messages */}
       <FormMessages
-        successMessage="Form submitted successfully!"
         errorMessage={submitError}
-        showSuccess={submitSuccess}
         showError={!!submitError}
       />
 

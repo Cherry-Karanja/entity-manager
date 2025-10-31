@@ -267,19 +267,13 @@ export const userConfig: EntityConfig<User, UserFormData> = {
         id: 'view',
         label: 'View Details',
         type: 'default',
-        actionType: 'immediate',
-        onExecute: (item: unknown) => {
-          console.log('View user:', item)
-        }
+        actionType: 'immediate'
       },
       {
         id: 'edit',
         label: 'Edit User',
         type: 'default',
-        actionType: 'immediate',
-        onExecute: (item: unknown) => {
-          console.log('Edit user:', item)
-        }
+        actionType: 'immediate'
       },
       {
         id: 'reset-password',
@@ -301,14 +295,9 @@ export const userConfig: EntityConfig<User, UserFormData> = {
         label: 'Toggle Status',
         type: 'default',
         actionType: 'immediate',
-        condition: (item: unknown) => {
-          const user = item as User
-          return user.status !== 'suspended'
-        },
         onExecute: async (item: unknown) => {
           const user = item as User
-          const newStatus = user.status === 'active' ? 'inactive' : 'active'
-          console.log('Toggle user status:', user.id, 'to', newStatus)
+          console.log('Toggle user active status:', user.id, 'to', !user.is_active)
         }
       },
       {
@@ -316,17 +305,7 @@ export const userConfig: EntityConfig<User, UserFormData> = {
         label: 'Delete User',
         type: 'default',
         danger: true,
-        actionType: 'confirm',
-        confirm: {
-          title: 'Delete User',
-          content: 'Are you sure you want to delete this user? This action cannot be undone.',
-          okText: 'Delete',
-          cancelText: 'Cancel'
-        },
-        onExecute: async (item: unknown) => {
-          const user = item as User
-          console.log('Delete user:', user.id)
-        }
+        actionType: 'immediate'
       }
     ],
     bulk: [

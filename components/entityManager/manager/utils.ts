@@ -20,6 +20,7 @@ export interface FieldTransformationOptions {
   readonly includeValidation?: boolean
   readonly includeRelationships?: boolean
   readonly includeAdvanced?: boolean
+  readonly mode?: 'create' | 'edit' | 'view'
 }
 
 // ===== PERFORMANCE UTILITIES =====
@@ -117,12 +118,57 @@ export const transformEntityFieldToFormField = <TEntity, TFormData extends Recor
   const errors: string[] = []
 
   try {
+    // Map entity field types to form field types
+    let formType: FormField['type'] = 'text'
+    switch (field.type) {
+      case 'string':
+        formType = field.fieldType === 'textarea' ? 'textarea' : 'text'
+        break
+      case 'email':
+        formType = 'email'
+        break
+      case 'password':
+        formType = 'password'
+        break
+      case 'number':
+      case 'integer32':
+      case 'integer64':
+      case 'float':
+      case 'double':
+      case 'decimal':
+        formType = 'number'
+        break
+      case 'boolean':
+        formType = field.fieldType === 'switch' ? 'switch' : 'checkbox'
+        break
+      case 'date':
+        formType = 'date'
+        break
+      case 'time':
+        formType = 'time'
+        break
+      case 'select':
+        formType = field.multiple ? 'multiselect' : 'select'
+        break
+      case 'textarea':
+        formType = 'textarea'
+        break
+      case 'file':
+        formType = 'file'
+        break
+      case 'url':
+        formType = 'url'
+        break
+      default:
+        formType = 'text'
+    }
+
     const baseField: FormField = {
       name: field.key,
       label: field.label,
-      type: field.type as FormField['type'],
+      type: formType,
       required: field.required,
-      disabled: field.disabled,
+      disabled: field.disabled || (field.readOnly && options.mode === 'edit'),
       placeholder: field.placeholder,
       description: field.description || field.helperText,
       validation: options.includeValidation && field.validation ? (() => {
@@ -179,7 +225,13 @@ export const transformEntityFieldsToFormFields = <TEntity, TFormData extends Rec
   fields: EntityField<TEntity, TFormData>[],
   options: FieldTransformationOptions = {}
 ): FormField[] => {
-  return fields.map(field => {
+  // Filter out readonly fields for create mode (completely hide them)
+  // For edit mode, keep them but mark as disabled
+  const filteredFields = options.mode === 'create' 
+    ? fields.filter(field => !field.readOnly)
+    : fields
+
+  return filteredFields.map(field => {
     const result = transformEntityFieldToFormField(field, options)
     if (!result.success) {
       console.warn(`Failed to transform field ${field.key}:`, result.errors)
@@ -188,7 +240,8 @@ export const transformEntityFieldsToFormFields = <TEntity, TFormData extends Rec
         name: field.key,
         label: field.label,
         type: field.type as FormField['type'],
-        required: field.required
+        required: field.required,
+        disabled: field.disabled || (field.readOnly && options.mode === 'edit')
       }
     }
     return result.field

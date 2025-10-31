@@ -17,7 +17,6 @@ export interface UseEntityApiOptions<TEntity extends BaseEntity, TFormData exten
   enableRequestDeduplication?: boolean
   retryAttempts?: number
   retryDelay?: number
-  cacheTimeout?: number
 }
 
 export interface ApiError {
@@ -61,7 +60,6 @@ export interface EntityApiActions<TEntity extends BaseEntity, TFormData extends 
 
 const DEFAULT_RETRY_ATTEMPTS = 3
 const DEFAULT_RETRY_DELAY = 1000 // 1 second
-const DEFAULT_CACHE_TIMEOUT = 5 * 60 * 1000 // 5 minutes
 const REQUEST_DEDUPLICATION_TIMEOUT = 5000 // 5 seconds
 
 // ===== UTILITY FUNCTIONS =====
@@ -116,8 +114,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   enableOptimisticUpdates = true,
   enableRequestDeduplication = true,
   retryAttempts = DEFAULT_RETRY_ATTEMPTS,
-  retryDelay = DEFAULT_RETRY_DELAY,
-  cacheTimeout = DEFAULT_CACHE_TIMEOUT
+  retryDelay = DEFAULT_RETRY_DELAY
 }: UseEntityApiOptions<TEntity, TFormData>) {
   // Loading and error states
   const [isLoading, setIsLoading] = useState(false)
@@ -126,7 +123,6 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   // Request management
   const abortControllerRef = useRef<AbortController | null>(null)
   const pendingRequestsRef = useRef<Map<string, Promise<unknown>>>(new Map())
-  const requestCacheRef = useRef<Map<string, { data: unknown; timestamp: number }>>(new Map())
 
   // Create API services for mutations - call hooks at top level
   const createApi = createApiService<TFormData, TEntity>(
@@ -188,11 +184,6 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     }
     return searchParams.toString() ? `?${searchParams.toString()}` : ''
   }, [])
-
-  // Check if cache is valid
-  const isCacheValid = useCallback((timestamp: number): boolean => {
-    return Date.now() - timestamp < cacheTimeout
-  }, [cacheTimeout])
 
   // Request deduplication
   const getDeduplicatedRequest = useCallback(<T,>(key: string, requestFn: () => Promise<T>): Promise<T> => {
@@ -262,8 +253,8 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     return JSON.stringify(params)
   }, [state.currentPage, state.pageSize, state.debouncedSearchTerm, state.sortConfig, state.filterValues])
 
-  // Imperative fetch function for list data with caching
-  const fetchListData = useCallback(async (params: Record<string, unknown>): Promise<DjangoPaginatedResponse<TEntity>> => {
+  // Imperative fetch function for list data (using TanStack Query caching)
+  const fetchListData = useCallback(async (params: Record<string, unknown>, force = false): Promise<DjangoPaginatedResponse<TEntity>> => {
     const queryString = buildQueryString(params as Record<string, number | string | string[] | boolean | undefined>)
     // If the configured list endpoint already contains a query string, join using & instead of ?
     let url = config.endpoints.list
@@ -275,48 +266,27 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         url = `${url}${queryString}`
       }
     }
-    const cacheKey = `list:${url}`
-
-    // Check cache first
-    const cached = requestCacheRef.current.get(cacheKey)
-    if (cached && isCacheValid(cached.timestamp)) {
-      return cached.data as DjangoPaginatedResponse<TEntity>
-    }
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController()
 
     try {
-      console.log('Making API request to:', url)
-      const response = await api.get<DjangoPaginatedResponse<TEntity>>(url)
-      console.log('API response received:', response.data)
-
-      // Cache the response
-      requestCacheRef.current.set(cacheKey, {
-        data: response.data,
-        timestamp: Date.now()
+      const response = await api.get<DjangoPaginatedResponse<TEntity>>(url, {
+        signal: abortControllerRef.current.signal
       })
 
       return response.data
     } catch (error) {
-      console.error('API request failed:', error)
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request was cancelled')
       }
       throw error
     }
-  }, [config.endpoints.list, buildQueryString, isCacheValid])
+  }, [config.endpoints.list, buildQueryString])
 
-  // Imperative fetch function for single entity with caching
+  // Imperative fetch function for single entity
   const fetchSingleEntity = useCallback(async (id: string | number): Promise<TEntity> => {
     const url = formatUrl(config.endpoints.list, id)
-    const cacheKey = `single:${url}`
-
-    // Check cache first
-    const cached = requestCacheRef.current.get(cacheKey)
-    if (cached && isCacheValid(cached.timestamp)) {
-      return cached.data as TEntity
-    }
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController()
@@ -326,12 +296,6 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         signal: abortControllerRef.current.signal
       })
 
-      // Cache the response
-      requestCacheRef.current.set(cacheKey, {
-        data: response.data,
-        timestamp: Date.now()
-      })
-
       return response.data
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -339,13 +303,12 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       }
       throw error
     }
-  }, [config.endpoints.list, formatUrl, isCacheValid])
+  }, [config.endpoints.list, formatUrl])
 
   // ===== UTILITY FUNCTIONS =====
 
   // Cache invalidation
   const invalidateCache = useCallback(() => {
-    requestCacheRef.current.clear()
     actions.clearPaginationCache()
   }, [actions])
 
@@ -365,7 +328,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
   // ===== CRUD OPERATIONS =====
 
-  // Fetch entities with deduplication and caching
+  // Fetch entities with deduplication
   const fetchEntities = useCallback(async (force = false): Promise<void> => {
     const cacheKey = getCacheKey()
     const requestKey = `fetchEntities:${cacheKey}`
@@ -374,11 +337,6 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       setIsLoading(true)
       setError(null)
       actions.setError(null) // Clear any previous errors
-
-      const cached = state.paginationCache[cacheKey]
-      if (!force && cached && isCacheValid(cached.timestamp)) {
-        return
-      }
 
       await getDeduplicatedRequest(requestKey, async () => {
         const params = {
@@ -389,7 +347,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
           ...state.filterValues
         }
 
-        const response = await retryWithBackoff(() => fetchListData(params))
+        const response = await retryWithBackoff(() => fetchListData(params, force))
         actions.updatePaginationCache(cacheKey, response)
         actions.setHasLoadedOnce(true)
       })
@@ -401,7 +359,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [state, actions, getCacheKey, isCacheValid, getDeduplicatedRequest, retryWithBackoff, fetchListData])
+  }, [state, actions, getCacheKey, getDeduplicatedRequest, retryWithBackoff, fetchListData])
 
   // Fetch single entity with deduplication
   const fetchEntityById = useCallback(async (id: string | number): Promise<TEntity | null> => {
