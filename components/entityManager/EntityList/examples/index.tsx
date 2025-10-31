@@ -12,8 +12,7 @@ import EntityGridView from '../views/EntityGridView'
 import EntityTimelineView from '../views/EntityTimelineView'
 import EntityDetailedListView from '../views/EntityDetailedListView'
 import EntityGalleryView from '../views/EntityGalleryView'
-import { EntityActions } from '../../EntityActions'
-import { EntityActionsConfig } from '../../EntityActions/types'
+
 
 // Custom Modal Components
 const UserDetailsModal: React.FC<{ item: unknown; onClose: () => void }> = ({ item, onClose }) => {
