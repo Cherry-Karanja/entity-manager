@@ -50,56 +50,83 @@ const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
   }
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6", className)}>
-      {data.map((item, index) => (
-        <Card key={item.id || index} className="h-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
-              {String(item.title || item.name || `Item ${index + 1}`)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-3">
-              {columns.slice(0, 4).map((column) => {
-                const value = item[column.accessorKey || column.id]
-                if (!value) return null
-
-                return (
-                  <div key={column.id} className="flex justify-between items-center py-1">
-                    <span className="text-sm text-muted-foreground">{column.header}:</span>
-                    <span className="text-sm font-medium">
-                      {typeof value === 'boolean' ? (
-                        <Badge variant={value ? 'default' : 'secondary'}>
-                          {value ? 'Yes' : 'No'}
-                        </Badge>
-                      ) : (
-                        String(value)
-                      )}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-            {(actions.length > 0 || entityActions) && (
-              <div className="mt-6 pt-4 border-t">
-                {entityActions ? (
-                  <EntityActions
-                    config={entityActions}
-                    item={item}
-                  />
-                ) : (
-                  <EntityListActions
-                    actions={actions}
-                    item={item}
-                    onAction={onAction}
-                    maxVisible={2}
-                  />
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6", className)}>
+      {data.map((item, index) => {
+        const itemName = String(item.title || item.name || `Item ${index + 1}`)
+        
+        return (
+          <Card 
+            key={item.id || index} 
+            className="h-full hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 group overflow-hidden"
+          >
+            <CardHeader className="pb-3 bg-gradient-to-br from-primary/5 to-primary/10 border-b">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors line-clamp-2">
+                    {itemName}
+                  </CardTitle>
+                  {item.description && typeof item.description === 'string' ? (
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                      {String(item.description)}
+                    </p>
+                  ) : null}
+                </div>
+                {item.id && (
+                  <Badge variant="secondary" className="flex-shrink-0">
+                    #{String(item.id)}
+                  </Badge>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+            </CardHeader>
+            
+            <CardContent className="pt-4">
+              <div className="space-y-3">
+                {columns.slice(0, 6).map((column) => {
+                  const value = item[column.accessorKey || column.id]
+                  if (!value || column.id === 'title' || column.id === 'name' || column.id === 'description') return null
+
+                  return (
+                    <div key={column.id} className="flex justify-between items-center py-2 border-b border-dashed last:border-0">
+                      <span className="text-sm font-medium text-muted-foreground">{column.header}</span>
+                      <span className="text-sm font-semibold text-right ml-2">
+                        {typeof value === 'boolean' ? (
+                          <Badge variant={value ? 'default' : 'secondary'} className="ml-auto">
+                            {value ? 'Yes' : 'No'}
+                          </Badge>
+                        ) : column.cell ? (
+                          column.cell(value, item, index)
+                        ) : (
+                          <span className="truncate max-w-[200px] inline-block">
+                            {String(value)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {(actions.length > 0 || entityActions) && (
+                <div className="mt-6 pt-4 border-t flex justify-center bg-accent/30 -mx-6 px-6 -mb-6 pb-4 group-hover:bg-accent/50 transition-colors">
+                  {entityActions ? (
+                    <EntityActions
+                      config={entityActions}
+                      item={item}
+                    />
+                  ) : (
+                    <EntityListActions
+                      actions={actions}
+                      item={item}
+                      onAction={onAction}
+                      maxVisible={2}
+                    />
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }

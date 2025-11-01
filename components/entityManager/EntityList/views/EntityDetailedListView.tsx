@@ -51,82 +51,110 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
   }
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       {data.map((item, index) => (
         <Card 
           key={item.id || index}
-          className="hover:shadow-lg transition-all duration-200 hover:border-primary/50 group"
+          className="hover:shadow-xl transition-all duration-300 hover:border-primary/50 group overflow-hidden"
         >
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
-                  {String(item.title || item.name || `Item ${index + 1}`)}
-                </h3>
-                {item.description && typeof item.description === 'string' ? (
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                    {String(item.description)}
-                  </p>
-                ) : null}
-              </div>
-
-              {(actions.length > 0 || entityActions) && (
-                <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {entityActions ? (
-                    <EntityActions
-                      config={entityActions}
-                      item={item}
-                    />
-                  ) : (
-                    <EntityListActions
-                      actions={actions}
-                      item={item}
-                      onAction={onAction}
-                      maxVisible={0}
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-
-            <Separator className="my-3" />
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {columns.map((column) => {
-                const value = item[column.accessorKey || column.id]
-                if (!value || column.id === 'title' || column.id === 'name' || column.id === 'description') return null
-                
-                return (
-                  <div key={column.id} className="space-y-1">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                      {String(column.header)}
-                    </div>
-                    <div className="text-sm font-medium">
-                      {column.cell ? column.cell(value, item, index) : String(value)}
+          <CardContent className="p-0">
+            {/* Header Section with Gradient */}
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  {/* Avatar/Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg border-2 border-background">
+                      <span className="text-2xl font-bold text-primary-foreground">
+                        {String(item.title || item.name || `Item ${index + 1}`).substring(0, 2).toUpperCase()}
+                      </span>
                     </div>
                   </div>
-                )
-              })}
+
+                  {/* Title and Description */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <h3 className="text-xl font-bold tracking-tight truncate group-hover:text-primary transition-colors">
+                      {String(item.title || item.name || `Item ${index + 1}`)}
+                    </h3>
+                    {item.description && typeof item.description === 'string' ? (
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                        {String(item.description)}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Actions Section */}
+                {(actions.length > 0 || entityActions) && (
+                  <div className="flex-shrink-0">
+                    {entityActions ? (
+                      <EntityActions
+                        config={entityActions}
+                        item={item}
+                        className="shadow-sm"
+                      />
+                    ) : (
+                      <EntityListActions
+                        actions={actions}
+                        item={item}
+                        onAction={onAction}
+                        maxVisible={2}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Additional metadata row */}
-            <div className="flex items-center gap-4 mt-4 pt-3 border-t text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <span>ID:</span>
-                <Badge variant="secondary" className="text-xs">
-                  {String(item.id)}
-                </Badge>
+            {/* Content Section */}
+            <div className="p-6">
+              {/* Enhanced Metadata Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {columns.map((column) => {
+                  const value = item[column.accessorKey || column.id]
+                  if (!value || column.id === 'title' || column.id === 'name' || column.id === 'description') return null
+                  
+                  return (
+                    <div key={column.id} className="space-y-2 p-3 rounded-lg bg-accent/30 border border-border/50 hover:bg-accent/50 hover:border-primary/30 transition-colors">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold truncate">
+                        {String(column.header)}
+                      </div>
+                      <div className="text-sm font-bold truncate">
+                        {column.cell ? column.cell(value, item, index) : String(value)}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-              {item.createdAt && typeof item.createdAt !== 'undefined' ? (
-                <div>
-                  Created: {String(item.createdAt)}
+              
+              {/* Footer with Timestamps */}
+              {(item.createdAt || item.updatedAt || item.status) && (
+                <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t">
+                  <div className="flex items-center gap-6 text-xs text-muted-foreground">
+                    {item.createdAt && typeof item.createdAt !== 'undefined' ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">Created:</span>
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {String(item.createdAt)}
+                        </Badge>
+                      </div>
+                    ) : null}
+                    {item.updatedAt && typeof item.updatedAt !== 'undefined' ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">Updated:</span>
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {String(item.updatedAt)}
+                        </Badge>
+                      </div>
+                    ) : null}
+                  </div>
+                  {item.status && typeof item.status !== 'undefined' ? (
+                    <Badge variant="default" className="text-xs">
+                      {String(item.status)}
+                    </Badge>
+                  ) : null}
                 </div>
-              ) : null}
-              {item.updatedAt && typeof item.updatedAt !== 'undefined' ? (
-                <div>
-                  Updated: {String(item.updatedAt)}
-                </div>
-              ) : null}
+              )}
             </div>
           </CardContent>
         </Card>

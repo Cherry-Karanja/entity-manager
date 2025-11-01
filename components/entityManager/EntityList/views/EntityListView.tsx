@@ -48,58 +48,85 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-3", className)}>
       {data.map((item, index) => (
         <div 
           key={item.id || index} 
-          className="flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-md transition-all duration-200 hover:border-primary/50 group"
+          className="flex items-start gap-4 p-5 border rounded-lg bg-card hover:shadow-lg transition-all duration-300 hover:border-primary/50 hover:bg-accent/5 group cursor-pointer"
         >
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-base mb-1 group-hover:text-primary transition-colors">
-              {String(item.title || item.name || `Item ${index + 1}`)}
+          {/* Avatar/Icon Section */}
+          <div className="flex-shrink-0">
+            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-primary/10 group-hover:border-primary/30 transition-colors">
+              <span className="text-lg font-bold text-primary">
+                {String(item.title || item.name || `Item ${index + 1}`).substring(0, 2).toUpperCase()}
+              </span>
             </div>
-            {(() => {
-              const desc = item.description
-              return desc && typeof desc === 'string' ? (
-                <div className="text-sm text-muted-foreground line-clamp-2">
-                  {desc}
-                </div>
-              ) : null
-            })()}
           </div>
-          <div className="flex items-center gap-4 ml-4 flex-shrink-0">
-            {columns.slice(1, 3).map((column) => {
-              const value = item[column.accessorKey || column.id]
-              if (!value) return null
-              return (
-                <div key={column.id} className="text-sm">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
-                    {column.header}
-                  </div>
-                  <div className="font-medium">
-                    {column.cell ? column.cell(value, item, index) : String(value)}
-                  </div>
-                </div>
-              )
-            })}
-            {(actions.length > 0 || entityActions) && (
-              <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                {entityActions ? (
-                  <EntityActions
-                    config={entityActions}
-                    item={item}
-                  />
-                ) : (
-                  <EntityListActions
-                    actions={actions}
-                    item={item}
-                    onAction={onAction}
-                    maxVisible={0}
-                  />
-                )}
+
+          {/* Content Section */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors truncate">
+                  {String(item.title || item.name || `Item ${index + 1}`)}
+                </h3>
+                {(() => {
+                  const desc = item.description
+                  return desc && typeof desc === 'string' ? (
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                      {desc}
+                    </p>
+                  ) : null
+                })()}
               </div>
-            )}
+
+              {/* ID Badge */}
+              {item.id && (
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground">
+                    #{String(item.id)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Metadata Grid */}
+            <div className="flex flex-wrap gap-4 mt-3">
+              {columns.slice(1, 4).map((column) => {
+                const value = item[column.accessorKey || column.id]
+                if (!value || column.id === 'description' || column.id === 'title' || column.id === 'name') return null
+                return (
+                  <div key={column.id} className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {column.header}:
+                    </span>
+                    <span className="text-sm font-semibold">
+                      {column.cell ? column.cell(value, item, index) : String(value)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
+
+          {/* Actions Section */}
+          {(actions.length > 0 || entityActions) && (
+            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
+              {entityActions ? (
+                <EntityActions
+                  config={entityActions}
+                  item={item}
+                />
+              ) : (
+                <EntityListActions
+                  actions={actions}
+                  item={item}
+                  onAction={onAction}
+                  maxVisible={0}
+                />
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>
