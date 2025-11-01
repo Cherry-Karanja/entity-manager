@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
@@ -13,7 +13,7 @@ interface EntityGridViewProps extends EntityListViewProps {
   onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
-export const EntityGridView: React.FC<EntityGridViewProps> = ({
+const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
   data,
   columns,
   loading = false,
@@ -93,5 +93,8 @@ export const EntityGridView: React.FC<EntityGridViewProps> = ({
     </div>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+export const EntityGridView = memo(EntityGridViewComponent)
 
 export default EntityGridView

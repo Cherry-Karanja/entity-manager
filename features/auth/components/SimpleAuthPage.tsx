@@ -11,8 +11,7 @@ import { toast } from 'sonner';
 import { Logo } from '@/components/logo';
 import {  Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-// import authManager
+import authManager from '@/handler/AuthManager';
 
 
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password';
@@ -29,6 +28,9 @@ export function AuthPage({
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [uid, setUid] = useState('');
   const { login, isLoading } = useAuth();
   const isMobile = useIsMobile();
 
@@ -61,6 +63,26 @@ const handleSubmit = async (e: React.FormEvent) => {
             if (typeof onAuthSuccess === 'function') {
                 await onAuthSuccess();
             }
+        }
+    } else if (mode === 'forgot-password') {
+        try {
+            await authManager.forgotPassword(email);
+            toast.success('Password reset email sent! Check your inbox.');
+            setMode('login');
+        } catch (error) {
+            // Error is handled by authManager
+        }
+    } else if (mode === 'reset-password') {
+        if (password !== confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+        try {
+            await authManager.resetPassword(uid, resetToken, password, confirmPassword);
+            toast.success('Password reset successfully! Please log in.');
+            setMode('login');
+        } catch (error) {
+            // Error is handled by authManager
         }
     }
 };
@@ -302,6 +324,131 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <button type="button" onClick={() => setMode('login')} className="font-medium text-foreground underline underline-offset-4 hover:text-green-600">
                   Sign in
                 </button>
+            </p>
+          </div>
+        );
+      
+      case 'forgot-password':
+        return (
+          <div className="w-full max-w-md">
+            <div className="mb-8 text-center">
+              <div className="flex flex-col items-center justify-center">
+                <Logo width={120} height={60} />
+              </div>
+              <h1 className="mt-0 text-3xl font-bold text-foreground">Reset your password</h1>
+              <p className="mt-1 text-muted-foreground">Enter your email address and we&apos;ll send you a reset link</p>
+            </div>
+
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Forgot Password</CardTitle>
+                <CardDescription>Enter your email to receive a password reset link</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      placeholder="Enter your email"
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Send Reset Link
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Remember your password?{" "}
+              <button type="button" onClick={() => setMode('login')} className="font-medium text-foreground underline underline-offset-4 hover:text-green-600">
+                Sign in
+              </button>
+            </p>
+          </div>
+        );
+
+      case 'reset-password':
+        return (
+          <div className="w-full max-w-md">
+            <div className="mb-8 text-center">
+              <div className="flex flex-col items-center justify-center">
+                <Logo width={120} height={60} />
+              </div>
+              <h1 className="mt-0 text-3xl font-bold text-foreground">Set new password</h1>
+              <p className="mt-1 text-muted-foreground">Enter your new password</p>
+            </div>
+
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Reset Password</CardTitle>
+                <CardDescription>Enter your new password</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="uid">User ID</Label>
+                    <Input
+                      id="uid"
+                      type="text"
+                      value={uid}
+                      placeholder="User ID from reset link"
+                      onChange={(e) => setUid(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="resetToken">Reset Token</Label>
+                    <Input
+                      id="resetToken"
+                      type="text"
+                      value={resetToken}
+                      placeholder="Reset token from email"
+                      onChange={(e) => setResetToken(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">New Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      placeholder="Enter new password"
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      placeholder="Confirm new password"
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Reset Password
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Remember your password?{" "}
+              <button type="button" onClick={() => setMode('login')} className="font-medium text-foreground underline underline-offset-4 hover:text-green-600">
+                Sign in
+              </button>
             </p>
           </div>
         );

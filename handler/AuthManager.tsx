@@ -1,4 +1,4 @@
-import { LOGIN_URL, BASE_URL, REGISTRATION_URL, TOKEN_REFRESH_URL as REFRESH_TOKEN_URL, USER_DETAILS_URL, LOGOUT_URL } from '@/handler/apiConfig';
+import { LOGIN_URL, BASE_URL, REGISTRATION_URL, TOKEN_REFRESH_URL as REFRESH_TOKEN_URL, USER_DETAILS_URL, LOGOUT_URL, PASSWORD_RESET_URL, PASSWORD_RESET_CONFIRM_URL } from '@/handler/apiConfig';
 import axios, { AxiosError } from 'axios';
 import { ApiErrorResponse, User} from '@/types';
 import Cookies from 'js-cookie';
@@ -88,6 +88,31 @@ class AuthManager {
 
   async getUser(): Promise<User | null> {
     return this.getCurrentUser();
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    try {
+      await apiPlain.post(PASSWORD_RESET_URL, { email });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      await handleApiError(error, 'Failed to send password reset email');
+      throw error;
+    }
+  }
+
+  async resetPassword(uid: string, token: string, newPassword1: string, newPassword2: string): Promise<void> {
+    try {
+      await apiPlain.post(PASSWORD_RESET_CONFIRM_URL, {
+        uid,
+        token,
+        new_password1: newPassword1,
+        new_password2: newPassword2
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      await handleApiError(error, 'Failed to reset password');
+      throw error;
+    }
   }
 
   clearAuth(): void {

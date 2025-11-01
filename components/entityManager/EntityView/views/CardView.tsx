@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { EntityViewConfig, ViewField } from '../types'
@@ -14,21 +14,22 @@ export interface CardViewProps {
   className?: string
 }
 
-export const CardView: React.FC<CardViewProps> = ({
+const CardViewComponent: React.FC<CardViewProps> = ({
   data,
   config,
   fields,
   className,
 }) => {
-  const visibleFields = fields.filter(
-    field => !field.hidden && (!field.condition || field.condition(data))
+  const visibleFields = useMemo(() =>
+    fields.filter(field => !field.hidden && (!field.condition || field.condition(data))),
+    [fields, data]
   )
 
-  const spacing = {
+  const spacing = useMemo(() => ({
     sm: 'space-y-2',
     md: 'space-y-4',
     lg: 'space-y-6',
-  }[config.fieldSpacing || 'md']
+  }[config.fieldSpacing || 'md']), [config.fieldSpacing])
 
   return (
     <Card className={cn('w-full', className, config.className)}>
@@ -61,5 +62,8 @@ export const CardView: React.FC<CardViewProps> = ({
     </Card>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+export const CardView = memo(CardViewComponent)
 
 export default CardView

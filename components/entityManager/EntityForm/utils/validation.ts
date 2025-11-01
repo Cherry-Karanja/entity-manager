@@ -11,7 +11,10 @@ export const validateField = (
   // Required validation
   if (field.required) {
     if (value === null || value === undefined || value === '') {
-      errors.push(`${field.label || field.name} is required`)
+      // Check if there's a custom required message in schema rules
+      const requiredRule = rules.find(rule => rule.type === 'required')
+      const message = requiredRule?.message || `${field.label || field.name} is required`
+      errors.push(message)
       return errors // Don't continue with other validations if required fails
     }
   }
@@ -22,6 +25,7 @@ export const validateField = (
   }
 
   const stringValue = String(value)
+  const numericValue = field.type === 'number' ? Number(value) : value
 
   // Apply validation rules
   for (const rule of rules) {
@@ -31,16 +35,16 @@ export const validateField = (
         break
 
       case 'min':
-        if (typeof value === 'number' && typeof rule.value === 'number') {
-          if (value < rule.value) {
+        if (typeof numericValue === 'number' && typeof rule.value === 'number' && !isNaN(numericValue)) {
+          if (numericValue < rule.value) {
             errors.push(rule.message || `${field.label || field.name} must be at least ${rule.value}`)
           }
         }
         break
 
       case 'max':
-        if (typeof value === 'number' && typeof rule.value === 'number') {
-          if (value > rule.value) {
+        if (typeof numericValue === 'number' && typeof rule.value === 'number' && !isNaN(numericValue)) {
+          if (numericValue > rule.value) {
             errors.push(rule.message || `${field.label || field.name} must be at most ${rule.value}`)
           }
         }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, memo } from 'react'
 import { Search, Filter, SortAsc, SortDesc, MoreHorizontal, Download, RefreshCw, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,7 +35,7 @@ import { EntityExporter, exportData } from '../EntityExporter'
 
 // ===== MAIN COMPONENT =====
 
-export const EntityList: React.FC<EntityListProps> = ({
+const EntityListComponent: React.FC<EntityListProps> = ({
   config,
   data: overrideData,
   loading: overrideLoading,
@@ -80,6 +80,15 @@ export const EntityList: React.FC<EntityListProps> = ({
     return mergedConfig.defaultView || mergedConfig.views?.[0]?.id || 'table'
   })
   const [localSearchTerm, setLocalSearchTerm] = useState(overrideSearchTerm || '')
+  const [searchInput, setSearchInput] = useState(overrideSearchTerm || '')
+  
+  // Debounce search input for performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLocalSearchTerm(searchInput)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput])
   const [localFilters, setLocalFilters] = useState<Record<string, unknown>>(overrideActiveFilters || {})
   const [localSort, setLocalSort] = useState<EntityListSort[]>(overrideSortConfig || mergedConfig.defaultSort || [])
   const [localSelectedKeys, setLocalSelectedKeys] = useState<(string | number)[]>(overrideSelectedKeys || [])
@@ -241,7 +250,7 @@ export const EntityList: React.FC<EntityListProps> = ({
     // Only allow search if searchable is enabled
     if (!mergedConfig.searchable) return
 
-    setLocalSearchTerm(term)
+    setSearchInput(term)
     onSearch?.(term)
   }, [onSearch, mergedConfig.searchable])
 
@@ -337,21 +346,29 @@ export const EntityList: React.FC<EntityListProps> = ({
   }
 
   return (
-    <div className={cn("space-y-4", mergedConfig.className)}>
+    <div 
+      className={cn("space-y-4", mergedConfig.className)}
+      role="region"
+      aria-label={typeof mergedConfig.title === 'string' ? mergedConfig.title : 'Entity list'}
+      {...(mergedConfig.loading ? { 'aria-busy': true as any } : {})}
+      aria-describedby={mergedConfig.description ? 'entity-list-description' : undefined}
+    >
       {/* Header */}
       {(mergedConfig.title || mergedConfig.description) && (
         <Card>
           <CardHeader>
             {mergedConfig.title && (
               <CardTitle className="flex items-center justify-between">
-                <span>{mergedConfig.title}</span>
+                <span id="entity-list-title">{mergedConfig.title}</span>
                 {mergedConfig.components?.header && (
                   <mergedConfig.components.header config={mergedConfig} />
                 )}
               </CardTitle>
             )}
             {mergedConfig.description && (
-              <p className="text-muted-foreground">{mergedConfig.description}</p>
+              <p className="text-muted-foreground" id="entity-list-description">
+                {mergedConfig.description}
+              </p>
             )}
           </CardHeader>
         </Card>
@@ -463,5 +480,8 @@ export const EntityList: React.FC<EntityListProps> = ({
     </div>
   )
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const EntityList = memo(EntityListComponent)
 
 export default EntityList

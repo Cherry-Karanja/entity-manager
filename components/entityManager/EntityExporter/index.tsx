@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle, Download, FileText, Table } from 'lucide-react'
+import { AlertCircle, Download, FileText, Table, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   EntityExporterProps,
@@ -15,6 +15,7 @@ import {
   DEFAULT_EXPORTER_CONFIG,
   DEFAULT_EXPORT_FORMATS
 } from './types'
+import { validateExportOperation } from './validation'
 import { EntityListColumn } from '../EntityList/types'
 
 // ===== UTILITY FUNCTIONS =====
@@ -104,6 +105,8 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
   const [showPreview, setShowPreview] = useState(false)
   const [selectedFormat, setSelectedFormat] = useState<ExportFormatType>(config.defaultFormat || 'csv')
   const [error, setError] = useState<string | null>(null)
+  const [previewData, setPreviewData] = useState<unknown[] | null>(null)
+  const [validationResults, setValidationResults] = useState<any>(null)
 
   // Merge config with defaults
   const mergedConfig = useMemo(() => ({
@@ -128,6 +131,22 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
     return transformData(data, mergedConfig.dataTransformer)
   }, [propData, mergedConfig])
 
+  // Preview data and validation
+  const handlePreview = useCallback(async () => {
+    try {
+      setError(null)
+      const data = await getExportData()
+      const validation = validateExportOperation(mergedConfig, data, selectedFormat)
+
+      setPreviewData(data.slice(0, mergedConfig.maxPreviewRows || 5))
+      setValidationResults(validation)
+      setShowPreview(true)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Preview failed'
+      setError(errorMessage)
+    }
+  }, [getExportData, mergedConfig, selectedFormat])
+
   // Export data
   const performExport = useCallback(async (format: ExportFormatType) => {
     try {
@@ -136,6 +155,18 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
       setError(null)
 
       const data = await getExportData()
+      setExportProgress(10)
+
+      // Comprehensive validation
+      const validationResult = validateExportOperation(mergedConfig, data, format)
+      if (!validationResult.success) {
+        const validationErrors = validationResult.errors || []
+        const errorMessages = validationErrors.map(err =>
+          err.errors.map(e => e.message).join(', ')
+        ).join('; ')
+        throw new Error(`Validation failed: ${errorMessages}`)
+      }
+
       setExportProgress(25)
 
       if (!data || data.length === 0) {
@@ -214,7 +245,23 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
       onExport?.(result)
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Export failed'
+      const error = err as Error
+      const errorMessage = error.message
+      let errorType: 'validation' | 'no-data' | 'format' | 'serialization' | 'size-limit' | 'general' = 'general'
+
+      // Categorize errors for better user experience
+      if (errorMessage.includes('Validation failed')) {
+        errorType = 'validation'
+      } else if (errorMessage.includes('No data to export')) {
+        errorType = 'no-data'
+      } else if (errorMessage.includes('Unsupported format')) {
+        errorType = 'format'
+      } else if (errorMessage.includes('JSON serialization failed')) {
+        errorType = 'serialization'
+      } else if (errorMessage.includes('exceeds maximum')) {
+        errorType = 'size-limit'
+      }
+
       setError(errorMessage)
 
       const result: ExportResult = {
@@ -223,6 +270,7 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
         format,
         recordCount: 0,
         error: errorMessage,
+        errorType,
       }
 
       mergedConfig.hooks?.onExportError?.(format, err)
@@ -313,6 +361,20 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
     <div className="flex items-center gap-2">
       {renderFormatSelector()}
 
+      {/* Preview Button */}
+      {mergedConfig.showPreview && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePreview}
+          disabled={disabled || externalLoading || isExporting}
+          className={cn("ml-2", mergedConfig.className)}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Preview
+        </Button>
+      )}
+
       {/* Progress Dialog */}
       {mergedConfig.showProgress && (isExporting || exportProgress > 0) && (
         <Dialog open={isExporting} onOpenChange={() => {}}>
@@ -334,6 +396,94 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
               <p className="text-sm text-muted-foreground">
                 Preparing your {selectedFormat.toUpperCase()} export...
               </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Preview Dialog */}
+      {mergedConfig.showPreview && (
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Export Preview - {selectedFormat.toUpperCase()}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Validation Results */}
+              {validationResults && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Validation Results</h4>
+                  {validationResults.success ? (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="w-2 h-2 bg-green-600 rounded-full" />
+                      <span className="text-sm">All validations passed</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {validationResults.errors?.map((error: any, index: number) => (
+                        <div key={index} className="flex items-start gap-2 text-red-600">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{error.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Data Preview */}
+              {previewData && previewData.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">
+                    Data Preview ({previewData.length} of {validationResults?.data?.length || 0} records)
+                  </h4>
+                  <div className="border rounded-md overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          {Object.keys(previewData[0] as object).map((key) => (
+                            <th key={key} className="px-3 py-2 text-left font-medium">
+                              {key}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewData.map((row, index) => (
+                          <tr key={index} className="border-t">
+                            {Object.values(row as object).map((value: any, cellIndex) => (
+                              <td key={cellIndex} className="px-3 py-2">
+                                {String(value || '')}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Export Actions */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowPreview(false)}>
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowPreview(false)
+                    performExport(selectedFormat)
+                  }}
+                  disabled={!validationResults?.success}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export {selectedFormat.toUpperCase()}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

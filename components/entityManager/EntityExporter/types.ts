@@ -72,6 +72,7 @@ export interface ExportResult {
   format: ExportFormatType
   recordCount: number
   error?: string
+  errorType?: 'validation' | 'no-data' | 'format' | 'serialization' | 'size-limit' | 'general'
 }
 
 export interface EntityExporterProps {

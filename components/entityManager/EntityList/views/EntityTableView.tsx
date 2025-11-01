@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -28,7 +28,7 @@ interface EntityTableViewProps extends EntityListViewProps {
   bordered?: boolean
 }
 
-const EntityTableView: React.FC<EntityTableViewProps> = ({
+const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
   data,
   columns,
   loading = false,
@@ -148,9 +148,10 @@ const EntityTableView: React.FC<EntityTableViewProps> = ({
   }
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative", className)} role="region" aria-label="Data table">
       <div
         className={cn("overflow-auto", scroll?.y && "max-h-96")}
+        role="presentation"
       >
         <Table>
           <TableHeader>
@@ -168,6 +169,7 @@ const EntityTableView: React.FC<EntityTableViewProps> = ({
                         const selectedItems = checked ? data : []
                         selection.onChange(newSelectedKeys, selectedItems)
                       }}
+                      aria-label={`Select all ${data.length} items`}
                     />
                   )}
                 </TableHead>
@@ -233,6 +235,9 @@ const EntityTableView: React.FC<EntityTableViewProps> = ({
                   onContextMenu={rowProps?.onContextMenu ? handleRowContextMenu(item, index) : undefined}
                   onMouseEnter={rowProps?.onMouseEnter ? handleRowMouseEnter(item, index) : undefined}
                   onMouseLeave={rowProps?.onMouseLeave ? handleRowMouseLeave(item, index) : undefined}
+                  aria-selected={isSelected}
+                  tabIndex={0}
+                  role="row"
                 >
                   {/* Selection cell */}
                   {selection && selection.mode !== 'none' && (
@@ -241,6 +246,7 @@ const EntityTableView: React.FC<EntityTableViewProps> = ({
                         checked={isSelected}
                         onCheckedChange={handleSelectionChange(item)}
                         disabled={selection.getCheckboxProps?.(item)?.disabled}
+                        aria-label={`Select row ${index + 1}`}
                       />
                     </TableCell>
                   )}
@@ -286,5 +292,8 @@ const EntityTableView: React.FC<EntityTableViewProps> = ({
     </div>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+const EntityTableView = memo(EntityTableViewComponent)
 
 export default EntityTableView

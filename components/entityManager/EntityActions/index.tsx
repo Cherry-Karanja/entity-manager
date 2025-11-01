@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -19,7 +19,7 @@ import { ActionDrawer } from './components/ActionDrawer'
 
 // ===== MAIN COMPONENT =====
 
-export const EntityActions: React.FC<EntityActionsProps> = ({
+const EntityActionsComponent: React.FC<EntityActionsProps> = ({
   config,
   item,
   selectedItems = [],
@@ -260,13 +260,18 @@ export const EntityActions: React.FC<EntityActionsProps> = ({
 
   return (
     <TooltipProvider>
-      <div className={cn("flex items-center gap-1 bg-background/80 backdrop-blur-sm rounded-md p-1", className)}>
+      <div 
+        className={cn("flex items-center gap-1 bg-background/80 backdrop-blur-sm rounded-md p-1", className)}
+        role="toolbar"
+        aria-label="Entity actions"
+        aria-orientation="horizontal"
+      >
         {/* Render grouped actions */}
         {Object.entries(groupedActions).map(([groupName, actions]) => (
           <React.Fragment key={groupName}>
             {actions.map((action, index) => (
               <React.Fragment key={action.id}>
-                {action.separator && index > 0 && <div className="w-px h-6 bg-border mx-1" />}
+                {action.separator && index > 0 && <div className="w-px h-6 bg-border mx-1" role="separator" aria-orientation="vertical" />}
                 {renderActionButton(action)}
               </React.Fragment>
             ))}
@@ -408,5 +413,8 @@ export const EntityActions: React.FC<EntityActionsProps> = ({
     </TooltipProvider>
   )
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const EntityActions = memo(EntityActionsComponent)
 
 export default EntityActions

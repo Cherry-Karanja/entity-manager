@@ -15,6 +15,7 @@ import EntityCardView from '../EntityList/views/EntityCardView'
 import EntityListView from '../EntityList/views/EntityListView'
 import EntityGridView from '../EntityList/views/EntityGridView'
 import EntityCompactView from '../EntityList/views/EntityCompactView'
+import { usePermissions } from '@/hooks/use-permissions'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -157,6 +158,9 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
   // ===== HOOKS =====
 
+  // Permissions hook
+  const permissions = usePermissions()
+
   // Entity state management
   const entityState = useEntityState({
     config,
@@ -175,7 +179,8 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     config,
     state: entityState.state,
     actions: entityState.actions,
-    apiActions: entityApi
+    apiActions: entityApi,
+    cachedData: entityState.cachedData
   })
 
   // Form management
@@ -290,7 +295,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       enabled: true,
       formats: ['csv', 'xlsx', 'json'] as ('csv' | 'xlsx' | 'json' | 'pdf')[]
     } : undefined,
-    onCreate: config.permissions?.create !== false ? () => {
+    onCreate: permissions.hasEntityPermission('create') && config.permissions?.create !== false ? () => {
       setMode('create')
       setSelectedEntity(null)
       setFormData(null)

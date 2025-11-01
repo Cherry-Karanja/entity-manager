@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo } from 'react'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
 import { EntityActions } from '../../EntityActions'
@@ -12,7 +12,7 @@ interface EntityCompactViewProps extends EntityListViewProps {
   onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
-export const EntityCompactView: React.FC<EntityCompactViewProps> = ({
+const EntityCompactViewComponent: React.FC<EntityCompactViewProps> = ({
   data,
   columns,
   loading = false,
@@ -88,5 +88,8 @@ export const EntityCompactView: React.FC<EntityCompactViewProps> = ({
     </div>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+export const EntityCompactView = memo(EntityCompactViewComponent)
 
 export default EntityCompactView

@@ -10,6 +10,7 @@ export interface UseEntityActionsOptions<TEntity extends BaseEntity, TFormData e
   state: EntityState<TEntity>
   actions: EntityStateActions<TEntity>
   apiActions: EntityApiActions<TEntity, TFormData>
+  cachedData?: { results: TEntity[] } | null
 }
 
 export interface ActionState {
@@ -20,6 +21,16 @@ export interface ActionState {
     action: string
     timestamp: Date
     data?: unknown
+    retryData?: {
+      actionFn: () => Promise<unknown>
+      retryCount: number
+      maxRetries: number
+      lastError?: unknown
+    }
+    undoData?: {
+      undoFn: () => Promise<unknown>
+      canUndo: boolean
+    }
   }>
 }
 
@@ -79,7 +90,8 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   config,
   state,
   actions,
-  apiActions
+  apiActions,
+  cachedData
 }: UseEntityActionsOptions<TEntity, TFormData>) {
   // Action state management
   const actionStateRef = useRef<ActionState>({
@@ -95,11 +107,13 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   }, [])
 
   // Add action to history
-  const addToActionHistory = useCallback((action: string, data?: unknown) => {
+  const addToActionHistory = useCallback((action: string, data?: unknown, retryData?: ActionState['actionHistory'][0]['retryData'], undoData?: ActionState['actionHistory'][0]['undoData']) => {
     actionStateRef.current.actionHistory.unshift({
       action,
       timestamp: new Date(),
-      data
+      data,
+      retryData,
+      undoData
     })
     // Keep only last 10 actions
     if (actionStateRef.current.actionHistory.length > 10) {
@@ -115,9 +129,26 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
       showLoading?: boolean
       onSuccess?: (result: T) => void
       onError?: (error: unknown) => void
+      maxRetries?: number
+      retryable?: boolean
     } = {}
   ): Promise<T | null> => {
-    const { showLoading = true, onSuccess, onError } = options
+    const { showLoading = true, onSuccess, onError, maxRetries = 3, retryable = true } = options
+
+    const attemptAction = async (attempt: number): Promise<T> => {
+      try {
+        const result = await actionFn()
+        return result
+      } catch (error) {
+        if (attempt < maxRetries && retryable) {
+          // Exponential backoff: wait 2^attempt seconds
+          const delay = Math.pow(2, attempt) * 1000
+          await new Promise(resolve => setTimeout(resolve, delay))
+          return attemptAction(attempt + 1)
+        }
+        throw error
+      }
+    }
 
     try {
       if (showLoading) {
@@ -125,9 +156,13 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
       }
 
       updateActionState({ lastAction: actionName })
-      addToActionHistory(actionName)
+      addToActionHistory(actionName, undefined, {
+        actionFn,
+        retryCount: 0,
+        maxRetries
+      })
 
-      const result = await actionFn()
+      const result = await attemptAction(0)
 
       if (onSuccess) {
         onSuccess(result)
@@ -138,6 +173,14 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
       updateActionState({ error: errorMessage })
+
+      // Store retry data for failed actions
+      if (retryable) {
+        const lastHistoryItem = actionStateRef.current.actionHistory[0]
+        if (lastHistoryItem && lastHistoryItem.retryData) {
+          lastHistoryItem.retryData.lastError = error
+        }
+      }
 
       if (onError) {
         onError(error)
@@ -220,10 +263,22 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   // CRUD actions
   const handleSave = useCallback(async (data: TFormData): Promise<boolean> => {
     const result = await executeAction('create_entity', () => apiActions.createEntity(data), {
-      onSuccess: (createdEntity) => {
+      onSuccess: (createdEntity: TEntity | null) => {
         if (createdEntity) {
           actions.setMode('list')
           actions.setSelectedItem(null)
+          // Add undo data for create (undo = delete)
+          const lastHistoryItem = actionStateRef.current.actionHistory[0]
+          if (lastHistoryItem) {
+            lastHistoryItem.undoData = {
+              canUndo: true,
+              undoFn: async () => {
+                await apiActions.deleteEntity(createdEntity.id)
+                actions.setMode('list')
+                actions.setSelectedItem(null)
+              }
+            }
+          }
         }
       }
     })
@@ -237,11 +292,25 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
     }
 
     const selectedItem = state.selectedItem
+    const previousData = { ...selectedItem } // Store previous state for undo
+
     const result = await executeAction('update_entity', () => apiActions.updateEntity(selectedItem.id, data), {
-      onSuccess: (updatedEntity) => {
+      onSuccess: (updatedEntity: TEntity | null) => {
         if (updatedEntity) {
           actions.setMode('list')
           actions.setSelectedItem(null)
+          // Add undo data for update (undo = revert to previous state)
+          const lastHistoryItem = actionStateRef.current.actionHistory[0]
+          if (lastHistoryItem) {
+            lastHistoryItem.undoData = {
+              canUndo: true,
+              undoFn: async () => {
+                await apiActions.updateEntity(selectedItem.id, previousData as unknown as Partial<TFormData>)
+                actions.setMode('list')
+                actions.setSelectedItem(null)
+              }
+            }
+          }
         }
       }
     })
@@ -249,18 +318,32 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   }, [executeAction, apiActions, state.selectedItem, actions, updateActionState])
 
   const handleDelete = useCallback(async (id: string | number): Promise<boolean> => {
+    // Store the entity data before deletion for potential undo
+    const entityToDelete = cachedData?.results?.find((item: TEntity) => item.id === id)
+
     const result = await executeAction('delete_entity', () => apiActions.deleteEntity(id), {
-      onSuccess: (success) => {
+      onSuccess: (success: boolean) => {
         if (success) {
           actions.setDeleteDialog({ open: false })
           if (state.selectedItem?.id === id) {
             actions.setSelectedItem(null)
           }
+          // Note: Delete undo is complex and may not be fully reversible
+          // depending on backend implementation
+          const lastHistoryItem = actionStateRef.current.actionHistory[0]
+          if (lastHistoryItem && entityToDelete) {
+            lastHistoryItem.undoData = {
+              canUndo: false, // Mark as not undoable for now
+              undoFn: async () => {
+                throw new Error('Delete operations cannot be undone')
+              }
+            }
+          }
         }
       }
     })
     return result === true
-  }, [executeAction, apiActions, actions, state.selectedItem])
+  }, [executeAction, apiActions, actions, state.selectedItem, cachedData])
 
   const handleConfirmDelete = useCallback(async (): Promise<boolean> => {
     if (!state.deleteDialog.id) {
@@ -381,15 +464,40 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
 
   // Utility actions
   const handleRetryLastAction = useCallback(async (): Promise<boolean> => {
-    const lastAction = actionStateRef.current.lastAction
-    if (!lastAction) {
+    const lastHistoryItem = actionStateRef.current.actionHistory[0]
+    if (!lastHistoryItem || !lastHistoryItem.retryData) {
       updateActionState({ error: 'No action to retry' })
       return false
     }
 
-    // This is a simplified retry - in a real implementation, you'd store the actual function to retry
-    updateActionState({ error: 'Retry functionality not implemented for this action type' })
-    return false
+    const { actionFn, retryCount, maxRetries } = lastHistoryItem.retryData
+
+    if (retryCount >= maxRetries) {
+      updateActionState({ error: 'Maximum retry attempts exceeded' })
+      return false
+    }
+
+    try {
+      updateActionState({ isLoading: true, error: null })
+
+      // Increment retry count
+      lastHistoryItem.retryData.retryCount += 1
+
+      const result = await actionFn()
+
+      updateActionState({ error: null })
+      return true
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Retry failed'
+      updateActionState({ error: errorMessage })
+
+      // Update last error
+      lastHistoryItem.retryData.lastError = error
+
+      return false
+    } finally {
+      updateActionState({ isLoading: false })
+    }
   }, [updateActionState])
 
   const handleClearError = useCallback(() => {
@@ -397,10 +505,29 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   }, [updateActionState])
 
   const handleUndoLastAction = useCallback(async (): Promise<boolean> => {
-    // This is a placeholder for undo functionality
-    // In a real implementation, you'd need to track reversible actions and their undo operations
-    updateActionState({ error: 'Undo functionality not implemented' })
-    return false
+    const lastHistoryItem = actionStateRef.current.actionHistory[0]
+    if (!lastHistoryItem || !lastHistoryItem.undoData?.canUndo || !lastHistoryItem.undoData.undoFn) {
+      updateActionState({ error: 'No reversible action to undo' })
+      return false
+    }
+
+    try {
+      updateActionState({ isLoading: true, error: null })
+
+      await lastHistoryItem.undoData.undoFn()
+
+      // Remove the undone action from history
+      actionStateRef.current.actionHistory.shift()
+
+      updateActionState({ error: null })
+      return true
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Undo failed'
+      updateActionState({ error: errorMessage })
+      return false
+    } finally {
+      updateActionState({ isLoading: false })
+    }
   }, [updateActionState])
 
   // Memoized action state for external access

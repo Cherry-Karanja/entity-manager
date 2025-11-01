@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,7 @@ interface EntityCardViewProps extends EntityListViewProps {
   onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
-const EntityCardView: React.FC<EntityCardViewProps> = ({
+const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
   data,
   columns,
   loading = false,
@@ -103,5 +103,8 @@ const EntityCardView: React.FC<EntityCardViewProps> = ({
     </div>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+const EntityCardView = memo(EntityCardViewComponent)
 
 export default EntityCardView

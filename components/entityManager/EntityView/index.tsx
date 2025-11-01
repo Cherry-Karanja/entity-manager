@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -24,7 +24,7 @@ import { TimelineView } from './views/TimelineView'
 
 // ===== MAIN COMPONENT =====
 
-export const EntityView: React.FC<EntityViewProps> = ({
+const EntityViewComponent: React.FC<EntityViewProps> = ({
   config,
   data: initialData,
   onActionClick,
@@ -174,18 +174,26 @@ export const EntityView: React.FC<EntityViewProps> = ({
   }
 
   return (
-    <div className={cn('w-full', className)}>
+    <div 
+      className={cn('w-full', className)}
+      role="article"
+      aria-label="Entity details"
+    >
       {/* Navigation */}
       {mergedConfig.showNavigation && mergedConfig.navigation && (
-        <div className={`flex items-center mb-4 ${isMobile ? 'flex-col gap-2' : 'justify-between'}`}>
+        <nav 
+          className={`flex items-center mb-4 ${isMobile ? 'flex-col gap-2' : 'justify-between'}`}
+          aria-label="Entity navigation"
+        >
           <Button
             variant="outline"
             size="sm"
             disabled={!mergedConfig.navigation.canGoPrev}
             onClick={() => handleNavigate('prev')}
             className={isMobile ? 'w-full' : ''}
+            aria-label="Go to previous entity"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
+            <ChevronLeft className="h-4 w-4 mr-2" aria-hidden="true" />
             Previous
           </Button>
           <Button
@@ -194,11 +202,12 @@ export const EntityView: React.FC<EntityViewProps> = ({
             disabled={!mergedConfig.navigation.canGoNext}
             onClick={() => handleNavigate('next')}
             className={isMobile ? 'w-full' : ''}
+            aria-label="Go to next entity"
           >
             Next
-            <ChevronRight className="h-4 w-4 ml-2" />
+            <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
           </Button>
-        </div>
+        </nav>
       )}
 
       {/* Custom Header */}
@@ -226,5 +235,8 @@ export const EntityView: React.FC<EntityViewProps> = ({
     </div>
   )
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const EntityView = memo(EntityViewComponent)
 
 export default EntityView

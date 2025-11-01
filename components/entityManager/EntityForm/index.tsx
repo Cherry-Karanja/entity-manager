@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { toast } from 'sonner'
 import { EntityFormConfig, EntityFormProps, FormState, BulkImportState } from './types'
 import { DEFAULT_FORM_CONFIG, DEFAULT_BULK_IMPORT_FORMATS } from './types'
@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { SingleColumnLayout } from './layouts/SingleColumnLayout'
 import { TwoColumnLayout } from './layouts/TwoColumnLayout'
 
-export const EntityForm: React.FC<EntityFormProps> = ({
+const EntityFormComponent: React.FC<EntityFormProps> = ({
   config,
   data,
   onSubmit,
@@ -154,7 +154,7 @@ export const EntityForm: React.FC<EntityFormProps> = ({
     setFormState(prev => ({
       ...prev,
       errors,
-      touched: Object.keys(prev.data).reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+      touched: mergedConfig.fields.reduce((acc, field) => ({ ...acc, [field.name]: true }), {}),
       isValid,
       submitCount: prev.submitCount + 1,
     }))
@@ -299,5 +299,8 @@ export const EntityForm: React.FC<EntityFormProps> = ({
   // Default to single column layout
   return <SingleColumnLayout {...layoutProps} />
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const EntityForm = memo(EntityFormComponent)
 
 export default EntityForm

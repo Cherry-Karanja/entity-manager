@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, memo, useMemo, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { ChevronDown, ChevronUp } from 'lucide-react'
@@ -17,17 +17,17 @@ export interface DetailViewProps {
   className?: string
 }
 
-export const DetailView: React.FC<DetailViewProps> = ({
+const DetailViewComponent: React.FC<DetailViewProps> = ({
   data,
   config,
   fieldGroups,
   className,
 }) => {
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() =>
     new Set(fieldGroups.filter(g => g.collapsed).map(g => g.id))
   )
 
-  const toggleGroup = (groupId: string) => {
+  const toggleGroup = useCallback((groupId: string) => {
     setCollapsedGroups(prev => {
       const next = new Set(prev)
       if (next.has(groupId)) {
@@ -37,13 +37,13 @@ export const DetailView: React.FC<DetailViewProps> = ({
       }
       return next
     })
-  }
+  }, [])
 
-  const spacing = {
+  const spacing = useMemo(() => ({
     sm: 'space-y-2',
     md: 'space-y-4',
     lg: 'space-y-6',
-  }[config.fieldSpacing || 'md']
+  }[config.fieldSpacing || 'md']), [config.fieldSpacing])
 
   return (
     <Card className={cn('w-full', className, config.className)}>
@@ -142,5 +142,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
     </Card>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+export const DetailView = memo(DetailViewComponent)
 
 export default DetailView

@@ -76,13 +76,19 @@ export const EntityListToolbar: React.FC<EntityListToolbarProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={`relative ${isMobile ? 'flex-1' : 'flex-1 max-w-sm'}`}>
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <Input
                       placeholder={config.searchPlaceholder || "Search..."}
                       value={searchTerm}
                       onChange={(e) => onSearch(e.target.value)}
                       className="pl-9"
+                      aria-label="Search entities"
+                      aria-describedby="search-description"
+                      role="searchbox"
                     />
+                    <span id="search-description" className="sr-only">
+                      Search across {config.columns?.filter(col => col.searchable !== false).length || 'all'} searchable columns
+                    </span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -129,7 +135,7 @@ export const EntityListToolbar: React.FC<EntityListToolbarProps> = ({
         <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}>
           {/* View switcher */}
           {views.length > 1 && (
-            <div className="flex items-center border rounded-md">
+            <div className="flex items-center border rounded-md" role="group" aria-label="View options">
               {views.map((view) => {
                 const Icon = viewIcons[view.id as keyof typeof viewIcons] || Table
                 return (
@@ -140,8 +146,10 @@ export const EntityListToolbar: React.FC<EntityListToolbarProps> = ({
                         size="sm"
                         onClick={() => onViewChange(view.id)}
                         className="rounded-none first:rounded-l-md last:rounded-r-md"
+                        aria-label={`Switch to ${view.name} view`}
+                        aria-pressed={currentView === view.id}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>

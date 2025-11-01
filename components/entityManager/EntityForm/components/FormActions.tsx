@@ -59,11 +59,10 @@ export const FormActions: React.FC<FormActionsProps> = ({
 
         <Button
           type="submit"
-          disabled={isDisabled || !isValid}
+          disabled={isDisabled || isSubmitting}
           size={buttonSize}
           variant={buttonVariant}
           className={isMobile ? 'w-full' : ''}
-          onClick={onSubmit}
         >
           {isSubmitting ? 'Submitting...' : submitButtonText}
         </Button>
