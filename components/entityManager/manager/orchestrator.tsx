@@ -8,8 +8,13 @@ import { EntityActions } from '../EntityActions'
 import { useEntityState, useEntityApi, useEntityActions, useEntityForm } from './hooks'
 import { EntityConfig, BaseEntity } from './types'
 import { EntityListItem } from '../EntityList/types'
-import { FieldDisplayType } from '../EntityView/types'
+import { FieldDisplayType, ViewFieldGroup } from '../EntityView/types'
 import { transformEntityFieldsToFormFields } from './utils'
+import EntityTableView from '../EntityList/views/EntityTableView'
+import EntityCardView from '../EntityList/views/EntityCardView'
+import EntityListView from '../EntityList/views/EntityListView'
+import EntityGridView from '../EntityList/views/EntityGridView'
+import EntityCompactView from '../EntityList/views/EntityCompactView'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -269,6 +274,15 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     entityActions: undefined, // Use actions instead of entityActions
     bulkActions: bulkActionsWithHandlers,
     pagination: { pageSize: config.listConfig.pageSize || 10 },
+    paginated: true, // Enable pagination
+    views: [
+      { id: 'table', name: 'Table', component: EntityTableView },
+      { id: 'card', name: 'Cards', component: EntityCardView },
+      { id: 'list', name: 'List', component: EntityListView },
+      { id: 'grid', name: 'Grid', component: EntityGridView },
+      { id: 'compact', name: 'Compact', component: EntityCompactView }
+    ],
+    defaultView: 'table',
     searchable: (config.listConfig.searchableFields?.length ?? 0) > 0,
     sortable: true,
     selectable: config.listConfig.allowBatchActions,
@@ -320,61 +334,97 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     }))
 
     // Create field groups from fields if fieldGroups is not provided
-    const fieldGroups = config.viewConfig?.fieldGroups || [{
-      id: 'default',
-      title: 'Details',
-      fields: config.fields.map(field => {
-        // Map form field types to view field types
-        let viewType: FieldDisplayType = 'text'
-        switch (field.type) {
-          case 'string':
-            viewType = 'text'
-            break
-          case 'number':
-          case 'integer32':
-          case 'integer64':
-          case 'float':
-          case 'double':
-          case 'decimal':
-            viewType = 'number'
-            break
-          case 'boolean':
-            viewType = 'boolean'
-            break
-          case 'date':
-            viewType = 'date'
-            break
-          case 'email':
-            viewType = 'email'
-            break
-          case 'url':
-            viewType = 'url'
-            break
-          default:
-            viewType = 'text'
-        }
+    let fieldGroups: ViewFieldGroup[] = []
 
-        return {
-          key: field.key,
-          label: field.label,
-          type: viewType,
-          value: selectedEntity?.[field.key as keyof TEntity]
-        }
-      }),
-      layout: 'vertical' as const,
-      collapsible: false
-    }]
+    if (config.viewConfig?.fieldGroups) {
+      fieldGroups = config.viewConfig.fieldGroups
+    } else if (config.viewConfig?.fields) {
+      // Convert fields to fieldGroups
+      fieldGroups = [{
+        id: 'default',
+        title: 'Details',
+        fields: config.viewConfig.fields.map(viewField => ({
+          ...viewField,
+          value: selectedEntity?.[viewField.key as keyof TEntity]
+        })),
+        layout: 'vertical' as const,
+        collapsible: false
+      }]
+    } else {
+      // Fallback to form fields
+      fieldGroups = [{
+        id: 'default',
+        title: 'Details',
+        fields: config.fields.map(field => {
+          // Map form field types to view field types
+          let viewType: FieldDisplayType = 'text'
+          switch (field.type) {
+            case 'string':
+              viewType = 'text'
+              break
+            case 'number':
+            case 'integer32':
+            case 'integer64':
+            case 'float':
+            case 'double':
+            case 'decimal':
+              viewType = 'number'
+              break
+            case 'boolean':
+              viewType = 'boolean'
+              break
+            case 'date':
+              viewType = 'date'
+              break
+            case 'email':
+              viewType = 'email'
+              break
+            case 'url':
+              viewType = 'url'
+              break
+            default:
+              viewType = 'text'
+          }
+
+          return {
+            key: field.key,
+            label: field.label,
+            type: viewType,
+            value: selectedEntity?.[field.key as keyof TEntity],
+            copyable: config.viewConfig?.fields?.find(vf => vf.key === field.key)?.copyable || false
+          }
+        }),
+        layout: 'vertical' as const,
+        collapsible: false
+      }]
+    }
 
     return {
-    mode: 'detail' as const,
-    layout: 'single' as const,
+    mode: config.viewConfig?.mode || 'detail' as const,
+    layout: config.viewConfig?.layout || 'single' as const,
+    theme: config.viewConfig?.theme,
+    fields: config.viewConfig?.fields,
     fieldGroups,
-    showHeader: true,
-    showActions: true,
-    showMetadata: true,
-    actions: [], // Actions handled through entityActions
+    data: config.viewConfig?.data,
+    dataFetcher: config.viewConfig?.dataFetcher,
+    showHeader: config.viewConfig?.showHeader ?? true,
+    showActions: config.viewConfig?.showActions ?? true,
+    showMetadata: config.viewConfig?.showMetadata ?? true,
+    showNavigation: config.viewConfig?.showNavigation,
+    compact: config.viewConfig?.compact,
+    customComponents: config.viewConfig?.customComponents,
+    dataTransformer: config.viewConfig?.dataTransformer,
+    fieldMapper: config.viewConfig?.fieldMapper,
+    actions: config.viewConfig?.actions || [], // Actions handled through entityActions
     entityActions: { actions: viewEntityActionsWithHandlers },
-    permissions: config.permissions
+    navigation: config.viewConfig?.navigation,
+    permissions: config.viewConfig?.permissions || config.permissions,
+    hooks: config.viewConfig?.hooks,
+    className: config.viewConfig?.className,
+    style: config.viewConfig?.style,
+    fieldSpacing: config.viewConfig?.fieldSpacing,
+    borderRadius: config.viewConfig?.borderRadius,
+    shadow: config.viewConfig?.shadow
   }}, [config, selectedEntity, entityActions])
 
   // Entity Form configuration

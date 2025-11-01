@@ -233,24 +233,50 @@ export const userConfig: EntityConfig<User, UserFormData> = {
   viewConfig: {
     mode: 'detail',
     layout: 'single',
-    fields: [
-      { key: 'username', label: 'Username', type: 'text' },
-      { key: 'email', label: 'Email', type: 'email' },
-      { key: 'first_name', label: 'First Name', type: 'text' },
-      { key: 'last_name', label: 'Last Name', type: 'text' },
-      { key: 'phone_number', label: 'Phone', type: 'phone' },
-      { key: 'user_type', label: 'Role', type: 'badge' },
-      { key: 'status', label: 'Status', type: 'badge' },
-      { key: 'department', label: 'Department', type: 'text' },
-      { key: 'position', label: 'Position', type: 'text' },
-      { key: 'hireDate', label: 'Hire Date', type: 'date' },
-      { key: 'lastLogin', label: 'Last Login', type: 'datetime' },
-      { key: 'isEmailVerified', label: 'Email Verified', type: 'boolean' },
-      { key: 'isPhoneVerified', label: 'Phone Verified', type: 'boolean' }
+    fieldGroups: [
+      {
+        id: 'personal-info',
+        title: 'Personal Information',
+        fields: [
+          { key: 'first_name', label: 'First Name', type: 'text' },
+          { key: 'last_name', label: 'Last Name', type: 'text' },
+          { key: 'get_full_name', label: 'Full Name', type: 'text', copyable: true },
+          { key: 'email', label: 'Email', type: 'email', copyable: true },
+          { key: 'phone_number', label: 'Phone', type: 'phone', copyable: true },
+          { key: 'national_id', label: 'National ID', type: 'text', copyable: true }
+        ],
+        layout: 'grid',
+        columns: 2,
+        collapsible: true,
+        collapsed: false
+      },
+      {
+        id: 'account-info',
+        title: 'Account Information',
+        fields: [
+          { key: 'user_type', label: 'User Type', type: 'badge' },
+          { key: 'is_active', label: 'Active Status', type: 'boolean' }
+        ],
+        layout: 'vertical',
+        collapsible: true,
+        collapsed: false
+      },
+      {
+        id: 'timestamps',
+        title: 'Timestamps',
+        fields: [
+          { key: 'date_joined', label: 'Date Joined', type: 'date' },
+          { key: 'updated_at', label: 'Last Updated', type: 'datetime' }
+        ],
+        layout: 'horizontal',
+        collapsible: true,
+        collapsed: true
+      }
     ],
     showHeader: true,
     showActions: true,
-    showMetadata: true
+    showMetadata: true,
+    compact: false
   },
 
   permissions: {

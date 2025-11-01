@@ -92,6 +92,7 @@ export interface ViewField {
   suffix?: React.ReactNode
   icon?: React.ComponentType<{ className?: string }>
   badge?: boolean
+  copyable?: boolean
   link?: {
     href: string | ((data: unknown) => string)
     target?: '_blank' | '_self'
