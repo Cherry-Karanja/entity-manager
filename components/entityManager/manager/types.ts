@@ -670,6 +670,23 @@ export interface EntityConfig<TEntity = BaseEntity, TFormData extends Record<str
     /** Custom export action handler */
     export?: boolean | ((item: TEntity) => void)
   }
+  /** Chat configuration for real-time messaging */
+  chat?: {
+    /** Whether chat is enabled for this entity */
+    enabled: boolean
+    /** WebSocket URL for chat connections */
+    websocketUrl: string
+    /** Prefix for chat room names (e.g., 'entity_' for 'entity_user_123') */
+    roomPrefix?: string
+    /** Maximum number of messages to keep in memory */
+    maxMessages?: number
+    /** Whether to enable mock mode for development */
+    mockEnabled?: boolean
+    /** Mock messages for development */
+    mockMessages?: any[]
+    /** Delay between mock messages in milliseconds */
+    mockDelay?: number
+  }
 }
 
 /**

@@ -16,6 +16,7 @@ import EntityListView from '../EntityList/views/EntityListView'
 import EntityGridView from '../EntityList/views/EntityGridView'
 import EntityCompactView from '../EntityList/views/EntityCompactView'
 import { usePermissions } from '@/hooks/use-permissions'
+import { ChatPanel } from '@/components/chat'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +73,10 @@ export interface EntityManagerProps<TEntity extends BaseEntity, TFormData extend
   initialMode?: 'list' | 'view' | 'create' | 'edit'
   initialData?: TEntity
   className?: string
+  /** Whether chat is initially open */
+  chatOpen?: boolean
+  /** Callback when chat toggle state changes */
+  onChatToggle?: (isOpen: boolean) => void
 }
 
 // ===== MAIN COMPONENT =====
@@ -80,7 +85,9 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   config,
   initialMode = 'list',
   initialData,
-  className
+  className,
+  chatOpen: initialChatOpen = false,
+  onChatToggle
 }: EntityManagerProps<TEntity, TFormData>) {
   // ===== STATE MANAGEMENT =====
 
@@ -88,6 +95,9 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   const [mode, setMode] = useState<'list' | 'view' | 'create' | 'edit'>(initialMode)
   const [selectedEntity, setSelectedEntity] = useState<TEntity | null>(initialData || null)
   const [formData, setFormData] = useState<Partial<TFormData> | null>(null)
+
+  // Chat state
+  const [chatOpen, setChatOpen] = useState(initialChatOpen)
 
   // Breadcrumb navigation state
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
@@ -215,6 +225,13 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       console.error('Failed to refresh data:', error)
     })
   }, [entityApi.fetchEntities])
+
+  // Chat toggle handler
+  const handleChatToggle = useCallback(() => {
+    const newChatOpen = !chatOpen
+    setChatOpen(newChatOpen)
+    onChatToggle?.(newChatOpen)
+  }, [chatOpen, onChatToggle])
 
   // List actions with handlers
   const listActionsWithHandlers = useMemo(() => {
@@ -640,6 +657,17 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Chat Panel */}
+      {config.chat?.enabled && (
+        <ChatPanel
+          config={config.chat}
+          entityType={config.name}
+          entityId={selectedEntity?.id?.toString()}
+          isOpen={chatOpen}
+          onToggle={handleChatToggle}
+        />
+      )}
     </div>
   )
 }
