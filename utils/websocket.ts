@@ -8,6 +8,9 @@ export interface WebSocketMessage {
   entity_type?: string;
   entity_id?: string;
   user?: any;
+  user_id?: number;
+  session_id?: string;
+  timestamp?: number;
 }
 
 export interface WebSocketConfig {

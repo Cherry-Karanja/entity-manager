@@ -10,6 +10,8 @@ import { Slider } from '@/components/ui/slider'
 import { AlertCircle, HelpCircle } from 'lucide-react'
 import { FormField, FieldRenderProps } from '../types'
 import { cn } from '@/lib/utils'
+import { FileDropZone, FilePreview } from '../../FileDropZone'
+import { useFileUpload } from '@/hooks/useFileUpload'
 
 interface FormFieldRendererProps extends FieldRenderProps {
   layout?: 'vertical' | 'horizontal' | 'grid'
@@ -283,24 +285,111 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         )
 
       case 'file':
-        return (
-          <Input
-            id={fieldId}
-            type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              onChange(field.transform ? field.transform(file) : file)
-            }}
-            onBlur={onBlur}
-            disabled={disabled}
-            required={required}
-            accept={field.options?.map(opt => String(opt.value)).join(',')}
-            className={cn(
-              hasError && 'border-red-500 focus:border-red-500',
-              field.className
-            )}
-          />
-        )
+        // Check if advanced file upload is enabled
+        const enableAdvancedUpload = field.multiple || field.max || field.min ||
+          (field as any).enableDragDrop || (field as any).showPreview;
+
+        if (enableAdvancedUpload) {
+          // Advanced file upload with drag-drop and preview
+          const accept = field.options?.map(opt => String(opt.value)) || [];
+          const maxSize = (field as any).maxSize;
+          const minSize = (field as any).minSize;
+          const showPreview = (field as any).showPreview !== false;
+          const enableDragDrop = (field as any).enableDragDrop !== false;
+
+          return (
+            <div className="space-y-2">
+              {enableDragDrop ? (
+                <FileDropZone
+                  onFilesSelected={(files) => {
+                    if (field.multiple) {
+                      onChange(field.transform ? field.transform(files) : files);
+                    } else {
+                      const file = files[0];
+                      onChange(field.transform ? field.transform(file) : file);
+                    }
+                  }}
+                  accept={accept.length > 0 ? { [accept[0].split('/')[0] || '*']: accept } : undefined}
+                  maxSize={maxSize}
+                  minSize={minSize}
+                  maxFiles={field.multiple ? field.max || 10 : 1}
+                  disabled={disabled}
+                  className={cn(
+                    hasError && 'border-red-500',
+                    field.className
+                  )}
+                />
+              ) : (
+                <Input
+                  id={fieldId}
+                  type="file"
+                  multiple={field.multiple}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (field.multiple) {
+                      onChange(field.transform ? field.transform(files) : files);
+                    } else {
+                      const file = files[0];
+                      onChange(field.transform ? field.transform(file) : file);
+                    }
+                  }}
+                  onBlur={onBlur}
+                  disabled={disabled}
+                  required={required}
+                  accept={accept.join(',')}
+                  className={cn(
+                    hasError && 'border-red-500 focus:border-red-500',
+                    field.className
+                  )}
+                />
+              )}
+
+              {showPreview && value ? (
+                <div className="space-y-2">
+                  {Array.isArray(value) ? (
+                    (value as File[]).map((file: File, index: number) => (
+                      <FilePreview
+                        key={index}
+                        file={file}
+                        onRemove={() => {
+                          const newFiles = (value as File[]).filter((_: File, i: number) => i !== index);
+                          onChange(newFiles);
+                        }}
+                      />
+                    ))
+                  ) : (
+                    value instanceof File ? (
+                      <FilePreview
+                        file={value}
+                        onRemove={() => onChange(null)}
+                      />
+                    ) : null
+                  )}
+                </div>
+              ) : null}
+            </div>
+          );
+        } else {
+          // Simple file input
+          return (
+            <Input
+              id={fieldId}
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                onChange(field.transform ? field.transform(file) : file)
+              }}
+              onBlur={onBlur}
+              disabled={disabled}
+              required={required}
+              accept={field.options?.map(opt => String(opt.value)).join(',')}
+              className={cn(
+                hasError && 'border-red-500 focus:border-red-500',
+                field.className
+              )}
+            />
+          )
+        }
 
       case 'color':
         return (
