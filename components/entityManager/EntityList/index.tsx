@@ -45,6 +45,8 @@ const EntityListComponent: React.FC<EntityListProps> = ({
   activeFilters: overrideActiveFilters,
   sortConfig: overrideSortConfig,
   pagination: overridePagination,
+  fields: overrideFields,
+  expand: overrideExpand,
   onDataChange,
   onSelectionChange,
   onSearch,
@@ -64,8 +66,10 @@ const EntityListComponent: React.FC<EntityListProps> = ({
     ...config,
     data: overrideData || config.data,
     loading: overrideLoading ?? config.loading,
-    error: overrideError ?? config.error
-  }), [config, overrideData, overrideLoading, overrideError])
+    error: overrideError ?? config.error,
+    fields: overrideFields ?? config.fields,
+    expand: overrideExpand ?? config.expand
+  }), [config, overrideData, overrideLoading, overrideError, overrideFields, overrideExpand])
 
   // State management
   const [currentView, setCurrentView] = useState(() => {

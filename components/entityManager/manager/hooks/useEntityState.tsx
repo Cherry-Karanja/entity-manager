@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useDebounceSearch } from '../../../../hooks/useDebounce'
 import { EntityConfig, BaseEntity } from '../types'
+import { EntityListSort } from '../../EntityList/types'
 import { validateEntityConfig } from '../validation'
 
 export interface UseEntityStateOptions<TEntity extends BaseEntity, TFormData extends Record<string, unknown>> {
@@ -23,10 +24,12 @@ export interface EntityState<TEntity extends BaseEntity> {
   readonly selectedIds: readonly (string | number)[]
 
   // List state
-  readonly sortConfig: { readonly key: string; readonly direction: 'asc' | 'desc' } | undefined
+  readonly sortConfig: readonly EntityListSort[] | undefined
   readonly filterValues: Readonly<Record<string, unknown>>
   readonly searchTerm: string
   readonly debouncedSearchTerm: string
+  readonly fields?: string | string[]
+  readonly expand?: string | string[]
 
   // UI state
   readonly deleteDialog: { readonly open: boolean; readonly id?: string | number }
@@ -49,9 +52,11 @@ export interface EntityStateActions<TEntity extends BaseEntity> {
   setSelectedIds: (ids: readonly (string | number)[]) => void
 
   // List actions
-  setSortConfig: (config: { key: string; direction: 'asc' | 'desc' } | undefined) => void
+  setSortConfig: (config: readonly EntityListSort[] | undefined) => void
   setFilterValues: (values: Record<string, unknown>) => void
   setSearchTerm: (term: string) => void
+  setFields: (fields: string | string[] | undefined) => void
+  setExpand: (expand: string | string[] | undefined) => void
 
   // UI actions
   setDeleteDialog: (dialog: { open: boolean; id?: string | number }) => void
@@ -81,7 +86,7 @@ interface CacheEntry<T> {
 interface PersistedState {
   currentPage: number
   pageSize: number
-  sortConfig?: { key: string; direction: 'asc' | 'desc' }
+  sortConfig?: readonly EntityListSort[]
   filterValues: Record<string, unknown>
   searchTerm: string
 }
@@ -91,12 +96,14 @@ const DEFAULT_CACHE_TIMEOUT = 5 * 60 * 1000 // 5 minutes
 const DEFAULT_PAGE_SIZE = 10
 const STORAGE_KEY_PREFIX = 'entityManager_state_'
 
-function createCacheKey(page: number, pageSize: number, sortConfig?: { key: string; direction: 'asc' | 'desc' }, filterValues?: Record<string, unknown>, searchTerm?: string): string {
+function createCacheKey(page: number, pageSize: number, sortConfig?: readonly EntityListSort[], filterValues?: Record<string, unknown>, searchTerm?: string): string {
   const params = {
     page,
     page_size: pageSize,
     search: searchTerm,
-    ordering: sortConfig ? `${sortConfig.direction === 'desc' ? '-' : ''}${sortConfig.key}` : undefined,
+    ordering: sortConfig && sortConfig.length > 0
+      ? sortConfig.map(s => `${s.direction === 'desc' ? '-' : ''}${s.field}`).join(',')
+      : undefined,
     ...filterValues
   }
   return JSON.stringify(params)
@@ -155,15 +162,17 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
   const [selectedIds, setSelectedIds] = useState<readonly (string | number)[]>([])
 
   // List state
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | undefined>(
+  const [sortConfig, setSortConfig] = useState<readonly EntityListSort[] | undefined>(
     persistedState?.sortConfig ?? (
       config.listConfig.defaultSort
-        ? { key: config.listConfig.defaultSort.field, direction: config.listConfig.defaultSort.direction }
+        ? [{ field: config.listConfig.defaultSort.field, direction: config.listConfig.defaultSort.direction }]
         : undefined
     )
   )
   const [filterValues, setFilterValues] = useState<Record<string, unknown>>(persistedState?.filterValues ?? {})
   const { searchTerm, debouncedSearchTerm, setSearchTerm } = useDebounceSearch(persistedState?.searchTerm ?? '', 300)
+  const [fields, setFields] = useState<string | string[] | undefined>(config.listConfig.fields)
+  const [expand, setExpand] = useState<string | string[] | undefined>(config.listConfig.expand)
 
   // UI state
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string | number }>({ open: false })
@@ -267,7 +276,7 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
     setError(null)
   }, [])
 
-  const setSortConfigAction = useCallback((config: { key: string; direction: 'asc' | 'desc' } | undefined) => {
+  const setSortConfigAction = useCallback((config: readonly EntityListSort[] | undefined) => {
     setSortConfig(config)
     setCurrentPage(1) // Reset to first page when sorting
     setError(null)
@@ -330,11 +339,13 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
     setSelectedItem(null)
     setSelectedIds([])
     setSortConfig(config.listConfig.defaultSort
-      ? { key: config.listConfig.defaultSort.field, direction: config.listConfig.defaultSort.direction }
+      ? [{ field: config.listConfig.defaultSort.field, direction: config.listConfig.defaultSort.direction }]
       : undefined
     )
     setFilterValues({})
     setSearchTerm('')
+    setFields(config.listConfig.fields)
+    setExpand(config.listConfig.expand)
     setDeleteDialog({ open: false })
     setBatchDeleteDialog({ open: false })
     setError(null)
@@ -374,7 +385,15 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
     setHasLoadedOnce: setHasLoadedOnceAction,
     resetState: resetStateAction,
     resetFilters: resetFiltersAction,
-    resetSelection: resetSelectionAction
+    resetSelection: resetSelectionAction,
+    setFields: (fields: string | string[] | undefined) => {
+      setFields(fields)
+      setError(null)
+    },
+    setExpand: (expand: string | string[] | undefined) => {
+      setExpand(expand)
+      setError(null)
+    }
   }), [
     setCurrentPageAction,
     setPageSizeAction,
@@ -407,6 +426,8 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
     filterValues,
     searchTerm,
     debouncedSearchTerm,
+    fields,
+    expand,
     deleteDialog,
     batchDeleteDialog,
     isLoading,
@@ -429,6 +450,8 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
     filterValues,
     searchTerm,
     debouncedSearchTerm,
+    fields,
+    expand,
     deleteDialog,
     batchDeleteDialog,
     isLoading,

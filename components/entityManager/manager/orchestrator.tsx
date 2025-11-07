@@ -17,6 +17,8 @@ import EntityGridView from '../EntityList/views/EntityGridView'
 import EntityCompactView from '../EntityList/views/EntityCompactView'
 import { usePermissions } from '@/hooks/use-permissions'
 import { ChatPanel } from '@/components/entityManager/chat'
+import { mapApiErrorsToFormFields } from '../../../utils/formValidation'
+import { RealTimeIndicator } from '../RealTimeIndicator'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -95,6 +97,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   const [mode, setMode] = useState<'list' | 'view' | 'create' | 'edit'>(initialMode)
   const [selectedEntity, setSelectedEntity] = useState<TEntity | null>(initialData || null)
   const [formData, setFormData] = useState<Partial<TFormData> | null>(null)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]> | null>(null)
 
   // Chat state
   const [chatOpen, setChatOpen] = useState(initialChatOpen)
@@ -565,18 +568,26 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   const handleFormSubmit = useCallback(async (data: Record<string, unknown>) => {
     try {
       if (mode === 'create') {
-        const createdEntity = await entityApi.createEntity(data as TFormData)
-        if (createdEntity) {
-          setSelectedEntity(createdEntity)
+        const result = await entityApi.createEntity(data as TFormData)
+        if (result.success) {
+          setSelectedEntity(result.data)
           setMode('view')
-          updateBreadcrumbs('view', createdEntity)
+          updateBreadcrumbs('view', result.data)
+          setValidationErrors(null) // Clear validation errors on success
+        } else {
+          // Set validation errors for form to display
+          setValidationErrors(result.validationErrors.fieldErrors)
         }
       } else if (mode === 'edit' && selectedEntity) {
-        const updatedEntity = await entityApi.updateEntity(selectedEntity.id, data as Partial<TFormData>)
-        if (updatedEntity) {
-          setSelectedEntity(updatedEntity)
+        const result = await entityApi.updateEntity(selectedEntity.id, data as Partial<TFormData>)
+        if (result.success) {
+          setSelectedEntity(result.data)
           setMode('view')
-          updateBreadcrumbs('view', updatedEntity)
+          updateBreadcrumbs('view', result.data)
+          setValidationErrors(null) // Clear validation errors on success
+        } else {
+          // Set validation errors for form to display
+          setValidationErrors(result.validationErrors.fieldErrors)
         }
       }
     } catch (error) {
@@ -617,13 +628,8 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
               entityState.actions.setFilterValues(filters)
             }}
             onSort={(sorts: any) => {
-              // Map EntityListSort[] -> single sort config expected by state
-              if (Array.isArray(sorts) && sorts.length > 0) {
-                const s = sorts[0]
-                entityState.actions.setSortConfig({ key: s.field, direction: s.direction })
-              } else {
-                entityState.actions.setSortConfig(undefined)
-              }
+              // Pass EntityListSort[] directly to state
+              entityState.actions.setSortConfig(Array.isArray(sorts) ? sorts : undefined)
             }}
             onPageChange={(page: number, pageSize: number) => {
               // Update pagination state
@@ -652,6 +658,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
             onSubmit={handleFormSubmit}
             onCancel={handleFormCancel}
             loading={entityState.state.isLoading}
+            validationErrors={validationErrors || undefined}
           />
         )
 
@@ -662,7 +669,17 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
   return (
     <div className={className}>
-      <Breadcrumb items={breadcrumbs} />
+      <div className="flex items-center justify-between mb-4">
+        <Breadcrumb items={breadcrumbs} />
+        {entityApi.realTimeState && (
+          <RealTimeIndicator
+            isConnected={entityApi.realTimeState.isConnected}
+            connectionState={entityApi.realTimeState.connectionState}
+            queuedMessagesCount={entityApi.realTimeState.queuedMessagesCount}
+            compact
+          />
+        )}
+      </div>
       {renderContent()}
       
       {/* Delete Confirmation Dialog */}

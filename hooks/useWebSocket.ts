@@ -1,0 +1,297 @@
+/**
+ * useWebSocket Hook
+ *
+ * React hook for managing WebSocket connections with automatic cleanup,
+ * message filtering, and connection state management.
+ */
+
+import { useEffect, useRef, useState, useCallback } from 'react';
+import {
+  WebSocketManager,
+  createWebSocketManager,
+  getGlobalWebSocketManager,
+  setGlobalWebSocketManager
+} from '../utils/websocketManager';
+import {
+  ConnectionState,
+  MessageType,
+  WebSocketMessage,
+  BaseWebSocketMessage,
+  WebSocketHookOptions,
+  WebSocketHookReturn,
+  EntityWebSocketOptions,
+  PresenceWebSocketOptions
+} from '../types/websocket';
+
+export function useWebSocket(options: WebSocketHookOptions): WebSocketHookReturn {
+  const {
+    url,
+    protocols,
+    authToken,
+    reconnectInterval,
+    maxReconnectAttempts,
+    heartbeatInterval,
+    autoConnect = true,
+    messageFilter,
+    onMessage,
+    onConnect,
+    onDisconnect,
+    onError,
+    useGlobalManager = true
+  } = options;
+
+  // State
+  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
+  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+  const [messages, setMessages] = useState<WebSocketMessage[]>([]);
+  const [queuedMessagesCount, setQueuedMessagesCount] = useState(0);
+
+  // Refs
+  const managerRef = useRef<WebSocketManager | null>(null);
+  const messagesRef = useRef<WebSocketMessage[]>([]);
+  const isMountedRef = useRef(true);
+
+  // Computed values
+  const isConnected = connectionState === ConnectionState.CONNECTED;
+
+  // Message handler
+  const handleMessage = useCallback((message: WebSocketMessage) => {
+    // Apply filter if provided
+    if (messageFilter && !messageFilter(message)) {
+      return;
+    }
+
+    // Update state
+    if (isMountedRef.current) {
+      setLastMessage(message);
+      const newMessages = [...messagesRef.current, message];
+      messagesRef.current = newMessages;
+      setMessages(newMessages);
+    }
+
+    // Call custom handler
+    onMessage?.(message);
+  }, [messageFilter, onMessage]);
+
+  // State change handler
+  const handleStateChange = useCallback((state: ConnectionState) => {
+    if (isMountedRef.current) {
+      setConnectionState(state);
+    }
+  }, []);
+
+  // Queue count updater
+  const updateQueueCount = useCallback(() => {
+    if (managerRef.current && isMountedRef.current) {
+      setQueuedMessagesCount(managerRef.current.getQueuedMessagesCount());
+    }
+  }, []);
+
+  // Initialize manager
+  const initializeManager = useCallback(() => {
+    let manager: WebSocketManager;
+
+    if (useGlobalManager) {
+      manager = getGlobalWebSocketManager() || createWebSocketManager(
+        {
+          url,
+          protocols,
+          authToken,
+          reconnectInterval,
+          maxReconnectAttempts,
+          heartbeatInterval
+        },
+        {
+          onConnect,
+          onDisconnect,
+          onError,
+          onMessage: handleMessage,
+          onStateChange: (state) => {
+            handleStateChange(state);
+            updateQueueCount();
+          }
+        }
+      );
+
+      if (!getGlobalWebSocketManager()) {
+        setGlobalWebSocketManager(manager);
+      }
+    } else {
+      manager = createWebSocketManager(
+        {
+          url,
+          protocols,
+          authToken,
+          reconnectInterval,
+          maxReconnectAttempts,
+          heartbeatInterval
+        },
+        {
+          onConnect,
+          onDisconnect,
+          onError,
+          onMessage: handleMessage,
+          onStateChange: (state) => {
+            handleStateChange(state);
+            updateQueueCount();
+          }
+        }
+      );
+    }
+
+    managerRef.current = manager;
+    return manager;
+  }, [
+    url,
+    protocols,
+    authToken,
+    reconnectInterval,
+    maxReconnectAttempts,
+    heartbeatInterval,
+    useGlobalManager,
+    onConnect,
+    onDisconnect,
+    onError,
+    handleMessage,
+    handleStateChange,
+    updateQueueCount
+  ]);
+
+  // Connect function
+  const connect = useCallback(() => {
+    if (!managerRef.current) {
+      initializeManager();
+    }
+    managerRef.current?.connect();
+  }, [initializeManager]);
+
+  // Disconnect function
+  const disconnect = useCallback(() => {
+    managerRef.current?.disconnect();
+  }, []);
+
+  // Send message function
+  const sendMessage = useCallback((message: Omit<BaseWebSocketMessage, 'timestamp'>): boolean => {
+    if (managerRef.current) {
+      const success = managerRef.current.send(message);
+      updateQueueCount();
+      return success;
+    }
+    return false;
+  }, [updateQueueCount]);
+
+  // Clear messages function
+  const clearMessages = useCallback(() => {
+    messagesRef.current = [];
+    if (isMountedRef.current) {
+      setMessages([]);
+      setLastMessage(null);
+    }
+  }, []);
+
+  // Initialize on mount
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    if (autoConnect) {
+      connect();
+    }
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [autoConnect, connect]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      // Don't disconnect global manager on unmount, let it persist
+      if (!useGlobalManager && managerRef.current) {
+        managerRef.current.disconnect();
+      }
+    };
+  }, [useGlobalManager]);
+
+  // Update queue count periodically
+  useEffect(() => {
+    const interval = setInterval(updateQueueCount, 1000);
+    return () => clearInterval(interval);
+  }, [updateQueueCount]);
+
+  return {
+    isConnected,
+    connectionState,
+    queuedMessagesCount,
+    connect,
+    disconnect,
+    sendMessage,
+    lastMessage,
+    messages,
+    clearMessages,
+    manager: managerRef.current
+  };
+}
+
+// Specialized hooks for common use cases
+
+export interface UseEntityWebSocketOptions extends Omit<WebSocketHookOptions, 'messageFilter'> {
+  entityType?: string;
+  entityId?: string | number;
+  operations?: MessageType[];
+}
+
+export function useEntityWebSocket(options: UseEntityWebSocketOptions) {
+  const { entityType, entityId, operations = [], ...webSocketOptions } = options;
+
+  const messageFilter = useCallback((message: WebSocketMessage) => {
+    // Filter by entity type if specified
+    if (entityType && 'entityType' in message && message.entityType !== entityType) {
+      return false;
+    }
+
+    // Filter by entity ID if specified
+    if (entityId !== undefined && 'entityId' in message && message.entityId !== entityId) {
+      return false;
+    }
+
+    // Filter by operations if specified
+    if (operations.length > 0 && !operations.includes(message.type)) {
+      return false;
+    }
+
+    return true;
+  }, [entityType, entityId, operations]);
+
+  return useWebSocket({
+    ...webSocketOptions,
+    messageFilter
+  });
+}
+
+export function usePresenceWebSocket(options: Omit<WebSocketHookOptions, 'messageFilter'>) {
+  const messageFilter = useCallback((message: WebSocketMessage) => {
+    return [
+      MessageType.USER_JOINED,
+      MessageType.USER_LEFT,
+      MessageType.USER_VIEWING,
+      MessageType.USER_EDITING
+    ].includes(message.type);
+  }, []);
+
+  return useWebSocket({
+    ...options,
+    messageFilter
+  });
+}
+
+export function useNotificationWebSocket(options: Omit<WebSocketHookOptions, 'messageFilter'>) {
+  const messageFilter = useCallback((message: WebSocketMessage) => {
+    return message.type === MessageType.NOTIFICATION;
+  }, []);
+
+  return useWebSocket({
+    ...options,
+    messageFilter
+  });
+}

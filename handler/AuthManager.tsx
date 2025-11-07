@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 import { api,handleApiError } from '@/utils/api';
 
 export interface AuthResponse {
-  access: string;
-  refresh: string;
+  access_token: string;
+  refresh_token: string;
   user: Partial<User>;
 }
 
@@ -33,12 +33,12 @@ class AuthManager {
 
         if (response.data) {
           // Store new tokens after successful login in cookies
-          Cookies.set('access_token', response.data.access, {
+          Cookies.set('access_token', response.data.access_token, {
             expires: 1, // 1 day expiration
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax'
           });
-          Cookies.set('refresh_token', response.data.refresh, {
+          Cookies.set('refresh_token', response.data.refresh_token, {
             expires: 7, // 7 days expiration
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax'
@@ -130,4 +130,5 @@ class AuthManager {
   }
 }
 
-export default new AuthManager();
+const authManager = new AuthManager();
+export default authManager;

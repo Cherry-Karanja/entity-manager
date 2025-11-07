@@ -54,14 +54,15 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
   // Fetch Paginated Data (Supports Django Pagination)
   // signature: useFetchData(page, params?, enabled?)
   const useFetchData = (page: number = 1, params?: Record<string, number | string | string[] | boolean | undefined>, enabled: boolean = true) => {
-    const { page: _p, page_size = pageSize, ...restParams } = params || {};
+    const { page: _p, page_size = pageSize, fields, ...restParams } = params || {};
     const effectivePage = page || (_p as number) || 1
     return useQuery<DjangoPaginatedResponse<T>, AxiosError<ApiErrorResponse>>({
-      queryKey: [url, effectivePage, page_size, restParams],
+      queryKey: [url, effectivePage, page_size, fields, restParams],
       queryFn: async () => {
-        const queryString = buildQueryString({ 
+        const queryString = buildQueryString({
           page: effectivePage,
           page_size,
+          fields: fields ? (Array.isArray(fields) ? fields.join(',') : fields) : undefined,
           ...restParams,
           // Handle special cases for Django
           ordering: restParams.sort_by, // Map sort_by to Django's ordering parameter
@@ -77,11 +78,15 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
   };
 
   // Fetch a Single Item by ID
-  const useFetchById = (id: string | number, params?: Record<string, number | string | boolean>) => {
+  const useFetchById = (id: string | number, params?: Record<string, number | string | boolean | string[]>) => {
+    const { fields, ...restParams } = params || {};
     return useQuery<U, AxiosError<ApiErrorResponse>>({
-      queryKey: [url, id, params],
+      queryKey: [url, id, fields, restParams],
       queryFn: async () => {
-        const queryString = buildQueryString(params);
+        const queryString = buildQueryString({
+          fields: fields ? (Array.isArray(fields) ? fields.join(',') : fields) : undefined,
+          ...restParams
+        });
         const response = await api.get<U>(`${formatUrl(url, id)}${queryString}`);
         return response.data;
       },

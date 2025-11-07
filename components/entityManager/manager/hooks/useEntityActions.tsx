@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef } from 'react'
 import { EntityConfig, BaseEntity } from '../types'
 import { EntityState, EntityStateActions } from './useEntityState'
-import { EntityApiActions } from './useEntityApi'
+import { EntityApiActions, EntityOperationResult } from './useEntityApi'
 
 export interface UseEntityActionsOptions<TEntity extends BaseEntity, TFormData extends Record<string, unknown>> {
   config: EntityConfig<TEntity, TFormData>
@@ -263,8 +263,8 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   // CRUD actions
   const handleSave = useCallback(async (data: TFormData): Promise<boolean> => {
     const result = await executeAction('create_entity', () => apiActions.createEntity(data), {
-      onSuccess: (createdEntity: TEntity | null) => {
-        if (createdEntity) {
+      onSuccess: (operationResult: EntityOperationResult<TEntity>) => {
+        if (operationResult.success) {
           actions.setMode('list')
           actions.setSelectedItem(null)
           // Add undo data for create (undo = delete)
@@ -273,16 +273,19 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
             lastHistoryItem.undoData = {
               canUndo: true,
               undoFn: async () => {
-                await apiActions.deleteEntity(createdEntity.id)
+                await apiActions.deleteEntity(operationResult.data.id)
                 actions.setMode('list')
                 actions.setSelectedItem(null)
               }
             }
           }
+        } else {
+          // Handle validation errors
+          console.error('Validation errors during save:', operationResult.validationErrors)
         }
       }
     })
-    return result !== null
+    return result !== null && 'success' in result && result.success
   }, [executeAction, apiActions, actions])
 
   const handleUpdate = useCallback(async (data: Partial<TFormData>): Promise<boolean> => {
@@ -295,8 +298,8 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
     const previousData = { ...selectedItem } // Store previous state for undo
 
     const result = await executeAction('update_entity', () => apiActions.updateEntity(selectedItem.id, data), {
-      onSuccess: (updatedEntity: TEntity | null) => {
-        if (updatedEntity) {
+      onSuccess: (operationResult: EntityOperationResult<TEntity>) => {
+        if (operationResult.success) {
           actions.setMode('list')
           actions.setSelectedItem(null)
           // Add undo data for update (undo = revert to previous state)
@@ -305,16 +308,19 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
             lastHistoryItem.undoData = {
               canUndo: true,
               undoFn: async () => {
-                await apiActions.updateEntity(selectedItem.id, previousData as unknown as Partial<TFormData>)
+                await apiActions.updateEntity(operationResult.data.id, previousData as unknown as Partial<TFormData>)
                 actions.setMode('list')
                 actions.setSelectedItem(null)
               }
             }
           }
+        } else {
+          // Handle validation errors
+          console.error('Validation errors during update:', operationResult.validationErrors)
         }
       }
     })
-    return result !== null
+    return result !== null && 'success' in result && result.success
   }, [executeAction, apiActions, state.selectedItem, actions, updateActionState])
 
   const handleDelete = useCallback(async (id: string | number): Promise<boolean> => {
@@ -357,18 +363,18 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
   // Batch actions
   const handleBatchDelete = useCallback(async (): Promise<boolean> => {
     if (state.selectedIds.length === 0) {
-      updateActionState({ error: 'No items selected for batch deletion' })
+      updateActionState({ error: 'No items selected for batch delete' })
       return false
     }
 
     const result = await executeAction('batch_delete', () => apiActions.batchDeleteEntities([...state.selectedIds]), {
       onSuccess: (success) => {
-        if (success) {
+        if (success.success) {
           actions.setSelectedIds([])
         }
       }
     })
-    return result === true
+    return result?.success ?? false
   }, [executeAction, apiActions, state.selectedIds, actions, updateActionState])
 
   const handleBatchUpdate = useCallback(async (updates: Array<{ id: string | number; data: Partial<TFormData> }>): Promise<boolean> => {
@@ -379,18 +385,19 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
 
     const result = await executeAction('batch_update', () => apiActions.batchUpdateEntities(updates), {
       onSuccess: (success) => {
-        if (success) {
+        if (success.success) {
           // Batch update completed successfully
         }
       }
     })
-    return result === true
+    return result?.success ?? false
   }, [executeAction, apiActions, updateActionState])
 
   // List actions
   const handleSort = useCallback((key: string) => {
-    const direction = state.sortConfig?.key === key && state.sortConfig.direction === 'asc' ? 'desc' : 'asc'
-    actions.setSortConfig({ key, direction })
+    const currentSort = state.sortConfig?.[0]
+    const direction = currentSort?.field === key && currentSort.direction === 'asc' ? 'desc' : 'asc'
+    actions.setSortConfig([{ field: key, direction }])
     addToActionHistory('sort', { key, direction })
   }, [state.sortConfig, actions, addToActionHistory])
 

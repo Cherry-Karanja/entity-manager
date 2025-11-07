@@ -24,7 +24,40 @@ export const RESEND_EMAIL_VERIFICATION_URL = `${BASE_URL}/dj-rest-auth/registrat
 export const CSRF_TOKEN_URL = `${BASE_URL}/dj-rest-auth/csrf-cookie/`;
 
 // ===================================================================
-// Generic API Endpoints
+// User Management Endpoints
+// ===================================================================
+export const USER_MANAGER_BASE = `${BASE_URL}/user-manager`;
+export const USERS_URL = `${USER_MANAGER_BASE}/users/`;
+export const TENANT_PROFILES_URL = `${USER_MANAGER_BASE}/tenant-profiles/`;
+export const LANDLORD_PROFILES_URL = `${USER_MANAGER_BASE}/landlord-profiles/`;
+export const CARETAKER_PROFILES_URL = `${USER_MANAGER_BASE}/caretaker-profiles/`;
+export const PROPERTY_MANAGER_PROFILES_URL = `${USER_MANAGER_BASE}/property-manager-profiles/`;
+
+// ===================================================================
+// Property Management Endpoints
+// ===================================================================
+export const PROPERTY_MANAGER_BASE = `${BASE_URL}/property-manager`;
+export const APARTMENTS_URL = `${PROPERTY_MANAGER_BASE}/apartment/`;
+export const HOUSES_URL = `${PROPERTY_MANAGER_BASE}/house/`;
+export const UNITS_URL = `${PROPERTY_MANAGER_BASE}/units/`;
+export const MAINTENANCE_REQUESTS_URL = `${PROPERTY_MANAGER_BASE}/maintenance-requests/`;
+export const PROPERTY_STATISTICS_URL = `${PROPERTY_MANAGER_BASE}/statistics/`;
+
+// ===================================================================
+// Rent Management Endpoints
+// ===================================================================
+export const RENT_MANAGER_BASE = `${BASE_URL}/rent-manager`;
+export const RENTS_URL = `${RENT_MANAGER_BASE}/rents/`;
+export const RENT_PAYMENTS_URL = `${RENT_MANAGER_BASE}/rent-payments/`;
+export const MY_RENT_PAYMENT_HISTORY_URL = `${RENT_MANAGER_BASE}/my-rent-payment-history/`;
+
+// ===================================================================
+// Notifications Management Endpoints
+// ===================================================================
+export const NOTIFICATIONS_MANAGER_BASE = `${BASE_URL}/notifications-manager`;
+
+// ===================================================================
+// Generic API Endpoints (Legacy - kept for compatibility)
 // ===================================================================
 export const API_BASE = `${BASE_URL}/api`;
 export const ENTITIES_URL = `${API_BASE}/entities/`;

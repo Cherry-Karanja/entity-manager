@@ -106,9 +106,7 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
               </div>
             </div>
 
-            {/* Content Section */}
             <div className="p-6">
-              {/* Enhanced Metadata Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {columns.map((column) => {
                   const value = item[column.accessorKey || column.id]
@@ -127,8 +125,7 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
                 })}
               </div>
               
-              {/* Footer with Timestamps */}
-              {(item.createdAt || item.updatedAt || item.status) && (
+              {(!!item.createdAt || !!item.updatedAt || !!item.status) && (
                 <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t">
                   <div className="flex items-center gap-6 text-xs text-muted-foreground">
                     {item.createdAt && typeof item.createdAt !== 'undefined' ? (

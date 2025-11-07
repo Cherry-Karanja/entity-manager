@@ -174,6 +174,7 @@ export interface EntityFormProps {
   onCancel?: () => void
   disabled?: boolean
   loading?: boolean
+  validationErrors?: Record<string, string[]>
 }
 
 export interface FormState {

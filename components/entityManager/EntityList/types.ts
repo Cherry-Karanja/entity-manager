@@ -35,6 +35,9 @@ export interface EntityListFilter {
   label: string
   type: 'text' | 'select' | 'multiselect' | 'date' | 'daterange' | 'number' | 'boolean' | 'range'
   field?: string
+  operator?: DjangoLookupOperator
+  operators?: DjangoLookupOperator[] // Available operators for this filter
+  djangoField?: string // Override for backend field name
   options?: Array<{ value: string | number; label: string; disabled?: boolean }>
   placeholder?: string
   min?: number
@@ -42,13 +45,28 @@ export interface EntityListFilter {
   step?: number
   defaultValue?: unknown
   validation?: (value: unknown) => boolean | string
-  transform?: (value: unknown) => unknown
+  transform?: (value: unknown, operator: DjangoLookupOperator) => unknown // Enhanced transform with operator
   helpText?: string | React.ReactNode
   tooltip?: string
   icon?: React.ComponentType<{ className?: string }>
   className?: string
   required?: boolean
 }
+
+// Django REST Framework lookup operators
+export type DjangoLookupOperator =
+  // String lookups
+  | 'exact' | 'iexact' | 'contains' | 'icontains' | 'startswith' | 'istartswith' | 'endswith' | 'iendswith'
+  // Numeric lookups
+  | 'gt' | 'gte' | 'lt' | 'lte'
+  // Array lookups
+  | 'in' | 'range'
+  // Null lookups
+  | 'isnull'
+  // Date/time lookups
+  | 'date' | 'year' | 'month' | 'day' | 'week_day' | 'hour' | 'minute' | 'second'
+  // Special lookups
+  | 'regex' | 'iregex'
 
 export interface EntityListSort {
   field: string
@@ -266,6 +284,14 @@ export interface EntityListConfig {
   className?: string
   style?: React.CSSProperties
   rowClassName?: string | ((record: EntityListItem, index: number) => string)
+
+  // Field selection configuration
+  fields?: string | string[]
+  fieldSelection?: boolean
+
+  // Related object expansion configuration
+  expand?: string | string[]
+  expandable?: boolean
 }
 
 export interface EntityListProps {
@@ -279,6 +305,8 @@ export interface EntityListProps {
   activeFilters?: Record<string, unknown>
   sortConfig?: EntityListSort[]
   pagination?: Partial<EntityListPagination>
+  fields?: string | string[]
+  expand?: string | string[]
   // Event handlers
   onDataChange?: (data: EntityListItem[]) => void
   onSelectionChange?: (selectedKeys: (string | number)[], selectedItems: EntityListItem[]) => void

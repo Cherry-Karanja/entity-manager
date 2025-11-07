@@ -10,8 +10,8 @@ interface ApiErrorResponse {
 }
 
 interface AuthResponse {
-    access: string;
-    refresh: string;
+    access_token: string;
+    refresh_token?: string;
 }
 
 interface DecodedToken {
@@ -92,7 +92,7 @@ api.interceptors.request.use(
                     );
 
                     if (response.status === 200) {
-                        access_token = response.data.access;
+                        access_token = response.data.access_token;
                         Cookies.set('access_token', access_token, { 
                             expires: 1, 
                             secure: process.env.NODE_ENV === 'production', 
@@ -141,11 +141,44 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response: AxiosResponse) => response,
     async (error: AxiosError<ApiErrorResponse>) => {
+        // Log error for debugging
+        console.error('API Error:', error);
+
+        // Handle authentication errors
         if (error.response?.status === 401) {
             Cookies.remove('access_token');
             Cookies.remove('refresh_token');
             window.location.href = '/auth/login';
+            return Promise.reject(error);
         }
+
+        // Handle token refresh for 403 errors that might be due to expired tokens
+        if (error.response?.status === 403) {
+            const refreshToken = Cookies.get('refresh_token');
+            if (refreshToken && !error.config?.url?.includes('/token/refresh/')) {
+                try {
+                    const refreshResponse = await apiPlain.post('/dj-rest-auth/token/refresh/', {
+                        refresh: refreshToken
+                    });
+
+                    if (refreshResponse.data.access) {
+                        Cookies.set('access_token', refreshResponse.data.access);
+                        // Retry the original request with new token
+                        if (error.config) {
+                            error.config.headers.Authorization = `Bearer ${refreshResponse.data.access}`;
+                            return api.request(error.config);
+                        }
+                    }
+                } catch (refreshError) {
+                    // Refresh failed, redirect to login
+                    Cookies.remove('access_token');
+                    Cookies.remove('refresh_token');
+                    window.location.href = '/auth/login';
+                    return Promise.reject(error);
+                }
+            }
+        }
+
         return Promise.reject(error);
     }
 );

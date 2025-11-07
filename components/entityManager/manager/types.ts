@@ -539,6 +539,8 @@ export interface EntityConfig<TEntity = BaseEntity, TFormData extends Record<str
       /** Endpoint for updating relationships */
       updateRelationship?: string
     }
+    /** Nested resource endpoints for hierarchical data */
+    nested?: Record<string, NestedResourceConfig>
   }
   /** Configuration for the list/table view */
   listConfig: {
@@ -554,6 +556,23 @@ export interface EntityConfig<TEntity = BaseEntity, TFormData extends Record<str
     allowBatchActions?: boolean
     /** Whether export functionality is enabled */
     allowExport?: boolean
+    /** Filter configuration for the list */
+    filters?: EntityListFilter[]
+    /** Field selection configuration for sparse fieldsets */
+    fields?: string | string[]
+    fieldSelection?: {
+      /** Whether field selection is enabled */
+      enabled?: boolean
+      /** Default fields to select when none specified */
+      defaultFields?: string[]
+      /** Available fields for selection */
+      availableFields?: string[]
+      /** Whether to show field selector in UI */
+      showSelector?: boolean
+    }
+    /** Related object expansion configuration */
+    expand?: string | string[]
+    expandable?: boolean
     /** Data transformation configuration for list display */
     dataTransform?: {
       /** Field or function to get the title for each item */
@@ -863,3 +882,24 @@ export interface ForeignKeyConfig {
 // export type { CustomActionConfig, CustomActionContextConfig } from "../enhancedEntityCustomActions/types"
 // export type { EntityViewConfig } from "../reusableEntityView/types"
 // export type { FormConfig, FormFieldConfig } from "../reusableEntityForm/types"
+
+/**
+ * Configuration for nested resource relationships
+ */
+export interface NestedResourceConfig {
+  /** Endpoint pattern for the nested resource (e.g., '/api/properties/{property_id}/tenants/') */
+  endpoint: string
+  /** Field name in the child entity that references the parent */
+  parentField: string
+  /** Name of the relationship for URL building */
+  relatedName: string
+  /** Whether this nested resource is the primary relationship */
+  primary?: boolean
+  /** Custom permissions for nested operations */
+  permissions?: {
+    create?: boolean
+    read?: boolean
+    update?: boolean
+    delete?: boolean
+  }
+}

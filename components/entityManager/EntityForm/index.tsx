@@ -17,6 +17,7 @@ const EntityFormComponent: React.FC<EntityFormProps> = ({
   onCancel,
   disabled = false,
   loading = false,
+  validationErrors,
 }) => {
   // Mobile detection
   const isMobile = useIsMobile()
@@ -78,6 +79,25 @@ const EntityFormComponent: React.FC<EntityFormProps> = ({
       }))
     }
   }, [formState.data, mergedConfig.fields, mergedConfig.validationSchema, mergedConfig.validateOnChange])
+
+  // Handle server validation errors
+  useEffect(() => {
+    if (validationErrors) {
+      const serverErrors: Record<string, string> = {}
+      Object.entries(validationErrors).forEach(([field, messages]) => {
+        if (field === 'non_field_errors' || field === 'nonFieldErrors') {
+          serverErrors.root = messages.join(', ')
+        } else {
+          serverErrors[field] = messages.join(', ')
+        }
+      })
+      setFormState(prev => ({
+        ...prev,
+        errors: { ...prev.errors, ...serverErrors },
+        isValid: false,
+      }))
+    }
+  }, [validationErrors])
 
   // Handle field change
   const handleFieldChange = useCallback((fieldName: string, value: unknown) => {

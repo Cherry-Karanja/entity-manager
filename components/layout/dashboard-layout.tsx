@@ -5,7 +5,7 @@ import { Sidebar } from './sidebar';
 import { User } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Menu, Bell, Search, User as UserIcon, Settings, LogOut } from 'lucide-react';
+import { Menu, Search, User as UserIcon, Settings, LogOut } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ModeToggle } from '@/components/mode-toggle';
+import { NotificationBell } from '@/components/notification-bell';
+import { ConnectionStatus } from '@/components/connection-status';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 
@@ -131,6 +133,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
             {/* Header actions */}
             <div className="flex items-center space-x-4">
+              {/* Connection Status */}
+              <ConnectionStatus showLabel={false} />
+
               {/* Theme toggle */}
               <ModeToggle />
               {/* Search */}
@@ -143,12 +148,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </div>
 
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  3
-                </span>
-              </Button>
+              <NotificationBell />
 
               {/* User menu */}
               <DropdownMenu>

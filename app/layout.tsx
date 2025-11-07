@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/auth-context";
+import { NotificationProvider } from "@/contexts/notification-context";
 import { QueryProvider } from "@/components/query-provider";
 import { DynamicFavicon } from "@/components/dynamic-favicon";
 import { Toaster } from "sonner";
@@ -50,9 +51,11 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <AuthProvider>
-              <DynamicFavicon />
-              {children}
-              <Toaster position="top-right" richColors />
+              <NotificationProvider>
+                <DynamicFavicon />
+                {children}
+                <Toaster position="top-right" richColors />
+              </NotificationProvider>
             </AuthProvider>
           </ThemeProvider>
         </QueryProvider>
