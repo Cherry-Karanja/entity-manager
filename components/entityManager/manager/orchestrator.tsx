@@ -16,7 +16,7 @@ import EntityListView from '../EntityList/views/EntityListView'
 import EntityGridView from '../EntityList/views/EntityGridView'
 import EntityCompactView from '../EntityList/views/EntityCompactView'
 import { usePermissions } from '@/hooks/use-permissions'
-import { ChatPanel } from '@/components/chat'
+import { ChatPanel } from '@/components/entityManager/chat'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -324,6 +324,25 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     error: entityState.state.error
   }), [config, entityState.cachedData, entityApi.isLoading, entityState.state.error, listActionsWithHandlers, bulkActionsWithHandlers, handleRefresh])
 
+  // Re-fetch list when relevant list parameters change (page, pageSize, search, sort, filters)
+  React.useEffect(() => {
+    if (mode !== 'list') return
+
+    // Whenever pagination, search, sort or filters change, fetch updated data.
+    // Depend explicitly on the concrete state values here to avoid a re-creation
+    // loop caused by including a function (entityApi.fetchEntities) whose
+    // identity can change when internal state/cache updates.
+    ;(async () => {
+      try {
+        await entityApi.fetchEntities()
+      } catch (error) {
+        console.error('Failed to fetch data after param change:', error)
+      }
+    })()
+    // NOTE: intentionally not including entityApi.fetchEntities in deps to avoid
+    // an effect loop when fetchEntities is re-created on internal state changes.
+  }, [mode, entityState.state.currentPage, entityState.state.pageSize, entityState.state.debouncedSearchTerm, entityState.state.sortConfig, entityState.state.filterValues])
+
   // Entity View configuration
   const viewConfig = useMemo(() => {
     // Inject onExecute handlers for entity actions in view mode
@@ -589,6 +608,27 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
             onSelectionChange={(keys, items) => {
               // Handle selection changes if needed
               console.log('Selection changed:', keys, items)
+            }}
+            // Wire list UI events to manager state so API requests use latest params
+            onSearch={(term: string) => {
+              entityState.actions.setSearchTerm(term)
+            }}
+            onFilter={(filters: Record<string, unknown>) => {
+              entityState.actions.setFilterValues(filters)
+            }}
+            onSort={(sorts: any) => {
+              // Map EntityListSort[] -> single sort config expected by state
+              if (Array.isArray(sorts) && sorts.length > 0) {
+                const s = sorts[0]
+                entityState.actions.setSortConfig({ key: s.field, direction: s.direction })
+              } else {
+                entityState.actions.setSortConfig(undefined)
+              }
+            }}
+            onPageChange={(page: number, pageSize: number) => {
+              // Update pagination state
+              entityState.actions.setPageSize(pageSize)
+              entityState.actions.setCurrentPage(page)
             }}
             onAction={handleListAction}
           />

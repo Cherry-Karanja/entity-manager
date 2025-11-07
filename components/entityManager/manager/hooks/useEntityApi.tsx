@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { createApiService } from '@/handler/ApiService'
 import { EntityConfig, BaseEntity } from '../types'
 import { EntityState, EntityStateActions } from './useEntityState'
@@ -361,6 +361,21 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     }
   }, [state, actions, getCacheKey, getDeduplicatedRequest, retryWithBackoff, fetchListData])
 
+  // Provide a stable reference to fetchEntities for consumers so they can safely
+  // include it in effect dependency arrays without creating loops when the
+  // internal fetch function identity changes. We keep the original
+  // implementation for internal usage but export a stable wrapper that calls
+  // the latest implementation stored in a ref.
+  const fetchEntitiesRef = useRef(fetchEntities)
+  // update ref whenever fetchEntities changes
+  useEffect(() => {
+    fetchEntitiesRef.current = fetchEntities
+  }, [fetchEntities])
+
+  const fetchEntitiesStable = useCallback(async (force = false) => {
+    return fetchEntitiesRef.current(force)
+  }, [])
+
   // Fetch single entity with deduplication
   const fetchEntityById = useCallback(async (id: string | number): Promise<TEntity | null> => {
     const requestKey = `fetchEntityById:${id}`
@@ -569,7 +584,8 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
   // API actions object
   const apiActions: EntityApiActions<TEntity, TFormData> = useMemo(() => ({
-    fetchEntities,
+    // expose stable wrapper to callers
+    fetchEntities: fetchEntitiesStable,
     fetchEntityById,
     createEntity,
     updateEntity,
@@ -581,7 +597,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     cancelPendingRequests,
     retryFailedOperation
   }), [
-    fetchEntities,
+    fetchEntitiesStable,
     fetchEntityById,
     createEntity,
     updateEntity,
