@@ -1,9 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ConnectionState } from '../websockets/types';
-import { getGlobalWebSocketManager } from '../websockets/manager';
-import { WebSocketManager } from '../websockets/manager';
+import { ConnectionState } from './websockets/types';
+import { getGlobalWebSocketManager } from './websockets/manager';
+import { WebSocketManager } from './websockets/manager';
 
 interface ConnectionStatus {
   isConnected: boolean;

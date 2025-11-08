@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useConnectionStatusColor } from "@/components/connectionManager/http";
+import { useTheme } from "next-themes";
+import { ThemeToggleButton, useThemeTransition } from "@/components/ui/theme-toggle-button";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -95,6 +97,14 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const [open, setOpen] = useState(false);
   const connectionStatus = useConnectionStatusColor();
+  const { theme, setTheme } = useTheme();
+  const { startTransition } = useThemeTransition();
+
+  const handleThemeToggle = React.useCallback(() => {
+    startTransition(() => {
+      setTheme(theme === 'light' ? 'dark' : 'light');
+    });
+  }, [theme, setTheme, startTransition]);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -222,6 +232,15 @@ export function DashboardLayout({
                     {connectionStatus.status}
                   </span>
                 </div>
+
+                {/* Theme Toggle */}
+                <ThemeToggleButton
+                  theme={theme as 'light' | 'dark'}
+                  onClick={handleThemeToggle}
+                  variant="circle"
+                  start="bottom-right"
+                  className="h-8 w-8"
+                />
               </div>
             </div>
           </header>
