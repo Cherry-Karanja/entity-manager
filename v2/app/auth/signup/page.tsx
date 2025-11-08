@@ -1,0 +1,36 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { AuthForm } from '@/components/auth/auth-form'
+import { useAuth } from '@/components/auth/contexts/auth-context'
+
+type AuthMode = 'login' | 'signup' | 'reset' | 'reset-confirm'
+
+export default function SignupPage() {
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
+  const [mode, setMode] = useState<AuthMode>('signup')
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, router])
+
+  const handleSuccess = () => {
+    router.push('/dashboard')
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <AuthForm
+          mode={mode}
+          onSuccess={handleSuccess}
+          onModeChange={setMode}
+        />
+      </div>
+    </div>
+  )
+}

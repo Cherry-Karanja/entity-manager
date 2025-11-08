@@ -21,12 +21,12 @@ export interface PollOptions<T = unknown> {
  * Combines Axios setup, interceptors, error handling, and utilities
  */
 export class HttpClient {
-  private api: ReturnType<typeof axios.create>;
-  private apiPlain: ReturnType<typeof axios.create>;
+  private authApi: ReturnType<typeof axios.create>;
+  private plainApi: ReturnType<typeof axios.create>;
 
   constructor() {
     // Create Axios instance
-    this.api = axios.create({
+    this.authApi = axios.create({
       baseURL: Endpoints.BaseUrl,
       withCredentials: true,
       headers: {
@@ -39,7 +39,7 @@ export class HttpClient {
     });
 
     // Create plain Axios instance for authentication calls
-    this.apiPlain = axios.create({
+    this.plainApi = axios.create({
       baseURL: Endpoints.BaseUrl,
       withCredentials: false,
       headers: {
@@ -55,14 +55,14 @@ export class HttpClient {
    * Get the main API instance
    */
   get instance() {
-    return this.api;
+    return this.authApi;
   }
 
   /**
    * Get the plain API instance (for auth calls)
    */
   get plainInstance() {
-    return this.apiPlain;
+    return this.plainApi;
   }
 
   /**
@@ -70,7 +70,7 @@ export class HttpClient {
    */
   private setupInterceptors() {
     // Request Interceptor - simplified to just ensure credentials are sent
-    this.api.interceptors.request.use(
+    this.authApi.interceptors.request.use(
       async (config: AxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
         // Ensure credentials are always included for cookie-based auth
         (config as InternalAxiosRequestConfig).withCredentials = true;
@@ -94,7 +94,7 @@ export class HttpClient {
     );
 
     // Response interceptor for error handling
-    this.api.interceptors.response.use(
+    this.authApi.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error: AxiosError<ApiErrorResponse>) => {
         // Log error for debugging
@@ -110,7 +110,7 @@ export class HttpClient {
    */
   private async fetchCsrfToken() {
     try {
-      await this.api.get(Endpoints.Auth.CsrfToken);
+      await this.authApi.get(Endpoints.Auth.CsrfToken);
     } catch (error) {
       console.error('Failed to fetch CSRF token:', error);
     }
@@ -133,7 +133,7 @@ export class HttpClient {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const response = await this.api.get(statusUrl);
+        const response = await this.authApi.get(statusUrl);
         const data = response.data;
 
         // Call progress callback if provided
@@ -177,7 +177,7 @@ export class HttpClient {
 
     // Network or axios cancellation errors
     if (!error.response) {
-      toast.error(error.message || 'Network error occurred');
+      toast.error('🌐 Network error occurred. Please check your connection and try again.');
       return;
     }
 
@@ -276,28 +276,28 @@ export class HttpClient {
           if (data && (data as Record<string, unknown>).error) {
             toast.error((data as Record<string, unknown>).error as string);
           } else {
-            toast.error('You do not have permission to perform this action');
+            toast.error('🚫 You do not have permission to perform this action');
           }
           errorShown = true;
           break;
 
         case 404:
-          toast.error(customMessage || 'Resource not found');
+          toast.error('🔍 Resource not found. The page or data you\'re looking for doesn\'t exist.');
           errorShown = true;
           break;
 
         case 429:
-          toast.error('Too many requests. Please try again later');
+          toast.error('⏱️ Too many requests! Please wait a moment before trying again.');
           errorShown = true;
           break;
 
         case 500:
-          toast.error('Server error occurred. Please try again later');
+          toast.error('🔧 Server error occurred. Our team has been notified. Please try again later.');
           errorShown = true;
           break;
 
         default:
-          toast.error(customMessage || ((data as Record<string, unknown>)?.detail as string) || 'An unexpected error occurred');
+          toast.error('❌ An unexpected error occurred. Please try again or contact support if the problem persists.');
           errorShown = true;
       }
     }
@@ -316,7 +316,7 @@ export class HttpClient {
 export const httpClient = new HttpClient();
 
 // Export convenience functions
-export const api = httpClient.instance;
-export const apiPlain = httpClient.plainInstance;
+export const authApi = httpClient.instance;
+export const plainApi = httpClient.plainInstance;
 export const handleApiError = httpClient.handleApiError.bind(httpClient);
 export const pollTaskStatus = httpClient.pollTaskStatus.bind(httpClient);
