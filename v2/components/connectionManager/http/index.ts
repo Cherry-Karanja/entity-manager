@@ -19,9 +19,11 @@ export type {
   DjangoPaginatedResponse,
   EntityConfig,
   NestedResourceContext,
-  ApiServiceOptions,
-  PollOptions
+  ApiServiceOptions
 } from './types';
+
+// Connection status hook using TanStack Query
+export { useConnectionStatus, useConnectionStatusColor } from './connection-status-hook';
 
 // Re-export commonly used types from external libraries for convenience
 export type { AxiosError, AxiosRequestConfig } from 'axios';

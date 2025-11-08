@@ -8,17 +8,12 @@ interface ApiErrorResponse {
     [key: string]: unknown;
 }
 
-interface AuthResponse {
-    access_token: string;
-    refresh_token?: string;
-}
-
 // Polling utility for checking task status
-export interface PollOptions {
+export interface PollOptions<T = unknown> {
   maxAttempts?: number;
   interval?: number;
-  onProgress?: (attempt: number, data: any) => void;
-  stopCondition?: (data: any) => boolean;
+  onProgress?: (attempt: number, data: T) => void;
+  stopCondition?: (data: T) => boolean;
 }
 
 /**
@@ -124,10 +119,10 @@ export class HttpClient {
   /**
    * Poll task status utility
    */
-  async pollTaskStatus<T = any>(
+  async pollTaskStatus<T = unknown>(
     taskId: string,
     statusUrl: string,
-    options: PollOptions = {}
+    options: PollOptions<T> = {}
   ): Promise<T> {
     const {
       maxAttempts = 30, // 5 minutes with 10s intervals
@@ -176,7 +171,7 @@ export class HttpClient {
   /**
    * Handle API errors with user-friendly messages
    */
-  handleApiError(error: any, customMessage?: string) {
+  handleApiError(error: AxiosError, customMessage?: string) {
     // Flag to track if we've already shown an error toast
     let errorShown = false;
 
@@ -206,7 +201,7 @@ export class HttpClient {
         // Try to parse if it's a JSON string
         const parsedData = JSON.parse(data);
         error.response.data = parsedData;
-      } catch (e) {
+      } catch {
         // If it's not JSON, check if it's a Python-like error format
         const errorMatch = data.match(/\[ErrorDetail\(string='([^']+)',\s*code='([^']+)'\)\]/);
         if (errorMatch && errorMatch[1]) {
@@ -259,7 +254,7 @@ export class HttpClient {
           }
 
           if (!errorShown) {
-            toast.error(customMessage || (data?.detail) || 'Invalid request');
+            toast.error(customMessage || ((data as Record<string, unknown>)?.detail as string) || 'Invalid request');
             errorShown = true;
           }
           break;
@@ -278,8 +273,8 @@ export class HttpClient {
           break;
 
         case 403:
-          if (data && data.error) {
-            toast.error(data.error);
+          if (data && (data as Record<string, unknown>).error) {
+            toast.error((data as Record<string, unknown>).error as string);
           } else {
             toast.error('You do not have permission to perform this action');
           }
@@ -302,7 +297,7 @@ export class HttpClient {
           break;
 
         default:
-          toast.error(customMessage || (data?.detail) || 'An unexpected error occurred');
+          toast.error(customMessage || ((data as Record<string, unknown>)?.detail as string) || 'An unexpected error occurred');
           errorShown = true;
       }
     }

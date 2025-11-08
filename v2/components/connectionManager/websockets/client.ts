@@ -5,7 +5,6 @@ import {
   BaseWebSocketMessage,
   ConnectionConfig,
   ConnectionCallbacks,
-  WebSocketError,
   ConnectionError,
   MessageParseError
 } from './types';
@@ -178,7 +177,7 @@ export class WebSocketClient {
     } catch (error) {
       console.error('Failed to parse WebSocket message:', error);
       const parseError = new MessageParseError('Failed to parse WebSocket message', error);
-      this.callbacks.onError?.(parseError as any);
+      this.callbacks.onError?.(parseError);
     }
   }
 
@@ -204,7 +203,7 @@ export class WebSocketClient {
     console.error('WebSocket connection error:', error);
     this.setState(ConnectionState.ERROR);
     const connectionError = new ConnectionError('Failed to establish WebSocket connection', error);
-    this.callbacks.onError?.(connectionError as any);
+    this.callbacks.onError?.(connectionError);
 
     if (!this.isDestroyed) {
       this.attemptReconnect();

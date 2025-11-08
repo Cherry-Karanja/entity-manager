@@ -13,14 +13,6 @@ export interface DjangoPaginatedResponse<T> {
   results: T[]
 }
 
-// Polling utility options
-export interface PollOptions {
-  maxAttempts?: number;
-  interval?: number;
-  onProgress?: (attempt: number, data: any) => void;
-  stopCondition?: (data: any) => boolean;
-}
-
 // Simplified EntityConfig for basic CRUD operations
 export interface EntityConfig {
   name: string

@@ -2,16 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { WebSocketClient } from './client';
-import { WebSocketManager, getGlobalWebSocketManager, setGlobalWebSocketManager } from './manager';
+import { WebSocketManager, getGlobalWebSocketManager } from './manager';
 import {
   ConnectionState,
   MessageType,
   WebSocketMessage,
   BaseWebSocketMessage,
   WebSocketHookOptions,
-  WebSocketHookReturn,
-  EntityWebSocketOptions,
-  PresenceWebSocketOptions
+  WebSocketHookReturn
 } from './types';
 
 /**

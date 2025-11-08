@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Disallow access to API routes (if they were served from the same domain)
+Disallow: /api/
+
+# Disallow access to admin areas
+Disallow: /admin/
+
+# Disallow access to development and build files
+Disallow: /_next/
+Disallow: /.next/
+
+# Allow access to static assets
+Allow: /favicon.ico
+Allow: /manifest.json
+Allow: /robots.txt
+
+# Sitemap (uncomment and update if you add a sitemap)
+# Sitemap: https://yourdomain.com/sitemap.xml

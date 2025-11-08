@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { WebSocketClient, createWebSocketClient } from './client';
 import { ConnectionConfig, ConnectionCallbacks } from './types';
 

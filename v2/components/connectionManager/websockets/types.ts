@@ -4,6 +4,7 @@
  * Comprehensive type definitions for real-time communication,
  * entity updates, user presence, and collaborative features.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export enum ConnectionState {
   DISCONNECTED = 'disconnected',
@@ -144,7 +145,7 @@ export interface ConnectionCallbacks {
   onConnect?: () => void;
   onDisconnect?: () => void;
   onReconnect?: () => void;
-  onError?: (error: Event) => void;
+  onError?: (error: Event | Error) => void;
   onMessage?: (message: WebSocketMessage) => void;
   onStateChange?: (state: ConnectionState) => void;
 }
@@ -161,7 +162,7 @@ export interface WebSocketHookOptions {
   onMessage?: (message: WebSocketMessage) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
-  onError?: (error: Event) => void;
+  onError?: (error: Event | Error) => void;
   useGlobalManager?: boolean;
 }
 

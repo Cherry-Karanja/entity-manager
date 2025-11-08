@@ -122,8 +122,8 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
         const queryString = buildQueryString(arg.params);
         const response = await api.post<U>(`${url}${queryString}`, arg.item);
         return response.data;
-      } catch (error: any) {
-        await httpClient.handleApiError(error, error?.response?.data?.detail);
+      } catch (error) {
+        httpClient.handleApiError(error as AxiosError);
         throw error;
       }
     },
@@ -131,7 +131,7 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
       queryClient.invalidateQueries({ queryKey: [url] });
     },
     onError: (error) => {
-     httpClient.handleApiError(error, error?.response?.data?.detail);
+     httpClient.handleApiError(error as AxiosError);
     }
 
   });
@@ -147,8 +147,8 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
         const queryString = buildQueryString(params);
         const response = await api.patch<U>(`${formatUrl(url, id)}${queryString}`, item);
         return response.data;
-      } catch (error: any) {
-        await httpClient.handleApiError(error, error?.response?.data?.detail);
+      } catch (error) {
+        httpClient.handleApiError(error as AxiosError);
         throw error;
       }
     },
@@ -156,7 +156,7 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
       queryClient.invalidateQueries({ queryKey: [url] });
     },
     onError: (error) => {
-     httpClient.handleApiError(error, error?.response?.data?.detail);
+     httpClient.handleApiError(error as AxiosError);
     }
   });
 
@@ -175,8 +175,8 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
         } else {
           await api.delete(`${baseUrl}${id}/${queryString}`);
         }
-      } catch (error: any) {
-        await httpClient.handleApiError(error, error?.response?.data?.detail);
+      } catch (error) {
+        httpClient.handleApiError(error as AxiosError);
         throw error;
       }
     },
@@ -184,7 +184,7 @@ export function useApi<T, U>(url: string, pageSize: number = 10) {
       queryClient.invalidateQueries({ queryKey: [url] });
     },
     onError: (error) => {
-     httpClient.handleApiError(error, error?.response?.data?.detail);
+     httpClient.handleApiError(error as AxiosError);
     }
   });
 
