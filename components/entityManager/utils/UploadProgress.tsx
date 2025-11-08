@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { UploadProgress as UploadProgressType, UploadError } from '@/types/fileUpload';
+import { UploadProgress as UploadProgressType, UploadError } from '@/components/entityManager/utils/types/fileUpload';
 
 interface UploadProgressProps {
   progress: UploadProgressType;
@@ -66,7 +66,7 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {getStatusIcon()}
-          <span className="text-sm font-medium">File {progress.fileId}</span>
+          <span className={`text-sm font-medium ${getStatusColor()}`}>File {progress.fileId}</span>
         </div>
         <span className="text-sm text-muted-foreground">
           {formatFileSize(progress.loaded)} / {formatFileSize(progress.total)}

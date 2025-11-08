@@ -1,4 +1,4 @@
-import { CollaborativeSession, UserPresenceData, CursorPosition, EntityLock, ConflictResolution } from '../types/collaborative';
+import { CollaborativeSession, UserPresenceData, CursorPosition, EntityLock, ConflictResolution } from '../components/entityManager/utils/types/collaborative';
 import { WebSocketManager } from '../utils/websocket';
 import authManager from '../handler/AuthManager';
 

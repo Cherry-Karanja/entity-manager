@@ -12,8 +12,10 @@ import { analyzeCascadeOperations, executeCascadeOperations, CascadeOperation, C
 import { offlineStorage, useOfflineState, OfflineOperation, SyncResult, startAutoSync, stopAutoSync } from '../../../../utils/offlineStorage'
 import { useEntityWebSocket } from '../../../../hooks/useWebSocket'
 import { MessageType } from '../../../../types/websocket'
-import { OptimisticOperation, OptimisticState, OptimisticConfig, ConflictResolution, OptimisticApiResult } from '../../../../types'
-import { ConflictResolutionDialog, ConflictNotification } from '../../ConflictResolution'
+import { ConnectionState } from '../../../../types/websocket'
+import { OptimisticOperation, OptimisticState, OptimisticConfig, ConflictResolution, OptimisticApiResult } from '../../utils/types/optimistic'
+import { ConflictResolutionDialog, ConflictNotification } from '../../utils/ConflictResolution'
+import { UserPresenceData, CursorPosition, EntityLock } from '../../utils/types/collaborative'
 
 // ===== UTILITY FUNCTIONS =====
 
@@ -117,13 +119,16 @@ export interface UseEntityApiReturn<TEntity extends BaseEntity, TFormData extend
   offlineState: ReturnType<typeof useOfflineState>
   realTimeState: {
     isConnected: boolean
-    connectionState: any
+    connectionState: ConnectionState
     queuedMessagesCount: number
   }
   presenceState: {
     currentUser: { id: string; name: string } | null
     viewers: Array<{ userId: string; userName: string; lastActivity: number }>
     editors: Array<{ userId: string; userName: string; entityId: string | number; lastActivity: number }>
+    activeUsers: UserPresenceData[]
+    entityLocks: EntityLock[]
+    userCursors: CursorPosition[]
   }
   presenceActions: {
     updatePresenceViewing: (entityId: string | number) => void
@@ -230,7 +235,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   // Real-time updates via WebSocket
   const webSocket = useEntityWebSocket({
     url: webSocketUrl || '',
-    authToken,
+    // No authToken needed - authentication handled via HTTP-only cookies
     entityType: config.name,
     autoConnect: enableRealTimeUpdates && !!webSocketUrl,
     onMessage: (message) => messageHandlerRef.current(message)
@@ -241,10 +246,16 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     currentUser: { id: string; name: string } | null
     viewers: Array<{ userId: string; userName: string; lastActivity: number }>
     editors: Array<{ userId: string; userName: string; entityId: string | number; lastActivity: number }>
+    activeUsers: UserPresenceData[]
+    entityLocks: EntityLock[]
+    userCursors: CursorPosition[]
   }>({
     currentUser: null, // This would be set from auth context
     viewers: [],
-    editors: []
+    editors: [],
+    activeUsers: [],
+    entityLocks: [],
+    userCursors: []
   })
 
   // Optimistic UI updates state
@@ -1143,6 +1154,11 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
   // Create entity with optimistic updates
   const createEntity = useCallback(async (data: TFormData): Promise<EntityOperationResult<TEntity>> => {
+    // Use optimistic updates if enabled
+    if (enableOptimisticUpdates) {
+      return performOptimisticCreate(data)
+    }
+
     try {
       setIsLoading(true)
       setError(null)
@@ -1207,51 +1223,54 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
             priority: 'normal',
             retryCount: 0,
             maxRetries: 3
-          }
-
-          await offlineStorage.storeOperation(operation)
-          return { success: true as const, data: data as unknown as TEntity }
-        } catch {
-          // If offline storage also fails, return the original error
-          setError(apiError)
-          actions.setError(apiError.message)
-          return {
-            success: false as const,
-            validationErrors: {
-              fieldErrors: {},
-              nonFieldErrors: [apiError.message]
-            }
-          }
         }
-      }
-      
-      // Check if it's a validation error (400 status with field errors)
-      if (apiError.statusCode === 400 && apiError.details) {
+
+        await offlineStorage.storeOperation(operation)
+        return { success: true as const, data: data as unknown as TEntity }
+      } catch {
+        // If offline storage also fails, return the original error
+        setError(apiError)
+        actions.setError(apiError.message)
         return {
           success: false as const,
           validationErrors: {
-            fieldErrors: apiError.details as Record<string, string[]>,
-            nonFieldErrors: []
+            fieldErrors: {},
+            nonFieldErrors: [apiError.message]
           }
         }
       }
-      
-      setError(apiError)
-      actions.setError(apiError.message)
+    }
+    
+    // Check if it's a validation error (400 status with field errors)
+    if (apiError.statusCode === 400 && apiError.details) {
       return {
         success: false as const,
         validationErrors: {
-          fieldErrors: {},
-          nonFieldErrors: [apiError.message]
+          fieldErrors: apiError.details as Record<string, string[]>,
+          nonFieldErrors: []
         }
       }
-    } finally {
-      setIsLoading(false)
     }
-  }, [apiServices.mutations.addItem, retryWithBackoff, invalidateCache, fetchEntities, actions, config.name, offlineState.isOnline, offlineStorage])
-
-  // Update entity with optimistic updates
+    
+    setError(apiError)
+    actions.setError(apiError.message)
+    return {
+      success: false as const,
+      validationErrors: {
+        fieldErrors: {},
+        nonFieldErrors: [apiError.message]
+      }
+    }
+  } finally {
+    setIsLoading(false)
+  }
+}, [enableOptimisticUpdates, performOptimisticCreate, setIsLoading, setError, actions, offlineState.isOnline, offlineStorage, retryWithBackoff, apiServices.mutations.addItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.name])  // Update entity with optimistic updates
   const updateEntity = useCallback(async (id: string | number, data: Partial<TFormData>): Promise<EntityOperationResult<TEntity>> => {
+    // Use optimistic updates if enabled
+    if (enableOptimisticUpdates) {
+      return performOptimisticUpdate(id, data)
+    }
+
     try {
       setIsLoading(true)
       setError(null)
@@ -1360,10 +1379,16 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [apiServices.mutations.updateItem, retryWithBackoff, invalidateCache, fetchEntities, actions, config.name, offlineState.isOnline, offlineStorage])
+  }, [enableOptimisticUpdates, performOptimisticUpdate, setIsLoading, setError, actions, offlineState.isOnline, offlineStorage, retryWithBackoff, apiServices.mutations.updateItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.name])
 
   // Delete entity with cascade operations
   const deleteEntity = useCallback(async (id: string | number): Promise<boolean> => {
+    // Use optimistic updates if enabled
+    if (enableOptimisticUpdates) {
+      const result = await performOptimisticDelete(id)
+      return result.success
+    }
+
     try {
       setIsLoading(true)
       setError(null)
@@ -1465,7 +1490,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [apiServices.mutations.deleteItem, retryWithBackoff, invalidateCache, fetchEntities, actions, config.name, offlineState.isOnline, offlineStorage])
+  }, [enableOptimisticUpdates, performOptimisticDelete, setIsLoading, setError, actions, offlineState.isOnline, offlineStorage, retryWithBackoff, apiServices.mutations.deleteItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.name])
 
   // Batch delete with progress tracking
   const batchDeleteEntities = useCallback(async (
@@ -1913,6 +1938,46 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     executeCascadeOperations
   ])
 
+  // Retry failed optimistic operation
+  const retryOptimisticOperation = useCallback(async (operationId: string): Promise<void> => {
+    const operation = optimisticState.operations.get(operationId)
+    if (!operation || operation.status !== 'failed') return
+
+    // Update operation status to pending
+    updateOptimisticOperation(operationId, { status: 'pending', retryCount: operation.retryCount + 1 })
+
+    try {
+      let result: EntityOperationResult<TEntity>
+
+      switch (operation.type) {
+        case 'create':
+          result = await performOptimisticCreate(operation.localData as TFormData)
+          break
+        case 'update':
+          if (!operation.entityId) throw new Error('Entity ID required for update operation')
+          result = await performOptimisticUpdate(operation.entityId, operation.localData as Partial<TFormData>)
+          break
+        case 'delete':
+          if (!operation.entityId) throw new Error('Entity ID required for delete operation')
+          result = await performOptimisticDelete(operation.entityId)
+          break
+        default:
+          throw new Error(`Unknown operation type: ${operation.type}`)
+      }
+
+      if (!result.success) {
+        // If retry failed, keep it as failed
+        updateOptimisticOperation(operationId, { status: 'failed', error: result.validationErrors?.nonFieldErrors?.join(', ') || 'Retry failed' })
+      }
+    } catch (error) {
+      // Update operation as failed again
+      updateOptimisticOperation(operationId, { 
+        status: 'failed', 
+        error: error instanceof Error ? error.message : 'Retry failed' 
+      })
+    }
+  }, [optimisticState.operations, updateOptimisticOperation, performOptimisticCreate, performOptimisticUpdate, performOptimisticDelete])
+
   return {
     isLoading,
     error,
@@ -1930,7 +1995,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     optimisticState,
     optimisticActions: {
       rollbackOperation: rollbackOptimisticOperation,
-      retryOperation: () => Promise.resolve(), // TODO: implement retry logic
+      retryOperation: retryOptimisticOperation,
       clearFailedOperations: () => {
         setOptimisticState(prev => ({
           ...prev,

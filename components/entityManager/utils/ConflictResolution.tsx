@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertTriangle, CheckCircle, XCircle, GitMerge, ArrowRight, Clock } from 'lucide-react'
-import type { ConflictResolution as ConflictResolutionType, OptimisticOperation } from '@/types'
+import type { ConflictResolution as ConflictResolutionType, OptimisticOperation } from './types/optimistic'
 
 interface ConflictResolutionDialogProps {
   conflict: ConflictResolutionType

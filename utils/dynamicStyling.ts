@@ -1,4 +1,4 @@
-import { FormFieldConfig } from '@/types'
+import { EntityField } from '../components/entityManager/manager/types'
 import { FieldErrors } from 'react-hook-form'
 import { clsx } from 'clsx'
 
@@ -51,9 +51,15 @@ export interface StylingFactors {
  * Generate styling factors from field configuration and current state
  */
 export function generateStylingFactors(
-  field: FormFieldConfig,
+  field: EntityField,
   value: unknown,
   errors: FieldErrors,
+  permissions?: {
+    create?: boolean
+    update?: boolean
+    read?: boolean
+    delete?: boolean
+  },
   interactionState: 'idle' | 'hover' | 'focus' | 'active' = 'idle'
 ): StylingFactors {
   const hasError = !!errors[field.key]
@@ -85,10 +91,10 @@ export function generateStylingFactors(
     isDisabled,
     isReadOnly,
     hasPermission: {
-      create: field.permissions?.create ?? true,
-      update: field.permissions?.update ?? true,
-      read: field.permissions?.read ?? true,
-      delete: field.permissions?.delete ?? true
+      create: permissions?.create ?? true,
+      update: permissions?.update ?? true,
+      read: permissions?.read ?? true,
+      delete: permissions?.delete ?? true
     },
     relationshipType: field.relationshipType,
     validationState,

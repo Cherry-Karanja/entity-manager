@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils'
 import { EntityListAction, EntityListItem } from '../types'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { PermissionedAction } from '../../utils/PermissionedActions'
 
 interface EntityListActionsProps {
   actions: EntityListAction[]
@@ -15,6 +16,7 @@ interface EntityListActionsProps {
   onAction?: (action: EntityListAction, item: EntityListItem) => void
   maxVisible?: number
   className?: string
+  entityType?: string
 }
 
 export const EntityListActions: React.FC<EntityListActionsProps> = ({
@@ -22,7 +24,8 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
   item,
   onAction,
   maxVisible = 2,
-  className
+  className,
+  entityType = 'entity'
 }) => {
   const isMobile = useIsMobile()
 
@@ -116,26 +119,34 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
           const variant = getButtonVariant(action)
 
           return (
-            <Tooltip key={action.id}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={variant as any}
-                  size="sm"
-                  onClick={handleActionClick(action)}
-                  disabled={action.disabled || action.loading}
-                  className={cn(
-                    action.type === 'text' && 'h-auto p-1',
-                    action.className
-                  )}
-                >
-                  {Icon && <Icon className="h-4 w-4" />}
-                  {action.loading && <div className="animate-spin rounded-full h-3 w-3 border-b border-current ml-1" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{action.label}</p>
-              </TooltipContent>
-            </Tooltip>
+            <PermissionedAction
+              key={action.id}
+              action={action.id}
+              entityType={entityType}
+              entityId={item.id?.toString()}
+              showTooltip={true}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={variant as any}
+                    size="sm"
+                    onClick={handleActionClick(action)}
+                    disabled={action.disabled || action.loading}
+                    className={cn(
+                      action.type === 'text' && 'h-auto p-1',
+                      action.className
+                    )}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {action.loading && <div className="animate-spin rounded-full h-3 w-3 border-b border-current ml-1" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{action.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            </PermissionedAction>
           )
         })}
 
@@ -154,18 +165,25 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
                 return (
                   <React.Fragment key={action.id}>
                     {action.separator && index > 0 && <DropdownMenuSeparator />}
-                    <DropdownMenuItem
-                      onClick={handleActionClick(action)}
-                      disabled={action.disabled || action.loading}
-                      className={cn(
-                        action.danger && 'text-destructive focus:text-destructive',
-                        action.className
-                      )}
+                    <PermissionedAction
+                      action={action.id}
+                      entityType={entityType}
+                      entityId={item.id?.toString()}
+                      showTooltip={false}
                     >
-                      {Icon && <Icon className="h-4 w-4 mr-2" />}
-                      {action.label}
-                      {action.loading && <div className="animate-spin rounded-full h-3 w-3 border-b border-current ml-auto" />}
-                    </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleActionClick(action)}
+                        disabled={action.disabled || action.loading}
+                        className={cn(
+                          action.danger && 'text-destructive focus:text-destructive',
+                          action.className
+                        )}
+                      >
+                        {Icon && <Icon className="h-4 w-4 mr-2" />}
+                        {action.label}
+                        {action.loading && <div className="animate-spin rounded-full h-3 w-3 border-b border-current ml-auto" />}
+                      </DropdownMenuItem>
+                    </PermissionedAction>
                   </React.Fragment>
                 )
               })}

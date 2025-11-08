@@ -1,8 +1,8 @@
 import React from 'react';
-import { UserPresenceData, CursorPosition, EntityLock } from '../../types/collaborative';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { UserPresenceData, CursorPosition, EntityLock } from './types/collaborative';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
+import { Badge } from '../../ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/tooltip';
 
 interface CollaborativeIndicatorProps {
   activeUsers: UserPresenceData[];

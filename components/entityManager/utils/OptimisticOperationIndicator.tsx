@@ -4,7 +4,7 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-react'
-import { OptimisticState } from '@/types'
+import { OptimisticState } from './types/optimistic'
 
 interface OptimisticOperationIndicatorProps {
   optimisticState: OptimisticState

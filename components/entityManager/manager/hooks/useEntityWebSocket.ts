@@ -1,8 +1,8 @@
 import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useNotificationWebSocket, useEntityWebSocket } from './useWebSocket';
-import authManager from '../handler/AuthManager';
+import { useNotificationWebSocket, useEntityWebSocket } from '../../../../hooks/useWebSocket';
+import authManager from '../../../../handler/AuthManager';
 
 export interface NotificationData {
   id: number;
@@ -58,9 +58,9 @@ export const useEntityNotificationWebSocket = () => {
 
   const ws = useNotificationWebSocket({
     url: `${process.env.NEXT_PUBLIC_WS_BASE_URL || 'ws://localhost:8000'}/ws/notifications/`,
-    authToken: authManager.getToken(),
+    // No authToken needed - authentication handled via HTTP-only cookies
     onMessage: handleNotificationMessage,
-    autoConnect: authManager.isAuthenticated(),
+    autoConnect: false, // Don't auto-connect to avoid connection issues
   });
 
   // Auto-connect when user becomes authenticated
@@ -107,11 +107,11 @@ export const useEntityRealTimeUpdates = (entityType: string, entityId?: string |
 
   const ws = useEntityWebSocket({
     url: `${process.env.NEXT_PUBLIC_WS_BASE_URL || 'ws://localhost:8000'}/ws/entity/${entityType}/${entityId || ''}/`,
-    authToken: authManager.getToken(),
+    // No authToken needed - authentication handled via HTTP-only cookies
     entityType,
     entityId,
     onMessage: handleEntityMessage,
-    autoConnect: authManager.isAuthenticated(),
+    autoConnect: false, // Don't auto-connect to avoid connection issues
   });
 
   return ws;

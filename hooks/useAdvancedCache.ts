@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getCacheManager, AdvancedCacheManager } from '../utils/advancedCacheManager';
-import { CacheConfig, PrefetchConfig, OfflineConfig, CacheQuery, CacheEntry } from '../types/caching';
+import { CacheConfig, PrefetchConfig, OfflineConfig, CacheQuery, CacheEntry } from '../components/entityManager/utils/types/caching';
 
 interface UseAdvancedCacheOptions {
   config?: CacheConfig;

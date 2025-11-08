@@ -15,6 +15,7 @@ interface EntityTableViewProps extends EntityListViewProps {
   actions?: EntityListAction[]
   entityActions?: import('../../EntityActions/types').EntityActionsConfig
   onAction?: (action: EntityListAction, item: EntityListItem) => void
+  entityType?: string
   rowKey?: string | ((item: EntityListItem) => string | number)
   onRow?: (record: EntityListItem, index?: number) => {
     onClick?: (event: React.MouseEvent) => void
@@ -38,6 +39,7 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
   actions = [],
   entityActions,
   onAction,
+  entityType = 'entity',
   rowKey = 'id',
   onRow,
   scroll,
@@ -279,6 +281,7 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
                           actions={actions}
                           item={item}
                           onAction={onAction}
+                          entityType={entityType}
                         />
                       )}
                     </TableCell>

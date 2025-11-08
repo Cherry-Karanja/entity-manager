@@ -18,7 +18,11 @@ import EntityCompactView from '../EntityList/views/EntityCompactView'
 import { usePermissions } from '@/hooks/use-permissions'
 import { ChatPanel } from '@/components/entityManager/chat'
 import { mapApiErrorsToFormFields } from '../../../utils/formValidation'
-import { RealTimeIndicator } from '../RealTimeIndicator'
+import { RealTimeIndicator } from '../utils/RealTimeIndicator'
+import OptimisticUI from '../utils/OptimisticUI'
+import { CollaborativeIndicator } from '../utils/CollaborativeIndicator'
+import { ConflictNotification } from '../utils/ConflictResolution'
+import { ConnectionState } from '@/types/websocket'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,6 +105,12 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
   // Chat state
   const [chatOpen, setChatOpen] = useState(initialChatOpen)
+
+  // Real-time/WebSocket state
+  const [isConnected, setIsConnected] = useState(false)
+  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED)
+  const [queuedMessagesCount, setQueuedMessagesCount] = useState(0)
+  const [lastUpdate, setLastUpdate] = useState<number | undefined>(undefined)
 
   // Breadcrumb navigation state
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
@@ -292,6 +302,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
   // Entity List configuration
   const listConfig = useMemo(() => ({
+    name: config.name,
     data: entityState.cachedData?.results || [],
     columns: config.listConfig.columns,
     filters: [], // Filters can be added to config.filters if needed
@@ -671,14 +682,26 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
         <Breadcrumb items={breadcrumbs} />
-        {entityApi.realTimeState && (
-          <RealTimeIndicator
-            isConnected={entityApi.realTimeState.isConnected}
-            connectionState={entityApi.realTimeState.connectionState}
-            queuedMessagesCount={entityApi.realTimeState.queuedMessagesCount}
-            compact
+        <div className="flex items-center gap-3">
+          <OptimisticUI.OptimisticStatusBadge
+            optimisticState={entityApi.optimisticState}
           />
-        )}
+          {entityApi.realTimeState && (
+            <RealTimeIndicator
+              isConnected={entityApi.realTimeState.isConnected}
+              connectionState={entityApi.realTimeState.connectionState}
+              queuedMessagesCount={entityApi.realTimeState.queuedMessagesCount}
+              compact
+            />
+          )}
+          <CollaborativeIndicator
+            activeUsers={entityApi.presenceState.activeUsers}
+            entityLocks={entityApi.presenceState.entityLocks}
+            userCursors={entityApi.presenceState.userCursors}
+            currentUserId={entityApi.presenceState.currentUser?.id ? parseInt(entityApi.presenceState.currentUser.id) : undefined}
+            className="ml-2"
+          />
+        </div>
       </div>
       {renderContent()}
       
@@ -725,6 +748,21 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           onToggle={handleChatToggle}
         />
       )}
+
+      {/* Optimistic Operation Toast */}
+      <OptimisticUI.OptimisticOperationToast
+        optimisticState={entityApi.optimisticState}
+        onRollback={entityApi.optimisticActions.rollbackOperation}
+        onRetry={entityApi.optimisticActions.retryOperation}
+        onClearFailed={entityApi.optimisticActions.clearFailedOperations}
+      />
+
+      {/* Conflict Resolution Notification */}
+      <ConflictNotification
+        conflicts={entityApi.optimisticState.conflicts}
+        onResolve={entityApi.optimisticActions.resolveConflict}
+        onDismiss={entityApi.optimisticActions.dismissConflict}
+      />
     </div>
   )
 }

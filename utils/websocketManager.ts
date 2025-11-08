@@ -144,13 +144,15 @@ export class WebSocketManager {
     this.reconnectAttempts = 0;
     this.callbacks.onConnect?.();
 
-    // Send authentication if token provided
+    // Send authentication if token provided (for backward compatibility)
     if (this.config.authToken) {
       this.send({
         type: MessageType.CONNECTION_ACK,
         payload: { token: this.config.authToken }
       });
     }
+    // Note: With HTTP-only cookies, authentication is handled automatically
+    // by the WebSocket server using the same cookies as HTTP requests
 
     // Start heartbeat
     this.startHeartbeat();

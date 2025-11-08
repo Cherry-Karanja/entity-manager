@@ -1,5 +1,5 @@
 // Enhanced WebSocket types for collaborative features
-import { WebSocketMessage } from '../utils/websocket';
+import { WebSocketMessage } from '../../../../utils/websocket';
 
 export interface CollaborativeMessage extends WebSocketMessage {
   type: 'user_joined' | 'user_left' | 'user_editing' | 'user_cursor' | 'entity_lock' | 'entity_unlock' | 'conflict_resolution';

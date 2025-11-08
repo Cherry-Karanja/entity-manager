@@ -37,17 +37,10 @@ export class WebSocketManager {
       return; // Already connected
     }
 
-    const token = authManager.getToken();
-    if (!token) {
-      console.warn('No auth token available for WebSocket connection');
-      return;
-    }
+    // No token required - authentication handled via HTTP-only cookies
+    // The WebSocket server should authenticate using the same cookies as HTTP requests
 
-    // Add token to URL as query parameter for authentication
-    const url = new URL(this.config.url);
-    url.searchParams.set('token', token);
-
-    this.ws = new ReconnectingWebSocket(url.toString(), [], {
+    this.ws = new ReconnectingWebSocket(this.config.url, [], {
       maxReconnectionDelay: 30000,
       minReconnectionDelay: 1000,
       reconnectionDelayGrowFactor: 1.3,

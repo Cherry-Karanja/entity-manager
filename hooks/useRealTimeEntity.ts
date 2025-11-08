@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEntityRealTimeUpdates } from '../hooks/useEntityWebSocket';
+import { useEntityRealTimeUpdates } from '../components/entityManager/manager/hooks/useEntityWebSocket';
 import { toast } from 'sonner';
 
 interface UseRealTimeEntityOptions {

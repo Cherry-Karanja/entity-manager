@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider'
 import { AlertCircle, HelpCircle } from 'lucide-react'
 import { FormField, FieldRenderProps } from '../types'
 import { cn } from '@/lib/utils'
-import { FileDropZone, FilePreview } from '../../FileDropZone'
+import { FileDropZone, FilePreview } from '../../utils/FileDropZone'
 import { useFileUpload } from '@/hooks/useFileUpload'
 
 interface FormFieldRendererProps extends FieldRenderProps {

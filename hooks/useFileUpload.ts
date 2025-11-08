@@ -8,7 +8,7 @@ import {
   FileValidationResult,
   FilePreview,
   DragDropConfig
-} from '../types/fileUpload';
+} from '../components/entityManager/utils/types/fileUpload';
 
 interface UseFileUploadOptions extends FileUploadOptions {
   autoUpload?: boolean;

@@ -8,7 +8,7 @@ import {
   CacheQuery,
   CacheSyncOperation,
   PrefetchPattern
-} from '../types/caching';
+} from '../components/entityManager/utils/types/caching';
 
 export class AdvancedCacheManager {
   private cache = new Map<string, CacheEntry>();

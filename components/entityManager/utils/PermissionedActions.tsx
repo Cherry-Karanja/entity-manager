@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { usePermissions } from '../../hooks/usePermissions';
-import { useDynamicActions } from '../../hooks/usePermissions';
-import { Button } from '../ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { usePermissions } from '../../../hooks/usePermissions';
+import { useDynamicActions } from '../../../hooks/usePermissions';
+import { Button } from '../../ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/tooltip';
 import { Loader2, Eye, Edit, Trash2, Plus, Download, Upload } from 'lucide-react';
 
 interface PermissionedActionProps {

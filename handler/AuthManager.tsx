@@ -22,30 +22,13 @@ export const apiPlain = axios.create({
 class AuthManager {
   async login(email: string, password: string): Promise<AuthResponse | undefined> {
     try {
-        // Clear tokens synchronously before making the API call
-        Cookies.remove('access_token');
-        Cookies.remove('refresh_token');
-
         const response = await apiPlain.post<AuthResponse>(LOGIN_URL, {
           email,
           password
         });
 
-        if (response.data) {
-          // Store new tokens after successful login in cookies
-          Cookies.set('access_token', response.data.access_token, {
-            expires: 1, // 1 day expiration
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
-          });
-          Cookies.set('refresh_token', response.data.refresh_token, {
-            expires: 7, // 7 days expiration
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
-          });
-
-          return response.data;
-        }
+        // Backend automatically sets HTTP-only cookies, no need to store them manually
+        return response.data;
     } catch (error) {
       console.error('Login error:', error);
       await handleApiError(error, 'Login failed');
@@ -56,10 +39,11 @@ class AuthManager {
   async logout(): Promise<void> {
     try {
       await api.post(LOGOUT_URL);
+      // Backend automatically clears HTTP-only cookies
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear tokens regardless of API call success
+      // Clear any client-side cookies as fallback
       Cookies.remove('access_token');
       Cookies.remove('refresh_token');
     }
@@ -68,6 +52,8 @@ class AuthManager {
   async register(userData: { email: string; password1: string; password2: string }): Promise<AuthResponse | undefined> {
     try {
       const response = await apiPlain.post<AuthResponse>(REGISTRATION_URL, userData);
+
+      // Backend automatically sets HTTP-only cookies, no need to store them manually
       return response.data;
     } catch (error) {
       console.error('Registration error:', error);
@@ -76,7 +62,7 @@ class AuthManager {
     }
   }
 
-  async getCurrentUser(): Promise<User | null> {
+  async getUser(): Promise<User | null> {
     try {
       const response = await api.get<User>(USER_DETAILS_URL);
       return response.data;
@@ -84,10 +70,6 @@ class AuthManager {
       console.error('Get current user error:', error);
       return null;
     }
-  }
-
-  async getUser(): Promise<User | null> {
-    return this.getCurrentUser();
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -116,17 +98,20 @@ class AuthManager {
   }
 
   clearAuth(): void {
+    // Clear any client-side cookies
     Cookies.remove('access_token');
     Cookies.remove('refresh_token');
   }
 
   isAuthenticated(): boolean {
-    const token = Cookies.get('access_token');
-    return !!token;
+    // With HTTP-only cookies, we can't check client-side
+    // This will be checked by making API requests
+    return true; // Assume authenticated, let API handle 401 errors
   }
 
   getToken(): string | undefined {
-    return Cookies.get('access_token');
+    // With HTTP-only cookies, tokens are not accessible to JavaScript
+    return undefined;
   }
 }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CollaborativeManager, getCollaborativeManager } from '../utils/collaborativeManager';
-import { CollaborativeSession, UserPresenceData, CursorPosition, EntityLock } from '../types/collaborative';
+import { CollaborativeSession, UserPresenceData, CursorPosition, EntityLock } from '../components/entityManager/utils/types/collaborative';
 import { WebSocketManager } from '../utils/websocket';
 
 interface UseCollaborativeSessionOptions {

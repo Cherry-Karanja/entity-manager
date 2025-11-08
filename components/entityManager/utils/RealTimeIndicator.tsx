@@ -8,11 +8,11 @@
 'use client'
 
 import React from 'react'
-import { ConnectionState } from '../../types/websocket'
-import { Badge } from '../ui/badge'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+import { ConnectionState } from '../../../types/websocket'
+import { Badge } from '../../ui/badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/tooltip'
 import { Wifi, WifiOff, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { cn } from '../../../lib/utils'
 
 interface RealTimeIndicatorProps {
   isConnected: boolean

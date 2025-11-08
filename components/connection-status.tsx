@@ -3,7 +3,7 @@
 import React from 'react';
 import { Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useEntityNotificationWebSocket } from '../hooks/useEntityWebSocket';
+import { useEntityNotificationWebSocket } from './entityManager/manager/hooks/useEntityWebSocket';
 
 interface ConnectionStatusProps {
   className?: string;

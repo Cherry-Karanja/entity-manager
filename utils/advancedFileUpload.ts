@@ -10,7 +10,7 @@ import {
   UploadSession,
   FileValidationResult,
   FilePreview
-} from '../types/fileUpload';
+} from '../components/entityManager/utils/types/fileUpload';
 
 export class AdvancedFileUploadManager {
   private activeUploads = new Map<string, ResumableUpload>();

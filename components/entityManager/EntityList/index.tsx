@@ -449,6 +449,7 @@ const EntityListComponent: React.FC<EntityListProps> = ({
                 } : undefined,
                 actions: mergedConfig.actions,
                 entityActions: mergedConfig.entityActions,
+                entityType: mergedConfig.name,
                 onAction: handleAction,
                 rowKey: mergedConfig.rowKey,
                 onRow: mergedConfig.onRow,

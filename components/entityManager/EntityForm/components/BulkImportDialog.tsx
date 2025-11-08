@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { FormField, BulkImportFormat, BulkImportState } from '../types'
 import { Upload, FileText, AlertCircle, CheckCircle, X, Download } from 'lucide-react'
 import { parseImportFile } from '../utils/fileParser'
+import { FileDropZone, FilePreview } from '../../utils/FileDropZone'
+import { cn } from '@/lib/utils'
 
 interface BulkImportDialogProps {
   open: boolean
@@ -33,9 +35,15 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
   const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([])
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({})
   const [parseError, setParseError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = async (file: File) => {
+  const handleFileSelect = async (files: FileList | File[]) => {
+    const file = Array.isArray(files) ? files[0] : files[0]
+    if (file) {
+      await handleSingleFileSelect(file)
+    }
+  }
+
+  const handleSingleFileSelect = async (file: File) => {
     setSelectedFile(file)
     setParseError(null)
     setPreviewData([])
@@ -104,9 +112,6 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
     setPreviewData([])
     setFieldMapping({})
     setParseError(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
   }
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -168,55 +173,36 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
                   </Button>
                 </div>
 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept={`.${selectedFormat.extension}`}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileSelect(file)
-                    }}
-                    className="hidden"
-                    disabled={importState.isImporting}
-                    aria-label={`Upload ${selectedFormat.label} file`}
-                  />
-
+                <div className="space-y-4">
                   {selectedFile ? (
                     <div className="space-y-2">
-                      <CheckCircle className="w-8 h-8 text-green-500 mx-auto" />
-                      <p className="text-sm font-medium">{selectedFile.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {(selectedFile.size / 1024).toFixed(1)} KB
-                      </p>
+                      <FilePreview
+                        file={selectedFile}
+                        onRemove={() => setSelectedFile(null)}
+                      />
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto" />
-                      <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-gray-500">
-                        {selectedFormat.label} files only
-                      </p>
-                    </div>
+                    <FileDropZone
+                      onFilesSelected={handleFileSelect}
+                      accept={selectedFormat ? { [selectedFormat.type]: [`.${selectedFormat.extension}`] } : undefined}
+                      maxFiles={1}
+                      disabled={importState.isImporting}
+                      placeholder={`Drop your ${selectedFormat?.label} file here or click to browse`}
+                      dragActiveText={`Drop your ${selectedFormat?.label} file here`}
+                      className={cn(
+                        "min-h-[120px]",
+                        parseError && "border-red-300"
+                      )}
+                    />
                   )}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={importState.isImporting}
-                  >
-                    Choose File
-                  </Button>
+                  {parseError && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{parseError}</AlertDescription>
+                    </Alert>
+                  )}
                 </div>
-
-                {parseError && (
-                  <Alert variant="destructive" className="mt-3">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{parseError}</AlertDescription>
-                  </Alert>
-                )}
               </div>
 
               {/* Field Mapping */}

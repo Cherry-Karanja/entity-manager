@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
-import { useEntityNotificationWebSocket } from '../hooks/useEntityWebSocket';
+import { useEntityNotificationWebSocket } from '../components/entityManager/manager/hooks/useEntityWebSocket';
 
 export interface NotificationItem {
   id: number;
@@ -42,8 +42,8 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  // Connect to WebSocket for real-time notifications
-  const { isConnected } = useEntityNotificationWebSocket();
+  // WebSocket connection disabled for now - backend doesn't support websockets yet
+  // const { isConnected } = useEntityNotificationWebSocket();
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 

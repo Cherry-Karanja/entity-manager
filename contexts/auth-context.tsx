@@ -28,27 +28,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const initializeAuth = async () => {
     try {
-      // Check if user has valid tokens
-      if (authManager.isAuthenticated()) {
+      // Try to get user data from server - this will fail if not authenticated
+      console.debug('Checking authentication by fetching user data...');
+      const userData = await authManager.getUser()
+      if (userData) {
+        await setUser(userData as User)
         await setIsAuthenticated(true)
-        console.debug('User is authenticated, fetching user data...');
-        // Try to get user data from server
-        try {
-          const userData = await authManager.getUser()
-          if (userData) {
-            await setUser(userData as User)
-          }
-        } catch (error) {
-          console.error('Failed to fetch user data:', error)
-          // If we can't get user data, clear auth state
-          authManager.clearAuth()
-          setIsAuthenticated(false)
-        }
+        console.debug('User is authenticated');
+      } else {
+        await setIsAuthenticated(false)
+        console.debug('User is not authenticated');
       }
     } catch (error) {
       console.error('Auth initialization error:', error)
       authManager.clearAuth()
       setIsAuthenticated(false)
+      setUser(null)
     } finally {
       setIsLoading(false)
     }

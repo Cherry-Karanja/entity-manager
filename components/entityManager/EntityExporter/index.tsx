@@ -18,6 +18,11 @@ import {
 import { validateExportOperation } from './validation'
 import { EntityListColumn } from '../EntityList/types'
 
+// Import export libraries
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+
 // ===== UTILITY FUNCTIONS =====
 
 const formatFilename = (filename: string | ((format: ExportFormatType) => string), format: ExportFormatType): string => {
@@ -89,6 +94,103 @@ const exportToXML = async (
 
   xml += `</${rootName}>`
   return xml
+}
+
+export const exportToXLSX = async (
+  data: unknown[],
+  config: any,
+  fields?: Array<{ key: string; label: string; format?: (value: unknown, item: unknown) => string }>
+): Promise<Blob> => {
+  // Prepare data for Excel
+  const headers = fields
+    ? fields.map(f => f.label || f.key)
+    : data.length > 0 ? Object.keys(data[0] as Record<string, unknown>) : []
+
+  const rows = data.map(item => {
+    const row: Record<string, unknown> = {}
+    if (fields) {
+      fields.forEach(field => {
+        const value = (item as Record<string, unknown>)[field.key]
+        row[field.label || field.key] = field.format ? field.format(value, item) : value
+      })
+    } else {
+      Object.assign(row, item)
+    }
+    return row
+  })
+
+  // Create workbook and worksheet
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.json_to_sheet(rows, { header: headers })
+
+  // Auto-size columns
+  const colWidths = headers.map(header => ({
+    wch: Math.max(header.length, ...rows.map(row => String(row[header] || '').length).slice(0, 10))
+  }))
+  ws['!cols'] = colWidths
+
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(wb, ws, 'Data')
+
+  // Generate buffer and return as Blob
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+  return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+}
+
+export const exportToPDF = async (
+  data: unknown[],
+  config: any,
+  fields?: Array<{ key: string; label: string; format?: (value: unknown, item: unknown) => string }>
+): Promise<Blob> => {
+  const doc = new jsPDF()
+
+  // Prepare data for PDF
+  const headers = fields
+    ? fields.map(f => f.label || f.key)
+    : data.length > 0 ? Object.keys(data[0] as Record<string, unknown>) : []
+
+  const rows = data.map(item => {
+    if (fields) {
+      return fields.map(field => {
+        const value = (item as Record<string, unknown>)[field.key]
+        return field.format ? field.format(value, item) : String(value || '')
+      })
+    } else {
+      return Object.values(item as Record<string, unknown>).map(val => String(val || ''))
+    }
+  })
+
+  // Add title
+  doc.setFontSize(16)
+  doc.text('Data Export', 14, 20)
+
+  // Add export info
+  doc.setFontSize(10)
+  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30)
+  doc.text(`Total records: ${data.length}`, 14, 35)
+
+  // Add table
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 45,
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold',
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245],
+    },
+    margin: { top: 45 },
+  })
+
+  // Return as Blob
+  return new Blob([doc.output('blob')], { type: 'application/pdf' })
 }
 
 // ===== MAIN COMPONENT =====
@@ -185,64 +287,98 @@ export const EntityExporter: React.FC<EntityExporterProps> = ({
         throw new Error(`Unsupported format: ${format}`)
       }
 
-      mimeType = formatConfig.mimeType
-      extension = formatConfig.extension
-
       switch (format) {
         case 'csv':
-          content = await exportToCSV(data, mergedConfig, mergedConfig.fields)
-          break
         case 'json':
-          content = await exportToJSON(data)
+        case 'xml': {
+          const mimeType = formatConfig.mimeType
+          const extension = formatConfig.extension
+          let content: string
+
+          if (format === 'csv') {
+            content = await exportToCSV(data, mergedConfig, mergedConfig.fields)
+          } else if (format === 'json') {
+            content = await exportToJSON(data)
+          } else {
+            content = await exportToXML(data, mergedConfig.fields)
+          }
+
+          // Create blob and download
+          const blob = new Blob([content], { type: mimeType })
+          const url = URL.createObjectURL(blob)
+
+          const filename = formatFilename(mergedConfig.filename || 'export', format).replace(`.${format}`, `.${extension}`)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = filename
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+
+          const result: ExportResult = {
+            success: true,
+            data: blob,
+            filename,
+            format,
+            recordCount: data.length,
+          }
+
+          mergedConfig.hooks?.onExportComplete?.(format, result)
+          onExport?.(result)
           break
-        case 'xml':
-          content = await exportToXML(data, mergedConfig.fields)
-          break
+        }
         case 'xlsx':
-          // For XLSX, we'd need a library like xlsx or exceljs
-          // For now, fall back to CSV
-          content = await exportToCSV(data, mergedConfig, mergedConfig.fields)
-          mimeType = 'text/csv'
-          extension = 'csv'
-          break
+          const xlsxBlob = await exportToXLSX(data, mergedConfig, mergedConfig.fields)
+          const xlsxUrl = URL.createObjectURL(xlsxBlob)
+          const xlsxFilename = formatFilename(mergedConfig.filename || 'export', format).replace(`.${format}`, `.${formatConfig.extension}`)
+          const xlsxLink = document.createElement('a')
+          xlsxLink.href = xlsxUrl
+          xlsxLink.download = xlsxFilename
+          document.body.appendChild(xlsxLink)
+          xlsxLink.click()
+          document.body.removeChild(xlsxLink)
+          URL.revokeObjectURL(xlsxUrl)
+
+          const xlsxResult: ExportResult = {
+            success: true,
+            data: xlsxBlob,
+            filename: xlsxFilename,
+            format,
+            recordCount: data.length,
+          }
+
+          mergedConfig.hooks?.onExportComplete?.(format, xlsxResult)
+          onExport?.(xlsxResult)
+          return // Early return since we handled the download directly
         case 'pdf':
-          // For PDF, we'd need a library like jsPDF or puppeteer
-          // For now, fall back to JSON
-          content = await exportToJSON(data)
-          mimeType = 'application/json'
-          extension = 'json'
-          break
+          const pdfBlob = await exportToPDF(data, mergedConfig, mergedConfig.fields)
+          const pdfUrl = URL.createObjectURL(pdfBlob)
+          const pdfFilename = formatFilename(mergedConfig.filename || 'export', format).replace(`.${format}`, `.${formatConfig.extension}`)
+          const pdfLink = document.createElement('a')
+          pdfLink.href = pdfUrl
+          pdfLink.download = pdfFilename
+          document.body.appendChild(pdfLink)
+          pdfLink.click()
+          document.body.removeChild(pdfLink)
+          URL.revokeObjectURL(pdfUrl)
+
+          const pdfResult: ExportResult = {
+            success: true,
+            data: pdfBlob,
+            filename: pdfFilename,
+            format,
+            recordCount: data.length,
+          }
+
+          mergedConfig.hooks?.onExportComplete?.(format, pdfResult)
+          onExport?.(pdfResult)
+          return // Early return since we handled the download directly
         default:
           throw new Error(`Unsupported format: ${format}`)
       }
 
-      setExportProgress(75)
-
-      // Create blob and download
-      const blob = new Blob([content], { type: mimeType })
-      const url = URL.createObjectURL(blob)
-
-      const filename = formatFilename(mergedConfig.filename || 'export', format).replace(`.${format}`, `.${extension}`)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
       setExportProgress(100)
-
-      const result: ExportResult = {
-        success: true,
-        data: blob,
-        filename,
-        format,
-        recordCount: data.length,
-      }
-
-      mergedConfig.hooks?.onExportComplete?.(format, result)
-      onExport?.(result)
 
     } catch (err) {
       const error = err as Error

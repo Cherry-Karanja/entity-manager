@@ -180,6 +180,7 @@ export interface EntityListExportConfig {
 export interface EntityListConfig {
   // Basic configuration
   id?: string
+  name?: string
   title?: string | React.ReactNode
   description?: string | React.ReactNode
 

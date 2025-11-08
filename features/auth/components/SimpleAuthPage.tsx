@@ -1,458 +1,471 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useReducer, useCallback, useEffect, Suspense, lazy } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Logo } from '@/components/logo';
-import {  Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import authManager from '@/handler/AuthManager';
 
+// ===== LAZY LOADED COMPONENTS =====
+const LoginForm = lazy(() => import('./auth-forms/LoginForm'));
+const RegisterForm = lazy(() => import('./auth-forms/RegisterForm'));
+const ForgotPasswordForm = lazy(() => import('./auth-forms/ForgotPasswordForm'));
+const ResetPasswordForm = lazy(() => import('./auth-forms/ResetPasswordForm'));
 
+// ===== TYPES =====
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password';
 
-interface AuthPageProps {
+export interface AuthFormData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  idNumber: string;
+  userType: string;
+  uid: string;
+  resetToken: string;
+}
+
+export interface AuthState {
+  mode: AuthMode;
+  formData: AuthFormData;
+  loading: {
+    login: boolean;
+    register: boolean;
+    forgotPassword: boolean;
+    resetPassword: boolean;
+  };
+  errors: Record<string, string>;
+  touched: Record<string, boolean>;
+  isSubmitting: boolean;
+}
+
+export interface AuthPageProps {
   initialMode?: AuthMode;
   onAuthSuccess: () => void;
 }
 
-export function AuthPage({ 
-  initialMode = 'login', 
-  onAuthSuccess, 
+// ===== ACTION TYPES =====
+type AuthAction =
+  | { type: 'SET_MODE'; payload: AuthMode }
+  | { type: 'UPDATE_FIELD'; payload: { field: keyof AuthFormData; value: string } }
+  | { type: 'SET_LOADING'; payload: { action: keyof AuthState['loading']; loading: boolean } }
+  | { type: 'SET_ERROR'; payload: { field: string; error: string } }
+  | { type: 'CLEAR_ERRORS' }
+  | { type: 'SET_TOUCHED'; payload: { field: string } }
+  | { type: 'SET_SUBMITTING'; payload: boolean }
+  | { type: 'RESET_FORM' };
+
+// ===== INITIAL STATE =====
+const initialFormData: AuthFormData = {
+  email: '',
+  password: '',
+  confirmPassword: '',
+  firstName: '',
+  lastName: '',
+  phoneNumber: '',
+  idNumber: '',
+  userType: '',
+  uid: '',
+  resetToken: '',
+};
+
+const initialState: AuthState = {
+  mode: 'login',
+  formData: initialFormData,
+  loading: {
+    login: false,
+    register: false,
+    forgotPassword: false,
+    resetPassword: false,
+  },
+  errors: {},
+  touched: {},
+  isSubmitting: false,
+};
+
+// ===== REDUCER =====
+function authReducer(state: AuthState, action: AuthAction): AuthState {
+  switch (action.type) {
+    case 'SET_MODE':
+      return {
+        ...state,
+        mode: action.payload,
+        errors: {},
+        touched: {},
+        isSubmitting: false,
+      };
+
+    case 'UPDATE_FIELD':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          [action.payload.field]: action.payload.value,
+        },
+        errors: {
+          ...state.errors,
+          [action.payload.field]: '', // Clear error when field is updated
+        },
+      };
+
+    case 'SET_LOADING':
+      return {
+        ...state,
+        loading: {
+          ...state.loading,
+          [action.payload.action]: action.payload.loading,
+        },
+      };
+
+    case 'SET_ERROR':
+      return {
+        ...state,
+        errors: {
+          ...state.errors,
+          [action.payload.field]: action.payload.error,
+        },
+      };
+
+    case 'CLEAR_ERRORS':
+      return {
+        ...state,
+        errors: {},
+      };
+
+    case 'SET_TOUCHED':
+      return {
+        ...state,
+        touched: {
+          ...state.touched,
+          [action.payload.field]: true,
+        },
+      };
+
+    case 'SET_SUBMITTING':
+      return {
+        ...state,
+        isSubmitting: action.payload,
+      };
+
+    case 'RESET_FORM':
+      return {
+        ...state,
+        formData: initialFormData,
+        errors: {},
+        touched: {},
+        isSubmitting: false,
+      };
+
+    default:
+      return state;
+  }
+}
+
+// ===== CUSTOM HOOKS =====
+function useAuthForm() {
+  const [state, dispatch] = useReducer(authReducer, initialState);
+  const { login } = useAuth();
+
+  const updateField = useCallback((field: keyof AuthFormData, value: string) => {
+    dispatch({ type: 'UPDATE_FIELD', payload: { field, value } });
+  }, []);
+
+  const setMode = useCallback((mode: AuthMode) => {
+    dispatch({ type: 'SET_MODE', payload: mode });
+  }, []);
+
+  const setLoading = useCallback((action: keyof AuthState['loading'], loading: boolean) => {
+    dispatch({ type: 'SET_LOADING', payload: { action, loading } });
+  }, []);
+
+  const setError = useCallback((field: string, error: string) => {
+    dispatch({ type: 'SET_ERROR', payload: { field, error } });
+  }, []);
+
+  const setTouched = useCallback((field: string) => {
+    dispatch({ type: 'SET_TOUCHED', payload: { field } });
+  }, []);
+
+  const clearErrors = useCallback(() => {
+    dispatch({ type: 'CLEAR_ERRORS' });
+  }, []);
+
+  const setSubmitting = useCallback((submitting: boolean) => {
+    dispatch({ type: 'SET_SUBMITTING', payload: submitting });
+  }, []);
+
+  const resetForm = useCallback(() => {
+    dispatch({ type: 'RESET_FORM' });
+  }, []);
+
+  return {
+    state,
+    actions: {
+      updateField,
+      setMode,
+      setLoading,
+      setError,
+      setTouched,
+      clearErrors,
+      setSubmitting,
+      resetForm,
+    },
+    login,
+  };
+}
+
+// ===== VALIDATION =====
+function validateField(field: keyof AuthFormData, value: string, mode: AuthMode): string {
+  switch (field) {
+    case 'email':
+      if (!value) return 'Email is required';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email';
+      return '';
+
+    case 'password':
+      if (!value) return 'Password is required';
+      if (value.length < 6) return 'Password must be at least 6 characters';
+      return '';
+
+    case 'confirmPassword':
+      if (mode === 'register' || mode === 'reset-password') {
+        if (!value) return 'Please confirm your password';
+        return '';
+      }
+      return '';
+
+    case 'firstName':
+      if (mode === 'register' && !value) return 'First name is required';
+      return '';
+
+    case 'lastName':
+      if (mode === 'register' && !value) return 'Last name is required';
+      return '';
+
+    case 'userType':
+      if (mode === 'register' && !value) return 'Please select a user type';
+      return '';
+
+    case 'uid':
+      if (mode === 'reset-password' && !value) return 'User ID is required';
+      return '';
+
+    case 'resetToken':
+      if (mode === 'reset-password' && !value) return 'Reset token is required';
+      return '';
+
+    default:
+      return '';
+  }
+}
+
+function validateForm(formData: AuthFormData, mode: AuthMode): Record<string, string> {
+  const errors: Record<string, string> = {};
+
+  // Validate all relevant fields for current mode
+  const fieldsToValidate: (keyof AuthFormData)[] = [];
+
+  switch (mode) {
+    case 'login':
+      fieldsToValidate.push('email', 'password');
+      break;
+    case 'register':
+      fieldsToValidate.push('firstName', 'lastName', 'email', 'password', 'confirmPassword', 'userType');
+      break;
+    case 'forgot-password':
+      fieldsToValidate.push('email');
+      break;
+    case 'reset-password':
+      fieldsToValidate.push('uid', 'resetToken', 'password', 'confirmPassword');
+      break;
+  }
+
+  fieldsToValidate.forEach(field => {
+    const error = validateField(field, formData[field], mode);
+    if (error) errors[field] = error;
+  });
+
+  // Cross-field validation
+  if (mode === 'register' || mode === 'reset-password') {
+    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+  }
+
+  return errors;
+}
+
+// ===== LOADING FALLBACK =====
+const FormLoadingFallback = () => (
+  <Card className="w-full max-w-md">
+    <CardContent className="flex items-center justify-center p-8">
+      <div className="flex items-center space-x-2">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>Loading...</span>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// ===== MAIN COMPONENT =====
+export function AuthPage({
+  initialMode = 'login',
+  onAuthSuccess,
 }: AuthPageProps) {
-  const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [uid, setUid] = useState('');
-  const { login, isLoading } = useAuth();
+  const { state, actions, login } = useAuthForm();
   const isMobile = useIsMobile();
 
-const handleLogin = async (email: string, password: string) => {
-    const isAuthenticated = await login(email, password);
-    if (isAuthenticated) {
-        // Add the check here:
-        if (typeof onAuthSuccess === 'function') {
-            console.log('is function')
-            await onAuthSuccess();
-        }
+  // Set initial mode
+  useEffect(() => {
+    if (initialMode !== state.mode) {
+      actions.setMode(initialMode);
     }
-};
+  }, [initialMode, state.mode, actions]);
 
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (mode === 'login') {
-        const isAuthenticated = await login(email, password);
-        if (isAuthenticated) {
-            // Add the check here:
-            if (typeof onAuthSuccess === 'function') {
-                await onAuthSuccess();
-            }
-        }
-    } else if (mode === 'register') {
-        // For now, just simulate registration by logging in
-        const isAuthenticated = await login(email, password);
-        if (isAuthenticated) {
-            // Add the check here:
-            if (typeof onAuthSuccess === 'function') {
-                await onAuthSuccess();
-            }
-        }
-    } else if (mode === 'forgot-password') {
-        try {
-            await authManager.forgotPassword(email);
-            toast.success('Password reset email sent! Check your inbox.');
-            setMode('login');
-        } catch (error) {
-            // Error is handled by authManager
-        }
-    } else if (mode === 'reset-password') {
-        if (password !== confirmPassword) {
-            toast.error('Passwords do not match');
-            return;
-        }
-        try {
-            await authManager.resetPassword(uid, resetToken, password, confirmPassword);
-            toast.success('Password reset successfully! Please log in.');
-            setMode('login');
-        } catch (error) {
-            // Error is handled by authManager
-        }
+  // Handle authentication success
+  const handleAuthSuccess = useCallback(async () => {
+    if (typeof onAuthSuccess === 'function') {
+      try {
+        await onAuthSuccess();
+      } catch (error) {
+        console.error('Auth success callback failed:', error);
+      }
     }
-};
+  }, [onAuthSuccess]);
+
+  // Handle form submission
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    actions.setSubmitting(true);
+    actions.clearErrors();
+
+    // Validate form
+    const validationErrors = validateForm(state.formData, state.mode);
+    if (Object.keys(validationErrors).length > 0) {
+      Object.entries(validationErrors).forEach(([field, error]) => {
+        actions.setError(field, error);
+      });
+      actions.setSubmitting(false);
+      return;
+    }
+
+    try {
+      switch (state.mode) {
+        case 'login':
+          actions.setLoading('login', true);
+          const isAuthenticated = await login(state.formData.email, state.formData.password);
+          if (isAuthenticated) {
+            await handleAuthSuccess();
+          }
+          break;
+
+        case 'register':
+          actions.setLoading('register', true);
+          // For now, simulate registration by logging in
+          const registerSuccess = await login(state.formData.email, state.formData.password);
+          if (registerSuccess) {
+            toast.success('Account created successfully!');
+            await handleAuthSuccess();
+          }
+          break;
+
+        case 'forgot-password':
+          actions.setLoading('forgotPassword', true);
+          await authManager.forgotPassword(state.formData.email);
+          toast.success('Password reset email sent! Check your inbox.');
+          actions.setMode('login');
+          break;
+
+        case 'reset-password':
+          actions.setLoading('resetPassword', true);
+          await authManager.resetPassword(
+            state.formData.uid,
+            state.formData.resetToken,
+            state.formData.password,
+            state.formData.confirmPassword
+          );
+          toast.success('Password reset successfully! Please log in.');
+          actions.setMode('login');
+          actions.resetForm();
+          break;
+      }
+    } catch (error) {
+      console.error('Auth operation failed:', error);
+      // Error handling is done by authManager and auth context
+    } finally {
+      actions.setLoading('login', false);
+      actions.setLoading('register', false);
+      actions.setLoading('forgotPassword', false);
+      actions.setLoading('resetPassword', false);
+      actions.setSubmitting(false);
+    }
+  }, [state.formData, state.mode, actions, login, handleAuthSuccess]);
+
+  // Handle quick login for testing
+  const handleQuickLogin = useCallback(async (email: string, password: string) => {
+    actions.updateField('email', email);
+    actions.updateField('password', password);
+    actions.setLoading('login', true);
+
+    try {
+      const isAuthenticated = await login(email, password);
+      if (isAuthenticated) {
+        await handleAuthSuccess();
+      }
+    } catch (error) {
+      console.error('Quick login failed:', error);
+    } finally {
+      actions.setLoading('login', false);
+    }
+  }, [actions, login, handleAuthSuccess]);
+
+  // Render form based on mode
   const renderForm = () => {
-    switch (mode) {
+    const commonProps = {
+      state,
+      actions,
+      onSubmit: handleSubmit,
+      onQuickLogin: handleQuickLogin,
+      isMobile,
+    };
+
+    switch (state.mode) {
       case 'login':
         return (
-          <div className="w-full max-w-md">
-
-            <div className="mb-8 text-center">
-                {/* Logo */}
-                <div className="flex flex-col items-center justify-center">
-                  <Logo width={120} height={60} />
-                </div>
-              <h1 className="mt-0 text-3xl font-bold text-foreground">Welcome back</h1>
-              <p className="mt-1 text-muted-foreground">Sign in to your account to continue</p>
-            </div>
-
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>Login</CardTitle>
-                <CardDescription>Enter your email and password to access your account</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      placeholder='Enter your email'
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      placeholder='Enter your password'
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      "Sign In"
-                    )}
-                  </Button>
-                  
-                  {/* Test User Buttons */}
-                  <div className="space-y-2 border-t pt-4">
-                    <p className="text-sm text-gray-600 text-center">Quick Test Login:</p>
-                    <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleLogin('test.landlord@gmail.com', 'user@12345')}
-                        disabled={isLoading}
-                      >
-                        Landlord
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleLogin('test.tenant@gmail.com', 'user@12345')}
-                        disabled={isLoading}
-                      >
-                        Tenant
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleLogin('test.propertyManager@gmail.com', 'user@12345')}
-                        disabled={isLoading}
-                      >
-                        Manager
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleLogin('test.caretaker@gmail.com', 'user@12345')}
-                        disabled={isLoading}
-                      >
-                        Caretaker
-                      </Button>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLogin('admin@gmail.com', 'admin123')}
-                      disabled={isLoading}
-                      className="w-full"
-                    >
-                      Admin
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <button type="button" onClick={() => setMode('register')} className="font-medium text-foreground underline underline-offset-4 hover:text-green-600">
-                Sign up
-              </button>
-            </p>
-          </div>
+          <Suspense fallback={<FormLoadingFallback />}>
+            <LoginForm {...commonProps} />
+          </Suspense>
         );
-      
+
       case 'register':
         return (
-          <div className="w-full max-w-md">
-
-             <div className="mb-8 text-center">
-                {/* Logo */}
-                <div className="flex flex-col items-center justify-center">
-                  <Logo width={120} height={60} />
-                </div>
-              <h1 className="mt-0 text-3xl font-bold text-foreground">Create your account</h1>
-              <p className="mt-1 text-muted-foreground">Get started with MyLandlord today</p>
-            </div>
-
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>Sign Up</CardTitle>
-                <CardDescription>Fill in your details to get started with MyLandlord</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="Enter your last name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Input
-                      id="phoneNumber"
-                      type="tel"
-                      placeholder="Enter your phone number"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="idNumber">ID Number</Label>
-                    <Input
-                      id="idNumber"
-                      type="text"
-                      placeholder="Enter your ID number"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">I am a...</Label>
-                    <Select
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger id="role">
-                        <SelectValue placeholder="Select your role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="landlord">Landlord</SelectItem>
-                        <SelectItem value="tenant">Tenant</SelectItem>
-                        <SelectItem value="property_manager">Property Manager</SelectItem>
-                        <SelectItem value="caretaker">Caretaker</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      // value={confirmPassword}
-                      // onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">Make sure to type the same password</p>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Creating account...' : 'Sign Up'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <button type="button" onClick={() => setMode('login')} className="font-medium text-foreground underline underline-offset-4 hover:text-green-600">
-                  Sign in
-                </button>
-            </p>
-          </div>
+          <Suspense fallback={<FormLoadingFallback />}>
+            <RegisterForm {...commonProps} />
+          </Suspense>
         );
-      
+
       case 'forgot-password':
         return (
-          <div className="w-full max-w-md">
-            <div className="mb-8 text-center">
-              <div className="flex flex-col items-center justify-center">
-                <Logo width={120} height={60} />
-              </div>
-              <h1 className="mt-0 text-3xl font-bold text-foreground">Reset your password</h1>
-              <p className="mt-1 text-muted-foreground">Enter your email address and we&apos;ll send you a reset link</p>
-            </div>
-
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>Forgot Password</CardTitle>
-                <CardDescription>Enter your email to receive a password reset link</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      placeholder="Enter your email"
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Send Reset Link
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Remember your password?{" "}
-              <button type="button" onClick={() => setMode('login')} className="font-medium text-foreground underline underline-offset-4 hover:text-green-600">
-                Sign in
-              </button>
-            </p>
-          </div>
+          <Suspense fallback={<FormLoadingFallback />}>
+            <ForgotPasswordForm {...commonProps} />
+          </Suspense>
         );
 
       case 'reset-password':
         return (
-          <div className="w-full max-w-md">
-            <div className="mb-8 text-center">
-              <div className="flex flex-col items-center justify-center">
-                <Logo width={120} height={60} />
-              </div>
-              <h1 className="mt-0 text-3xl font-bold text-foreground">Set new password</h1>
-              <p className="mt-1 text-muted-foreground">Enter your new password</p>
-            </div>
-
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>Reset Password</CardTitle>
-                <CardDescription>Enter your new password</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="uid">User ID</Label>
-                    <Input
-                      id="uid"
-                      type="text"
-                      value={uid}
-                      placeholder="User ID from reset link"
-                      onChange={(e) => setUid(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="resetToken">Reset Token</Label>
-                    <Input
-                      id="resetToken"
-                      type="text"
-                      value={resetToken}
-                      placeholder="Reset token from email"
-                      onChange={(e) => setResetToken(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">New Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      placeholder="Enter new password"
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      placeholder="Confirm new password"
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Reset Password
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Remember your password?{" "}
-              <button type="button" onClick={() => setMode('login')} className="font-medium text-foreground underline underline-offset-4 hover:text-green-600">
-                Sign in
-              </button>
-            </p>
-          </div>
+          <Suspense fallback={<FormLoadingFallback />}>
+            <ResetPasswordForm {...commonProps} />
+          </Suspense>
         );
-      
+
       default:
         return (
           <Card className="w-full max-w-md">
@@ -462,7 +475,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </CardHeader>
             <CardContent>
               <Button
-                onClick={() => setMode('login')}
+                onClick={() => actions.setMode('login')}
                 className="w-full"
               >
                 Back to Login
@@ -474,8 +487,82 @@ const handleSubmit = async (e: React.FormEvent) => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      {renderForm()}
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-muted/20">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <div className="flex flex-col items-center justify-center mb-4">
+            <Logo width={120} height={60} />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {state.mode === 'login' && 'Welcome back'}
+            {state.mode === 'register' && 'Create your account'}
+            {state.mode === 'forgot-password' && 'Reset your password'}
+            {state.mode === 'reset-password' && 'Set new password'}
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            {state.mode === 'login' && 'Sign in to your account to continue'}
+            {state.mode === 'register' && 'Get started with MyLandlord today'}
+            {state.mode === 'forgot-password' && "Enter your email address and we'll send you a reset link"}
+            {state.mode === 'reset-password' && 'Enter your new password'}
+          </p>
+        </div>
+
+        {/* Form */}
+        {renderForm()}
+
+        {/* Mode Switch Links */}
+        <div className="mt-6 text-center space-y-2">
+          {state.mode === 'login' && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => actions.setMode('register')}
+                  className="font-medium text-foreground underline underline-offset-4 hover:text-green-600"
+                >
+                  Sign up
+                </button>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={() => actions.setMode('forgot-password')}
+                  className="font-medium text-foreground underline underline-offset-4 hover:text-green-600"
+                >
+                  Forgot password?
+                </button>
+              </p>
+            </>
+          )}
+
+          {(state.mode === 'register' || state.mode === 'forgot-password' || state.mode === 'reset-password') && (
+            <p className="text-sm text-muted-foreground">
+              Remember your password?{' '}
+              <button
+                type="button"
+                onClick={() => actions.setMode('login')}
+                className="font-medium text-foreground underline underline-offset-4 hover:text-green-600"
+              >
+                Sign in
+              </button>
+            </p>
+          )}
+        </div>
+
+        {/* Global Error Display */}
+        {Object.keys(state.errors).length > 0 && (
+          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <span className="text-sm text-destructive">
+                Please fix the errors above and try again.
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

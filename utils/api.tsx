@@ -1,8 +1,7 @@
 import axios, { AxiosError, AxiosResponse, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
-import { jwtDecode } from 'jwt-decode';
-import Cookies from 'js-cookie';
 import { BASE_URL, TOKEN_REFRESH_URL, CSRF_TOKEN_URL } from '@/handler/apiConfig';
 import { toast } from 'sonner';
+import Cookies from 'js-cookie';
 
 interface ApiErrorResponse {
     detail?: string;
@@ -12,10 +11,6 @@ interface ApiErrorResponse {
 interface AuthResponse {
     access_token: string;
     refresh_token?: string;
-}
-
-interface DecodedToken {
-    exp: number;
 }
 
 // Create Axios instance
@@ -41,30 +36,6 @@ export const apiPlain = axios.create({
     }
 });
 
-// Function to check if a token is expired
-export const isTokenExpired = (token: string | undefined): boolean => {
-    if (!token) return true;
-    try {
-        const decoded: DecodedToken = jwtDecode(token);
-        return decoded.exp * 1000 < Date.now();
-    } catch (error) {
-        return true;
-    }
-};
-
-// Token refresh queue handler
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
-
-const subscribeTokenRefresh = (callback: (token: string) => void) => {
-    refreshSubscribers.push(callback);
-};
-
-const onRefreshed = (newToken: string) => {
-    refreshSubscribers.forEach((callback) => callback(newToken));
-    refreshSubscribers = [];
-};
-
 // Function to fetch CSRF token
 const fetchCsrfToken = async () => {
     try {
@@ -74,52 +45,13 @@ const fetchCsrfToken = async () => {
     }
 };
 
-// Request Interceptor with automatic token refresh
+// Request Interceptor - simplified to just ensure credentials are sent
 api.interceptors.request.use(
     async (config: AxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
-        let access_token = Cookies.get('access_token');
-        const refresh_token = Cookies.get('refresh_token');
-
-        // If access token is expired, try to refresh it
-        if (isTokenExpired(access_token) && refresh_token) {
-            if (!isRefreshing) {
-                isRefreshing = true;
-                try {
-                    const response = await axios.post<AuthResponse>(
-                        TOKEN_REFRESH_URL, 
-                        { refresh: refresh_token }, 
-                        { withCredentials: true }
-                    );
-
-                    if (response.status === 200) {
-                        access_token = response.data.access_token;
-                        Cookies.set('access_token', access_token, { 
-                            expires: 1, 
-                            secure: process.env.NODE_ENV === 'production', 
-                            sameSite: 'lax' 
-                        });
-                        onRefreshed(access_token);
-                    }
-                } catch (refreshError) {
-                    console.error('Token refresh failed:', refreshError);
-                    Cookies.remove('access_token');
-                    Cookies.remove('refresh_token');
-                    window.location.href = '/auth/login';
-                } finally {
-                    isRefreshing = false;
-                }
-            }
-        }
-
-        // Add authorization header
-        if (access_token && !isTokenExpired(access_token)) {
-            (config as InternalAxiosRequestConfig).headers.Authorization = `Bearer ${access_token}`;
-        }
-
-        // Ensure credentials are always included
+        // Ensure credentials are always included for cookie-based auth
         (config as InternalAxiosRequestConfig).withCredentials = true;
 
-        // Add CSRF token if available
+        // Add CSRF token if available for non-GET requests
         const csrfToken = Cookies.get('csrftoken');
         if (!csrfToken && ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
             // Fetch CSRF token before proceeding with the request
@@ -144,39 +76,13 @@ api.interceptors.response.use(
         // Log error for debugging
         console.error('API Error:', error);
 
-        // Handle authentication errors
+        // Handle authentication errors - redirect to login
         if (error.response?.status === 401) {
+            // Clear any client-side cookies and redirect
             Cookies.remove('access_token');
             Cookies.remove('refresh_token');
             window.location.href = '/auth/login';
             return Promise.reject(error);
-        }
-
-        // Handle token refresh for 403 errors that might be due to expired tokens
-        if (error.response?.status === 403) {
-            const refreshToken = Cookies.get('refresh_token');
-            if (refreshToken && !error.config?.url?.includes('/token/refresh/')) {
-                try {
-                    const refreshResponse = await apiPlain.post('/dj-rest-auth/token/refresh/', {
-                        refresh: refreshToken
-                    });
-
-                    if (refreshResponse.data.access) {
-                        Cookies.set('access_token', refreshResponse.data.access);
-                        // Retry the original request with new token
-                        if (error.config) {
-                            error.config.headers.Authorization = `Bearer ${refreshResponse.data.access}`;
-                            return api.request(error.config);
-                        }
-                    }
-                } catch (refreshError) {
-                    // Refresh failed, redirect to login
-                    Cookies.remove('access_token');
-                    Cookies.remove('refresh_token');
-                    window.location.href = '/auth/login';
-                    return Promise.reject(error);
-                }
-            }
         }
 
         return Promise.reject(error);
