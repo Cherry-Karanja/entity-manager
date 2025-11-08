@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AuthForm } from '@/components/auth/forms/auth-form'
 import { useAuth } from '@/components/auth/contexts/auth-context'
+import { toast } from 'sonner'
 
 type AuthMode = 'login' | 'signup' | 'reset' | 'reset-confirm'
 
@@ -14,6 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      toast.success('✅ You are already logged in!', { duration: 2000 })
       router.push('/dashboard')
     }
   }, [isAuthenticated, router])

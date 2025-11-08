@@ -21,25 +21,25 @@ export function ProtectedRoute({
   const router = useRouter()
   const pathname = usePathname()
 
-  useEffect(() => {
-    if (!isLoading) {
-      // Check if user is not authenticated for protected routes
-      if (requireAuth && (!isAuthenticated || !user)) {
-        toast.error('🔐 Oops! Please login to gain access', {
-          description: 'You need to be authenticated to view this page',
-          duration: 4000,
-        })
-        // Redirect to login with the current path as redirect parameter
-        router.replace(`${redirectTo}?redirect=${encodeURIComponent(pathname)}`)
-        return
-      }
-      // Check if user is authenticated for auth-only routes (like login/signup pages)
-      else if (!requireAuth && isAuthenticated && user) {
-        router.push('/dashboard')
-        return
-      }
-    }
-  }, [isAuthenticated, isLoading, user, pathname, router, requireAuth, redirectTo])
+  // useEffect(() => {
+  //   if (!isLoading) {
+  //     // Check if user is not authenticated for protected routes
+  //     if (requireAuth && (!isAuthenticated || !user)) {
+  //       toast.error('🔐 Oops! Please login to gain access', {
+  //         description: 'You need to be authenticated to view this page',
+  //         duration: 4000,
+  //       })
+  //       // Redirect to login with the current path as redirect parameter
+  //       router.replace(`${redirectTo}?redirect=${encodeURIComponent(pathname)}`)
+  //       return
+  //     }
+  //     // Check if user is authenticated for auth-only routes (like login/signup pages)
+  //     else if (!requireAuth && isAuthenticated && user) {
+  //       router.push('/dashboard')
+  //       return
+  //     }
+  //   }
+  // }, [isAuthenticated, isLoading, user, pathname, router, requireAuth, redirectTo])
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -55,11 +55,31 @@ export function ProtectedRoute({
 
   // Don't render children if authentication requirements aren't met
   if (requireAuth && (!isAuthenticated || !user)) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
+          <p className="text-muted-foreground">You need to be logged in to access this page.</p>
+          <button
+            onClick={() => router.push(redirectTo)}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!requireAuth && isAuthenticated && user) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold text-blue-600">Already Logged In</h2>
+          <p className="text-muted-foreground">You are already authenticated. Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
   return <>{children}</>

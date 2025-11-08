@@ -38,14 +38,8 @@ export class AuthAPI {
   }
 
   static async refreshToken(): Promise<AuthTokens> {
-    const refreshToken = localStorage.getItem('refresh_token')
-    if (!refreshToken) {
-      throw new Error('No refresh token available')
-    }
-
-    const response: AxiosResponse<AuthTokens> = await axios.post(Endpoints.Auth.TokenRefresh, {
-      refresh: refreshToken
-    })
+    // cookies already contain the refresh token
+    const response: AxiosResponse<AuthTokens> = await axios.post(Endpoints.Auth.TokenRefresh)
     return response.data
   }
 
@@ -78,8 +72,9 @@ export class AuthAPI {
 
   // Utility methods
   static isAuthenticated(): boolean {
-    const token = Cookies.get('access_token')
-    if (!token) return false
+    const token = AuthAPI.getAccessToken()
+    const user = AuthAPI.getAuthUser()
+    if (!token || !user) return false
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]))
@@ -94,13 +89,24 @@ export class AuthAPI {
     return Cookies.get('access_token') || null
   }
 
+  static getAuthUser(): AuthUser | null {
+    const userJson = Cookies.get('auth_user')
+    if (!userJson) return null
+    return JSON.parse(userJson)
+  }
+
   static setTokens(tokens: AuthTokens): void {
     Cookies.set('access_token', tokens.access)
+  }
+
+  static setAuthUser(user: AuthUser): void {
+    Cookies.set('auth_user', JSON.stringify(user))
   }
 
   static clearTokens(): void {
     Cookies.remove('access_token')
     Cookies.remove('refresh_token')
+    Cookies.remove('auth_user')
   }
 }
 

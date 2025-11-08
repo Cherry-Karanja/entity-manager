@@ -23,9 +23,8 @@ export interface AuthTokens {
   refresh: string
 }
 
-export interface AuthResponse {
+export interface AuthResponse extends AuthTokens {
   user: AuthUser
-  tokens: AuthTokens
 }
 
 export interface LoginRequest {

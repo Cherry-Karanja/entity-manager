@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Sidebar,
   SidebarContent,
@@ -141,10 +142,10 @@ export function DashboardLayout({
               {sidebarItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.href} className="flex items-center gap-3">
+                    <Link href={item.href} className="flex items-center gap-3">
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                   <Separator />
                 </SidebarMenuItem>
@@ -185,12 +186,12 @@ export function DashboardLayout({
                     <React.Fragment key={index}>
                       {index > 0 && <span>/</span>}
                       {breadcrumb.href ? (
-                        <a
+                        <Link
                           href={breadcrumb.href}
                           className="hover:text-sidebar-foreground transition-colors"
                         >
                           {breadcrumb.label}
-                        </a>
+                        </Link>
                       ) : (
                         <span className="text-sidebar-foreground font-medium">
                           {breadcrumb.label}

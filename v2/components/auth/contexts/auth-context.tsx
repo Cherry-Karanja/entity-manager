@@ -40,8 +40,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (AuthAPI.isAuthenticated()) {
-          await refreshUser()
+        if (AuthAPI.isAuthenticated() && !user) {
+          const userData = await AuthAPI.getAuthUser()
+          setUser(userData)
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error)
@@ -58,7 +59,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true)
       const response = await AuthAPI.login({ email, password })
-      AuthAPI.setTokens(response.tokens)
+      AuthAPI.setTokens(response)
+      AuthAPI.setAuthUser(response.user)
       setUser(response.user)
     } catch (error) {
       console.error('Login failed:', error)
@@ -72,7 +74,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true)
       const response = await AuthAPI.signup(userData)
-      AuthAPI.setTokens(response.tokens)
+      AuthAPI.setTokens(response)
+      AuthAPI.setAuthUser(response.user)
       setUser(response.user)
     } catch (error) {
       console.error('Signup failed:', error)

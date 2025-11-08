@@ -5,18 +5,18 @@ export class Endpoints {
   // Authentication & User Management
   // ===============================
   static readonly Auth = {
-    Login: `${this.BaseUrl}/dj-rest-auth/login/`,
-    Logout: `${this.BaseUrl}/dj-rest-auth/logout/`,
-    Register: `${this.BaseUrl}/dj-rest-auth/registration/`,
-    UserDetails: `${this.BaseUrl}/dj-rest-auth/user/`,
-    TokenRefresh: `${this.BaseUrl}/dj-rest-auth/token/refresh/`,
-    TokenVerify: `${this.BaseUrl}/dj-rest-auth/token/verify/`,
-    PasswordReset: `${this.BaseUrl}/dj-rest-auth/password/reset/`,
-    PasswordChange: `${this.BaseUrl}/dj-rest-auth/password/change/`,
-    PasswordResetConfirm: `${this.BaseUrl}/dj-rest-auth/password/reset/confirm/`,
-    EmailVerification: `${this.BaseUrl}/dj-rest-auth/account-confirm-email/`,
-    ResendEmailVerification: `${this.BaseUrl}/dj-rest-auth/registration/resend-email/`,
-    CsrfToken: `${this.BaseUrl}/dj-rest-auth/csrf-cookie/`,
+    Login: `${this.BaseUrl}/api/v1/core/auth/login/`,
+    Logout: `${this.BaseUrl}/api/v1/core/auth/logout/`,
+    Register: `${this.BaseUrl}/api/v1/core/auth/registration/`,
+    UserDetails: `${this.BaseUrl}/api/v1/core/auth/user/`,
+    TokenRefresh: `${this.BaseUrl}/api/v1/core/auth/token/refresh/`,
+    TokenVerify: `${this.BaseUrl}/api/v1/core/auth/token/verify/`,
+    PasswordReset: `${this.BaseUrl}/api/v1/core/auth/password/reset/`,
+    PasswordChange: `${this.BaseUrl}/api/v1/core/auth/password/change/`,
+    PasswordResetConfirm: `${this.BaseUrl}/api/v1/core/auth/password/reset/confirm/`,
+    EmailVerification: `${this.BaseUrl}/api/v1/core/auth/account-confirm-email/`,
+    ResendEmailVerification: `${this.BaseUrl}/api/v1/core/auth/registration/resend-email/`,
+    CsrfToken: `${this.BaseUrl}/api/v1/core/auth/csrf-cookie/`,
   };
 
   // ===============================
