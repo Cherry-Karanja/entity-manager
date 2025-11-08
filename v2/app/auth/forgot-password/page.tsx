@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AuthForm } from '@/components/auth/auth-form'
+import { AuthForm } from '@/components/auth/forms/auth-form'
 
 type AuthMode = 'login' | 'signup' | 'reset' | 'reset-confirm'
 
