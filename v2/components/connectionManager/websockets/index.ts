@@ -14,9 +14,12 @@ export {
 } from './hooks';
 
 // Types
-export type {
+export {
   ConnectionState,
-  MessageType,
+  MessageType
+} from './types';
+
+export type {
   WebSocketMessage,
   BaseWebSocketMessage,
   EntityMessage,
