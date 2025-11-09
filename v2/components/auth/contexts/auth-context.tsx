@@ -58,6 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true)
+      AuthAPI.clearTokens()
       const response = await AuthAPI.login({ email, password })
       AuthAPI.setTokens(response)
       AuthAPI.setAuthUser(response.user)

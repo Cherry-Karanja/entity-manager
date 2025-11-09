@@ -103,7 +103,7 @@ export class AuthAPI {
   }
 
   static setTokens(tokens: AuthTokens): void {
-    // Cookies.set('access_token', tokens.access)
+    Cookies.set('access_token', tokens.access)
   }
 
   static setAuthUser(user: AuthUser): void {
