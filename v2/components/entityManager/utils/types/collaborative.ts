@@ -1,9 +1,9 @@
 // Enhanced WebSocket types for collaborative features
-import { WebSocketMessage } from '../../../../utils/websocket';
+import { BaseWebSocketMessage, MessageType } from '../../../connectionManager/websockets/types'
 
-export interface CollaborativeMessage extends WebSocketMessage {
-  type: 'user_joined' | 'user_left' | 'user_editing' | 'user_cursor' | 'entity_lock' | 'entity_unlock' | 'conflict_resolution';
-  user_id: number;
+export interface CollaborativeMessage extends BaseWebSocketMessage {
+  type: MessageType.USER_JOINED | MessageType.USER_LEFT | MessageType.USER_EDITING | MessageType.USER_EDITING_STARTED | MessageType.USER_EDITING_STOPPED;
+  user_id: string;
   session_id: string;
   timestamp: number;
 }

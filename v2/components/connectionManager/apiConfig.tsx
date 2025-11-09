@@ -1,5 +1,5 @@
 export class Endpoints {
-  static readonly BaseUrl = "http://127.0.0.1:8000"; // replace with environment variable in prod
+  static readonly BaseUrl = "http://localhost:8000"; // replace with environment variable in prod
 
   // ===============================
   // Authentication & User Management

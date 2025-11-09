@@ -10,24 +10,26 @@ import {
 } from '../types/auth-types'
 
 import { Endpoints } from '@/components/connectionManager/apiConfig'
-import { authApi } from '@/components/connectionManager/http'
 import Cookies from 'js-cookie'
 
 
 export class AuthAPI {
   // Authentication endpoints
   static async login(credentials: LoginRequest): Promise<AuthResponse> {
+    const { authApi } = await import('@/components/connectionManager/http')
     const response: AxiosResponse<AuthResponse> = await authApi.post(Endpoints.Auth.Login, credentials)
     return response.data
   }
 
   static async signup(userData: SignupRequest): Promise<AuthResponse> {
+    const { authApi } = await import('@/components/connectionManager/http')
     const response: AxiosResponse<AuthResponse> = await authApi.post(Endpoints.Auth.Register, userData)
     return response.data
   }
 
   static async logout(): Promise<void> {
     try {
+      const { authApi } = await import('@/components/connectionManager/http')
       await authApi.post('/auth/logout/')
     } catch {
       // Even if logout fails on server, clear local tokens
@@ -45,27 +47,32 @@ export class AuthAPI {
 
   // Password reset endpoints
   static async requestPasswordReset(data: PasswordResetRequest): Promise<{ message: string }> {
+    const { authApi } = await import('@/components/connectionManager/http')
     const response: AxiosResponse<{ message: string }> = await authApi.post(Endpoints.Auth.PasswordReset, data)
     return response.data
   }
 
   static async confirmPasswordReset(data: PasswordResetConfirmRequest): Promise<{ message: string }> {
+    const { authApi } = await import('@/components/connectionManager/http')
     const response: AxiosResponse<{ message: string }> = await authApi.post(Endpoints.Auth.PasswordResetConfirm, data)
     return response.data
   }
 
   // User profile endpoints
   static async getCurrentUser(): Promise<AuthUser> {
+    const { authApi } = await import('@/components/connectionManager/http')
     const response: AxiosResponse<AuthUser> = await authApi.get(Endpoints.Auth.UserDetails)
     return response.data
   }
 
   static async updateProfile(userData: Partial<AuthUser>): Promise<AuthUser> {
+    const { authApi } = await import('@/components/connectionManager/http')
     const response: AxiosResponse<AuthUser> = await authApi.patch(Endpoints.Auth.UserDetails, userData)
     return response.data
   }
 
   static async changePassword(data: { old_password: string; new_password: string }): Promise<{ message: string }> {
+    const { authApi } = await import('@/components/connectionManager/http')
     const response: AxiosResponse<{ message: string }> = await authApi.post(Endpoints.Auth.PasswordChange, data)
     return response.data
   }
@@ -96,7 +103,7 @@ export class AuthAPI {
   }
 
   static setTokens(tokens: AuthTokens): void {
-    Cookies.set('access_token', tokens.access)
+    // Cookies.set('access_token', tokens.access)
   }
 
   static setAuthUser(user: AuthUser): void {
@@ -109,5 +116,3 @@ export class AuthAPI {
     Cookies.remove('auth_user')
   }
 }
-
-export default authApi

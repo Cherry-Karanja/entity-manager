@@ -4,6 +4,7 @@ import axios, { AxiosError, AxiosResponse, AxiosRequestConfig, InternalAxiosRequ
 import { Endpoints } from '../apiConfig';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
+import { AuthAPI } from '@/components/auth/lib/auth-api';
 
 interface ApiErrorResponse {
     detail?: string;
@@ -99,12 +100,7 @@ export class HttpClient {
     this.authApi.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error: AxiosError<ApiErrorResponse>) => {
-        // if response status is 401, handle token refresh logic here 
-        const AuthAPI = require('@/components/auth/lib/auth-api').AuthAPI;
-        const { useRouter, usePathname } = require('next/navigation');
-        const router = useRouter();
-        const pathname = usePathname();
-        const toast = require('sonner').toast;
+        // if response status is 401, handle token refresh logic here
         if (error.response?.status === 401) {
           try {
             // Attempt to refresh token
@@ -118,13 +114,14 @@ export class HttpClient {
             }
             return this.authApi.request(originalConfig);
           } catch (refreshError) {
+            const toast = (await import('sonner')).toast;
             console.error('Token refresh failed:', refreshError);
             toast.error('Session expired. Please login again.', {
               action: {
                 label: 'Login',
                 onClick: () => {
                   AuthAPI.clearTokens();
-                  router.replace(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+                  window.location.href = '/auth/login';
                 }
               }
             });
