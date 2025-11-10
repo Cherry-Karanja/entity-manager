@@ -210,9 +210,6 @@ const EntityFormComponent: React.FC<EntityFormProps> = ({
       // Call success hook
       mergedConfig.hooks?.onSubmitSuccess?.(submitData)
 
-      // Show success toast
-      toast.success(mergedConfig.submitSuccessMessage || 'Form submitted successfully!')
-
       // Reset form if in create mode
       if (mergedConfig.mode === 'create') {
         setFormState(prev => ({
@@ -225,6 +222,9 @@ const EntityFormComponent: React.FC<EntityFormProps> = ({
       } else {
         setFormState(prev => ({ ...prev, isSubmitting: false }))
       }
+
+      // Show success toast (only after everything succeeded)
+      toast.success(mergedConfig.submitSuccessMessage || 'Form submitted successfully!')
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred during submission'

@@ -587,6 +587,8 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         } else {
           // Set validation errors for form to display
           setValidationErrors(result.validationErrors.fieldErrors)
+          // Throw error so EntityForm shows error toast
+          throw new Error(result.validationErrors.nonFieldErrors.join(', ') || 'Form submission failed')
         }
       } else if (mode === 'edit' && selectedEntity) {
         const result = await entityApi.updateEntity(selectedEntity.id, data as Partial<TFormData>)
@@ -598,6 +600,8 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         } else {
           // Set validation errors for form to display
           setValidationErrors(result.validationErrors.fieldErrors)
+          // Throw error so EntityForm shows error toast
+          throw new Error(result.validationErrors.nonFieldErrors.join(', ') || 'Form submission failed')
         }
       }
     } catch (error) {
