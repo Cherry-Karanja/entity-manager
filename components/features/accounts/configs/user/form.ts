@@ -43,7 +43,7 @@ export const userFormConfig: {
       id: 'role-permissions',
       title: 'Role & Permissions',
       description: 'Assign user roles and permissions',
-      fields: ['role'],
+      fields: ['role_name'],
       layout: 'grid',
       columns: 1,
       collapsible: true,

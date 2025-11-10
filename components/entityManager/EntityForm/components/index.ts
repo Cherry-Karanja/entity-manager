@@ -5,7 +5,7 @@
 export { FormHeader } from './FormHeader'
 export { FormActions } from './FormActions'
 export { FormMessages } from './FormMessages'
-export { FormFieldRenderer } from './FormFieldRenderer'
+export { default as FormFieldRenderer } from './FormFieldRenderer'
 export { BulkImportDialog } from './BulkImportDialog'
 
 export type { FormHeaderProps } from './FormHeader'

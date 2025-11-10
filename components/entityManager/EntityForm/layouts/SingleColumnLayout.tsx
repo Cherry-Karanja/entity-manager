@@ -3,7 +3,7 @@
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { FormFieldRenderer } from '../components/FormFieldRenderer'
+import FormFieldRenderer from '../components/FormFieldRenderer'
 import { FormHeader } from '../components/FormHeader'
 import { FormActions } from '../components/FormActions'
 import { FormMessages } from '../components/FormMessages'

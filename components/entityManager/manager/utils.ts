@@ -201,7 +201,14 @@ export const transformEntityFieldToFormField = <TEntity, TFormData extends Recor
       min: field.validation?.min,
       max: field.validation?.max,
       minLength: field.validation?.minLength,
-      maxLength: field.validation?.maxLength
+      maxLength: field.validation?.maxLength,
+      // Relationship properties
+      foreignKey: field.foreignKey,
+      relatedEntity: field.relatedEntity,
+      endpoint: field.endpoint,
+      relatedField: field.relatedField,
+      displayField: field.displayField,
+      relationshipType: field.relationshipType
     }
 
     return {

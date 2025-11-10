@@ -81,14 +81,18 @@ export const userFields: EntityField<User, UserFormData>[] = [
 
   // Role and Permissions
   {
-    key: 'role',
+    key: 'role_name',
     label: 'Role',
     type: 'select',
     required: false,
     fieldType: 'select',
     placeholder: 'Select a role',
-    // Options will be loaded dynamically from API
-    options: []
+    foreignKey: true,
+    relatedEntity: 'user-role',
+    endpoint: '/api/v1/accounts/user-roles/',
+    displayField: 'display_name',
+    relatedField: 'name',
+    relationshipType: 'many-to-one'
   },
 
   // Account Status

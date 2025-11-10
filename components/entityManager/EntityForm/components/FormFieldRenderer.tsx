@@ -8,16 +8,100 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { AlertCircle, HelpCircle } from 'lucide-react'
-import { FormField, FieldRenderProps } from '../types'
+import { FieldRenderProps } from '../types'
 import { cn } from '@/lib/utils'
 import { FileDropZone, FilePreview } from '../../utils/FileDropZone'
-import { useFileUpload } from '../../hooks/useFileUpload'
+import { useRelatedData } from '../../hooks/useRelatedData'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
+import { ChevronsUpDown, Check } from 'lucide-react'
 
 interface FormFieldRendererProps extends FieldRenderProps {
   layout?: 'vertical' | 'horizontal' | 'grid'
 }
 
-export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
+// Searchable Select Field Component
+const SearchableSelectField: React.FC<{
+  field: {
+    label: string
+    placeholder?: string
+    transform?: (value: unknown) => unknown
+  }
+  value: unknown
+  onChange: (value: unknown) => void
+  searchValue: string
+  onSearchChange: (value: string) => void
+  options: Array<{ value: string | number; label: string }>
+  isLoading: boolean
+  disabled?: boolean
+  hasError?: boolean
+  className?: string
+}> = ({ field, value, onChange, searchValue, onSearchChange, options, isLoading, disabled = false, hasError = false, className }) => {
+  const [open, setOpen] = React.useState(false)
+  const selectedOption = options.find((option) => option.value === value)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            "w-full justify-between",
+            hasError && 'border-red-500 focus:border-red-500',
+            className
+          )}
+          disabled={disabled || isLoading}
+        >
+          {isLoading ? (
+            "Loading..."
+          ) : selectedOption ? (
+            selectedOption.label
+          ) : (
+            field.placeholder || `Select ${field.label}`
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start">
+        <Command>
+          <CommandInput
+            placeholder={`Search ${field.label}...`}
+            value={searchValue}
+            onValueChange={onSearchChange}
+          />
+          <CommandList>
+            <CommandEmpty>No {field.label.toLowerCase()} found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.label}
+                  onSelect={() => {
+                    onChange(field.transform ? field.transform(option.value) : option.value)
+                    setOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   field,
   value,
   onChange,
@@ -26,11 +110,26 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   touched,
   disabled,
   required,
-  layout = 'vertical',
+  layout = 'vertical'
 }) => {
   const fieldId = `field-${field.name}`
   const hasError = error && touched
   const helpText = field.helpText || field.description
+
+  // Search state for searchable selects
+  const [searchValue, setSearchValue] = React.useState('')
+
+  // Load related data for foreign key fields
+  const { data: relatedOptions, isLoading: isLoadingOptions } = useRelatedData(
+    field.relatedEntity || field.name,
+    {
+      endpoint: field.endpoint,
+      displayField: field.displayField || 'name',
+      valueField: field.relatedField || 'id',
+      search: searchValue || undefined, // Only pass search if it's not empty
+      enabled: field.foreignKey && !!field.endpoint
+    }
+  )
 
   // Custom render function
   if (field.render) {
@@ -118,12 +217,38 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           />
         )
 
-      case 'select':
+      case 'select': {
+        const options = field.foreignKey ? relatedOptions : field.options
+        const useSearchableSelect = field.foreignKey || (options && options.length > 10) || field.searchable
+
+        // Convert FieldOption[] to RelatedDataOption[] for consistency
+        const searchableOptions = options?.map(option => ({
+          value: option.value as string | number,
+          label: option.label
+        })) || []
+
+        if (useSearchableSelect) {
+          return (
+            <SearchableSelectField
+              field={field}
+              value={value}
+              onChange={onChange}
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              options={searchableOptions}
+              isLoading={isLoadingOptions}
+              disabled={disabled}
+              hasError={!!hasError}
+              className={field.className}
+            />
+          )
+        }
+
         return (
           <Select
             value={value as string || ''}
             onValueChange={(val) => onChange(field.transform ? field.transform(val) : val)}
-            disabled={disabled}
+            disabled={disabled || isLoadingOptions}
           >
             <SelectTrigger
               className={cn(
@@ -131,24 +256,21 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                 field.className
               )}
             >
-              <SelectValue placeholder={field.placeholder || `Select ${field.label}`} />
+              <SelectValue placeholder={isLoadingOptions ? 'Loading...' : (field.placeholder || `Select ${field.label}`)} />
             </SelectTrigger>
             <SelectContent>
-              {field.options?.map((option) => (
+              {options?.map((option) => (
                 <SelectItem
                   key={String(option.value)}
                   value={String(option.value)}
-                  disabled={option.disabled}
                 >
-                  <div className="flex items-center gap-2">
-                    {option.icon && <option.icon className="w-4 h-4" />}
-                    <span>{option.label}</span>
-                  </div>
+                  <span>{option.label}</span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )
+      }
 
       case 'multiselect':
         const selectedValues = Array.isArray(value) ? value : []
@@ -182,6 +304,50 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               </div>
             ))}
           </div>
+        )
+
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={fieldId}
+              checked={Boolean(value)}
+              onCheckedChange={(checked) => onChange(field.transform ? field.transform(checked) : checked)}
+              onBlur={onBlur}
+              disabled={disabled}
+              required={required}
+            />
+            <Label htmlFor={fieldId} className="text-sm font-normal cursor-pointer">
+              {field.label}
+            </Label>
+          </div>
+        )
+
+      case 'radio':
+        return (
+          <RadioGroup
+            value={String(value) || ''}
+            onValueChange={(val) => onChange(field.transform ? field.transform(val) : val)}
+            disabled={disabled}
+          >
+            {field.options?.map((option) => (
+              <div key={String(option.value)} className="flex items-center space-x-2">
+                <RadioGroupItem
+                  value={String(option.value)}
+                  id={`${fieldId}-${option.value}`}
+                />
+                <Label
+                  htmlFor={`${fieldId}-${option.value}`}
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    {option.icon && <option.icon className="w-4 h-4" />}
+                    <span>{option.label}</span>
+                  </div>
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
         )
 
       case 'checkbox':
@@ -287,15 +453,15 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       case 'file':
         // Check if advanced file upload is enabled
         const enableAdvancedUpload = field.multiple || field.max || field.min ||
-          (field as any).enableDragDrop || (field as any).showPreview;
+          field.enableDragDrop || field.showPreview;
 
         if (enableAdvancedUpload) {
           // Advanced file upload with drag-drop and preview
           const accept = field.options?.map(opt => String(opt.value)) || [];
-          const maxSize = (field as any).maxSize;
-          const minSize = (field as any).minSize;
-          const showPreview = (field as any).showPreview !== false;
-          const enableDragDrop = (field as any).enableDragDrop !== false;
+          const maxSize = field.maxSize;
+          const minSize = field.minSize;
+          const showPreview = field.showPreview !== false;
+          const enableDragDrop = field.enableDragDrop !== false;
 
           return (
             <div className="space-y-2">
@@ -505,3 +671,5 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     </div>
   )
 }
+
+export default FormFieldRenderer

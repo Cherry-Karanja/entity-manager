@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { authApi } from '@/components/connectionManager/http'
 
 export interface RelatedDataOption {
@@ -7,13 +8,16 @@ export interface RelatedDataOption {
 }
 
 export interface UseRelatedDataOptions {
-  endpoint?: string
-  displayField?: string
-  valueField?: string
-  filter?: Record<string, unknown>
-  sort?: { field: string; direction: 'asc' | 'desc' }
-  limit?: number
-  enabled?: boolean
+  endpoint?: string;
+  displayField?: string;
+  valueField?: string;
+  filter?: Record<string, unknown>;
+  sort?: { field: string; direction: 'asc' | 'desc' };
+  limit?: number;
+  search?: string;
+  searchFields?: string[];
+  debounceMs?: number;
+  enabled?: boolean;
 }
 
 /**
@@ -33,11 +37,25 @@ export function useRelatedData(
     filter = {},
     sort = { field: 'name', direction: 'asc' },
     limit,
-    enabled = true
+    search,
+    searchFields = [displayField],
+    enabled = true,
+    debounceMs = 300
   } = options
 
+  // Debounce search term
+  const [debouncedSearch, setDebouncedSearch] = useState(search)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, debounceMs)
+
+    return () => clearTimeout(timer)
+  }, [search, debounceMs])
+
   return useQuery({
-    queryKey: ['relatedData', entityType, endpoint, filter, sort, limit],
+    queryKey: ['relatedData', entityType, endpoint, filter, sort, limit, debouncedSearch, searchFields],
     queryFn: async (): Promise<RelatedDataOption[]> => {
       if (!endpoint) {
         throw new Error(`No endpoint provided for entity type: ${entityType}`)
@@ -52,6 +70,14 @@ export function useRelatedData(
           params.append(key, String(value))
         }
       })
+
+      // Add search parameters
+      if (debouncedSearch && searchFields.length > 0) {
+        params.append('search', debouncedSearch)
+        searchFields.forEach(field => {
+          params.append('search_fields', field)
+        })
+      }
 
       // Add sorting
       if (sort.field) {
@@ -70,17 +96,17 @@ export function useRelatedData(
 
       // Transform the response data to RelatedDataOption format
       if (Array.isArray(response.data)) {
-        return response.data.map((item: any) => ({
-          value: item[valueField],
-          label: item[displayField] || item.name || item.title || String(item[valueField])
+        return response.data.map((item: Record<string, unknown>) => ({
+          value: item[valueField] as string | number,
+          label: (item[displayField] as string) || (item.name as string) || (item.title as string) || String(item[valueField])
         }))
       }
 
       // Handle paginated responses
       if (response.data.results && Array.isArray(response.data.results)) {
-        return response.data.results.map((item: any) => ({
-          value: item[valueField],
-          label: item[displayField] || item.name || item.title || String(item[valueField])
+        return response.data.results.map((item: Record<string, unknown>) => ({
+          value: item[valueField] as string | number,
+          label: (item[displayField] as string) || (item.name as string) || (item.title as string) || String(item[valueField])
         }))
       }
 

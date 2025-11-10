@@ -13,6 +13,7 @@ const USER_TYPE_PERMISSIONS: Record<string, string[]> = {
     'can_assign_tenant_to_unit',
     'can_view_tenants',
     'can_manage_tenants',
+    'can_manage_users',
     'can_view_rent_payments',
     'can_view_rent_payments_history',
     'can_record_rent_payment',
@@ -76,10 +77,10 @@ const USER_TYPE_PERMISSIONS: Record<string, string[]> = {
 
 // Map entity actions to Django permissions
 const ENTITY_PERMISSION_MAPPING = {
-  create: ['can_manage_properties', 'can_manage_tenants', 'can_manage_units'],
+  create: ['can_manage_properties', 'can_manage_tenants', 'can_manage_units', 'can_manage_users'],
   read: ['can_view_dashboard', 'can_view_tenants', 'can_view_rent_payments', 'can_view_maintenance_requests'],
-  update: ['can_manage_properties', 'can_manage_tenants', 'can_manage_units', 'can_update_maintenance_request_status'],
-  delete: ['can_manage_properties', 'can_manage_tenants', 'can_manage_units']
+  update: ['can_manage_properties', 'can_manage_tenants', 'can_manage_units', 'can_manage_users'],
+  delete: ['can_manage_properties', 'can_manage_tenants', 'can_manage_units', 'can_manage_users']
 } as const
 
 export const usePermissions = () => {

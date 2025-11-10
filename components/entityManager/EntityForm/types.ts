@@ -107,6 +107,23 @@ export interface FormField {
   // Custom rendering
   render?: (props: FieldRenderProps) => React.ReactNode
   component?: React.ComponentType<FieldRenderProps>
+
+  // Relationship properties for foreign keys
+  foreignKey?: boolean
+  relatedEntity?: string
+  endpoint?: string
+  relatedField?: string
+  displayField?: string
+  relationshipType?: 'one-to-one' | 'many-to-one' | 'one-to-many' | 'many-to-many'
+
+  // Search functionality
+  searchable?: boolean
+
+  // File upload properties
+  enableDragDrop?: boolean
+  showPreview?: boolean
+  maxSize?: number
+  minSize?: number
 }
 
 export type FieldType =
