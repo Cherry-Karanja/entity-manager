@@ -3,12 +3,10 @@
 
 import React, { useState, useCallback, useEffect } from 'react'
 import { EntityManagerConfig, Entity } from '../types'
-
-// Component imports (to be created/updated)
-// import { EntityList } from '../EntityList'
-// import { EntityForm } from '../EntityForm'
-// import { EntityView } from '../EntityView'
-// import { EntityActions } from '../EntityActions'
+import { EntityList } from '../EntityList/index-v3'
+import { EntityForm } from '../EntityForm/index-v3'
+import { EntityView } from '../EntityView/index-v3'
+import { EntityActions } from '../EntityActions/index-v3'
 
 export interface EntityOrchestratorProps<TEntity extends Entity = Entity> {
   config: EntityManagerConfig<TEntity>
@@ -212,50 +210,44 @@ export const EntityOrchestrator = <TEntity extends Entity = Entity>({
     <div className={`entity-orchestrator ${className || ''}`}>
       {/* Global Actions - pass config directly */}
       {config.actions && (
-        <div className="entity-actions-container">
-          {/* <EntityActions config={config.actions} context={actionContext} /> */}
-          <p>Actions placeholder</p>
+        <div className="entity-actions-container mb-4">
+          <EntityActions config={config.actions} context={actionContext} />
         </div>
       )}
 
       {/* Main Content - pass config directly to components */}
       {view === 'list' && config.list && (
         <div className="entity-list-container">
-          {/* <EntityList
+          <EntityList
             config={config.list}
             data={entities}
             loading={loading}
             onRowClick={showView}
-            onEdit={showForm}
-            onDelete={handleDelete}
             onRefresh={fetchEntities}
-          /> */}
-          <p>List view: {entities.length} items</p>
+          />
         </div>
       )}
 
       {view === 'form' && config.form && (
         <div className="entity-form-container">
-          {/* <EntityForm
+          <EntityForm
             config={config.form}
             data={formMode === 'edit' ? selectedEntity : undefined}
             onSubmit={formMode === 'create' ? handleCreate : handleUpdate}
             onCancel={showList}
-          /> */}
-          <p>Form view: {formMode} mode</p>
+          />
         </div>
       )}
 
       {view === 'view' && config.view && selectedEntity && (
         <div className="entity-view-container">
-          {/* <EntityView
+          <EntityView
             config={config.view}
             data={selectedEntity}
             onEdit={() => showForm(selectedEntity)}
             onDelete={() => handleDelete(selectedEntity)}
             onBack={showList}
-          /> */}
-          <p>Detail view for: {selectedEntity.id}</p>
+          />
         </div>
       )}
     </div>
