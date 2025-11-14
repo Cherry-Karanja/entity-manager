@@ -202,7 +202,7 @@ export function fieldToViewField<TEntity extends BaseEntity>(
     icon: field.icon,
     badge: field.badge,
     copyable: field.copyable,
-    link: field.link,
+    link: field.link as any,
     render: field.renderView as any
   }
 }
@@ -236,7 +236,7 @@ export function actionToListAction<TEntity extends BaseEntity>(
     group: action.group,
     priority: action.priority,
     separator: action.separator,
-    variant: action.variant,
+    variant: action.variant === 'primary' ? 'default' : action.variant,
     className: action.className
   }
 }
@@ -424,7 +424,7 @@ export function toViewConfig<TEntity extends BaseEntity, TFormData extends Recor
       fields: group.fields
         .map(fieldKey => config.fields.find(f => f.key === fieldKey))
         .filter((f): f is UnifiedFieldConfig<TEntity, TFormData> => f !== undefined)
-        .map(f => fieldToViewField(f, entity)),
+        .map(f => fieldToViewField<TEntity>(f as any, entity)),
       collapsed: group.collapsed,
       collapsible: group.collapsible,
       layout: group.layout,
@@ -438,7 +438,7 @@ export function toViewConfig<TEntity extends BaseEntity, TFormData extends Recor
       title: 'Details',
       fields: config.fields
         .filter(f => !f.hidden)
-        .map(f => fieldToViewField(f, entity)),
+        .map(f => fieldToViewField<TEntity>(f as any, entity)),
       layout: 'vertical',
       collapsible: false
     }]
