@@ -5,7 +5,7 @@ import type { EntityListConfig } from '../EntityList/types'
 import type { EntityFormConfig } from '../EntityForm/types'
 import type { EntityViewConfig } from '../EntityView/types'
 import type { EntityActionsConfig } from '../EntityActions/types'
-import type { EntityExporterConfig } from '../EntityExporter/types'
+import type { EntityExporterConfig, ExportFormat, ExportFormatType } from '../EntityExporter/types'
 
 // ===== CORE ENTITY TYPES =====
 
@@ -184,4 +184,6 @@ export type {
   EntityViewConfig,
   EntityActionsConfig,
   EntityExporterConfig,
+  ExportFormat,
+  ExportFormatType,
 }
