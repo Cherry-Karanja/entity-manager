@@ -3,7 +3,7 @@ import { EntityActionsConfig } from "../EntityActions/types"
 
 // ===== TYPE DEFINITIONS =====
 
-export interface EntityViewConfig {
+export interface EntityViewConfig<TEntity = unknown> {
   // View mode and layout
   mode?: ViewMode
   layout?: ViewLayout
@@ -12,8 +12,8 @@ export interface EntityViewConfig {
   // Data display configuration
   fields?: ViewField[]
   fieldGroups?: ViewFieldGroup[]
-  data?: unknown
-  dataFetcher?: () => Promise<unknown>
+  data?: TEntity
+  dataFetcher?: () => Promise<TEntity>
 
   // Display options
   showHeader?: boolean
@@ -24,19 +24,19 @@ export interface EntityViewConfig {
 
   // View components
   customComponents?: {
-    header?: React.ComponentType<ViewHeaderProps>
-    content?: React.ComponentType<ViewContentProps>
-    actions?: React.ComponentType<ViewActionsProps>
-    metadata?: React.ComponentType<ViewMetadataProps>
+    header?: React.ComponentType<ViewHeaderProps<TEntity>>
+    content?: React.ComponentType<ViewContentProps<TEntity>>
+    actions?: React.ComponentType<ViewActionsProps<TEntity>>
+    metadata?: React.ComponentType<ViewMetadataProps<TEntity>>
   }
 
   // Data transformation
-  dataTransformer?: (data: unknown) => unknown
-  fieldMapper?: (data: unknown) => Record<string, unknown>
+  dataTransformer?: (data: TEntity) => TEntity
+  fieldMapper?: (data: TEntity) => Record<string, unknown>
 
   // Navigation and actions
   actions?: ViewAction[] // Legacy support
-  entityActions?: EntityActionsConfig // New EntityActions config
+  entityActions?: EntityActionsConfig<TEntity> // New EntityActions config
   navigation?: {
     prev?: () => void | Promise<void>
     next?: () => void | Promise<void>
@@ -52,9 +52,9 @@ export interface EntityViewConfig {
     navigate?: boolean
   }
   hooks?: {
-    onViewLoad?: (data: unknown) => void
-    onViewChange?: (data: unknown) => void
-    onActionClick?: (action: ViewAction, data: unknown) => void
+    onViewLoad?: (data: TEntity) => void
+    onViewChange?: (data: TEntity) => void
+    onActionClick?: (action: ViewAction, data: TEntity) => void
     onNavigate?: (direction: 'prev' | 'next') => void
   }
 
@@ -161,29 +161,29 @@ export interface FieldRenderProps {
   data: unknown
 }
 
-export interface ViewHeaderProps {
-  data: unknown
-  config: EntityViewConfig
+export interface ViewHeaderProps<TEntity = unknown> {
+  data: TEntity
+  config: EntityViewConfig<TEntity>
   title?: string
   subtitle?: string
 }
 
-export interface ViewContentProps {
-  data: unknown
-  config: EntityViewConfig
+export interface ViewContentProps<TEntity = unknown> {
+  data: TEntity
+  config: EntityViewConfig<TEntity>
   fields: ViewField[]
   fieldGroups: ViewFieldGroup[]
 }
 
-export interface ViewActionsProps {
-  data: unknown
-  config: EntityViewConfig
+export interface ViewActionsProps<TEntity = unknown> {
+  data: TEntity
+  config: EntityViewConfig<TEntity>
   actions: ViewAction[]
 }
 
-export interface ViewMetadataProps {
-  data: unknown
-  config: EntityViewConfig
+export interface ViewMetadataProps<TEntity = unknown> {
+  data: TEntity
+  config: EntityViewConfig<TEntity>
   createdAt?: string
   updatedAt?: string
   createdBy?: string
@@ -290,10 +290,10 @@ export const DEFAULT_VIEW_ACTIONS: ViewAction[] = [
 
 // ===== UTILITY TYPES =====
 
-export interface EntityViewProps {
-  config: EntityViewConfig
-  data?: unknown
-  onActionClick?: (action: ViewAction, data?: unknown) => void
+export interface EntityViewProps<TEntity = unknown> {
+  config: EntityViewConfig<TEntity>
+  data?: TEntity
+  onActionClick?: (action: ViewAction, data?: TEntity) => void
   onNavigate?: (direction: 'prev' | 'next') => void
   className?: string
 }
