@@ -1,7 +1,7 @@
 'use client'
 
-import { EntityManager } from '@/components/entityManager/manager/orchestrator'
-import loginAttemptEntityConfig from '@/components/features/accounts/configs/loginAttempt'
+import { EntityOrchestrator } from '@/components/entityManager/manager/orchestrator-v3'
+import { loginAttemptEntityConfig } from '@/components/features/accounts/configs/index-v3'
 
 export default function LoginAttemptsPage() {
   return (
@@ -15,9 +15,9 @@ export default function LoginAttemptsPage() {
         </div>
       </div>
 
-      <EntityManager
+      <EntityOrchestrator
         config={loginAttemptEntityConfig}
-        initialMode="list"
+        initialView="list"
       />
     </div>
   )
