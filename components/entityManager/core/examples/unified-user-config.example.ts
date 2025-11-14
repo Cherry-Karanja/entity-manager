@@ -11,11 +11,12 @@ import {
   createField, 
   createAction,
   commonFields, 
-  commonActions
+  commonActions,
+  BaseEntity
 } from '../index'
 
 // Example types (would be in separate types file)
-interface User {
+interface User extends BaseEntity {
   id: number
   email: string
   first_name: string
@@ -25,7 +26,7 @@ interface User {
   created_at: string
 }
 
-interface UserFormData {
+interface UserFormData extends Record<string, unknown> {
   email: string
   first_name: string
   last_name: string
@@ -67,10 +68,10 @@ export const userConfig = createEntityConfig<User, UserFormData>('User', 'Users'
 
 // Define fields
 userConfig.fields = [
-  commonFields.id().build(),
-  commonFields.email().sortable().build(),
-  commonFields.name('first_name', 'First Name').build(),
-  commonFields.name('last_name', 'Last Name').build(),
+  commonFields.id().build() as any,
+  commonFields.email().sortable().build() as any,
+  commonFields.name('first_name', 'First Name').build() as any,
+  commonFields.name('last_name', 'Last Name').build() as any,
   
   createField<User, UserFormData>('role_name', 'Role', 'select')
     .required()
@@ -81,8 +82,8 @@ userConfig.fields = [
     })
     .build(),
   
-  commonFields.isActive().build(),
-  commonFields.createdAt().build()
+  commonFields.isActive().build() as any,
+  commonFields.createdAt().build() as any
 ]
 
 // Define actions

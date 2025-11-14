@@ -599,7 +599,7 @@ export const commonActions = {
       .variant('destructive')
       .danger()
       .confirm({
-        title: (items: TEntity[]) => `Delete ${Array.isArray(items) ? items.length : 0} Items`,
+        title: (entity: TEntity | TEntity[]) => `Delete ${Array.isArray(entity) ? entity.length : 1} Item${Array.isArray(entity) ? 's' : ''}`,
         content: 'Are you sure you want to delete the selected items? This action cannot be undone.',
         okText: 'Delete',
         cancelText: 'Cancel',

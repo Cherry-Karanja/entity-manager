@@ -1,6 +1,7 @@
 import React from 'react';
 import { EntityExporter } from '../index';
 import { EntityExporterConfig, DEFAULT_EXPORT_FORMATS } from '../types';
+import { Entity } from '../../types';
 
 // Mock data for examples
 const mockUsers = [
@@ -18,7 +19,7 @@ const mockProducts = [
 ];
 
 // Example 1: Basic CSV Export
-const basicCsvConfig: EntityExporterConfig = {
+const basicCsvConfig: EntityExporterConfig<Entity> = {
   formats: DEFAULT_EXPORT_FORMATS,
   data: mockUsers,
   fields: [
@@ -35,7 +36,7 @@ const basicCsvConfig: EntityExporterConfig = {
 };
 
 // Example 2: Multiple Formats with Selector
-const multiFormatConfig: EntityExporterConfig = {
+const multiFormatConfig: EntityExporterConfig<Entity> = {
   formats: DEFAULT_EXPORT_FORMATS,
   data: mockProducts,
   fields: [
@@ -61,7 +62,7 @@ const multiFormatConfig: EntityExporterConfig = {
 };
 
 // Example 3: Async Data Fetching
-const asyncDataConfig: EntityExporterConfig = {
+const asyncDataConfig: EntityExporterConfig<Entity> = {
   formats: DEFAULT_EXPORT_FORMATS,
   dataFetcher: async () => {
     // Simulate API call
@@ -101,7 +102,7 @@ const asyncDataConfig: EntityExporterConfig = {
 };
 
 // Example 4: Data Transformation
-const transformedDataConfig: EntityExporterConfig = {
+const transformedDataConfig: EntityExporterConfig<Entity> = {
   formats: DEFAULT_EXPORT_FORMATS,
   data: mockProducts,
   dataTransformer: (data) => {
@@ -132,7 +133,7 @@ const transformedDataConfig: EntityExporterConfig = {
 };
 
 // Example 5: Custom Formats Configuration
-const customFormatsConfig: EntityExporterConfig = {
+const customFormatsConfig: EntityExporterConfig<Entity> = {
   data: mockUsers,
   fields: [
     { key: 'id', label: 'User ID' },

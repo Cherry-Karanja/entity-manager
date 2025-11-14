@@ -67,7 +67,7 @@ export const EntityListToolbar: React.FC<EntityListToolbarProps> = ({
   const isMobile = useIsMobile()
 
   return (
-    <div className="flex flex-col gap-4 p-4 border-b bg-muted/20">
+    <div className="flex flex-col gap-4 p-4 border-b bg-muted/20 w-full">
       {/* Top row: Search, Sort, and primary actions */}
       <div className={`flex items-center ${isMobile ? 'flex-col gap-4' : 'justify-between gap-4'}`}>
         <div className={`flex items-center gap-4 ${isMobile ? 'w-full flex-col' : 'flex-1'}`}>

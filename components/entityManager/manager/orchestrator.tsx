@@ -630,6 +630,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         return (
           <EntityList
             config={listConfig}
+            data={listConfig.data}
             onSelectionChange={(keys, items) => {
               // Handle selection changes if needed
               console.log('Selection changed:', keys, items)
@@ -644,6 +645,12 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
             onSort={(sorts: any) => {
               // Pass EntityListSort[] directly to state
               entityState.actions.setSortConfig(Array.isArray(sorts) ? sorts : undefined)
+            }}
+            onRowClick={(item: EntityListItem) => {
+              const typedItem = item as TEntity
+              setMode('view')
+              setSelectedEntity(typedItem)
+              updateBreadcrumbs('view', typedItem)
             }}
             onPageChange={(page: number, pageSize: number) => {
               // Update pagination state

@@ -464,7 +464,7 @@ const entityListConfig = {
   title: 'Users',
   data: mockUsers,
   columns: userColumns,
-  entityActions: entityListActionsConfig,
+  entityActions: entityListActionsConfig as any,
   selection: {
     mode: 'multiple' as const,
     selectedKeys: [],
@@ -496,8 +496,8 @@ export const EntityActionsExamples: React.FC = () => {
           Simple immediate and navigation actions with confirmations.
         </p>
         <EntityActions
-          config={basicActionsConfig}
-          item={mockUser}
+          config={basicActionsConfig as any}
+          context={{ entity: mockUser }}
         />
       </div>
 
@@ -508,8 +508,8 @@ export const EntityActionsExamples: React.FC = () => {
           Actions that open forms for data input and submission.
         </p>
         <EntityActions
-          config={formActionsConfig}
-          item={mockUser}
+          config={formActionsConfig as any}
+          context={{ entity: mockUser }}
         />
       </div>
 
@@ -520,8 +520,8 @@ export const EntityActionsExamples: React.FC = () => {
           Actions that open modals and drawers for complex interactions.
         </p>
         <EntityActions
-          config={modalDrawerActionsConfig}
-          item={mockUser}
+          config={modalDrawerActionsConfig as any}
+          context={{ entity: mockUser }}
         />
       </div>
 
@@ -532,9 +532,8 @@ export const EntityActionsExamples: React.FC = () => {
           Actions that work with multiple selected items.
         </p>
         <EntityActions
-          config={bulkActionsConfig}
-          item={mockUser}
-          selectedItems={[mockUser, { ...mockUser, id: '2', name: 'Jane Smith' }]}
+          config={bulkActionsConfig as any}
+          context={{ entities: [mockUser, { ...mockUser, id: '2', name: 'Jane Smith' }] }}
         />
       </div>
 

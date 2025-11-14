@@ -1,6 +1,6 @@
 'use client'
 
-import { EntityOrchestrator } from '@/components/entityManager/manager/orchestrator'
+import { EntityManager } from '@/components/entityManager/manager/orchestrator'
 import { userEntityConfig } from '@/components/features/accounts/configs'
 
 export default function UsersPage() {
@@ -15,9 +15,9 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <EntityOrchestrator
+      <EntityManager
         config={userEntityConfig}
-        initialView="list"
+        initialMode="list"
       />
     </div>
   )

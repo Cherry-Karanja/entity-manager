@@ -5,20 +5,14 @@ import {EntityHooks } from '../types'
 
 export type FormFieldType =
   | 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
-  | 'textarea' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'switch'
-  | 'date' | 'datetime' | 'time' | 'file' | 'image'
+  | 'textarea' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'switch' | 'slider'
+  | 'date' | 'datetime' | 'time' | 'color' | 'file' | 'image'
   | 'rich-text' | 'markdown' | 'json' | 'custom'
 
 export interface FieldValidation {
-  required?: boolean | string
-  min?: number | string
-  max?: number | string
-  minLength?: number | string
-  maxLength?: number | string
-  pattern?: RegExp | string
-  email?: boolean | string
-  url?: boolean | string
-  custom?: (value: unknown) => string | boolean
+  type: 'required' | 'min' | 'max' | 'minLength' | 'maxLength' | 'pattern' | 'email' | 'url' | 'custom'
+  value?: unknown
+  message?: string
 }
 
 export interface FieldOption {
@@ -28,7 +22,7 @@ export interface FieldOption {
   icon?: React.ComponentType<{ className?: string }>
   description?: string
 }
-export interface EntityFormConfig<TEntity = unknown> {
+export interface EntityFormConfig<TEntity = Entity> {
   // Form fields configuration (SINGLE SOURCE OF TRUTH - from unified types)
   fields: FormField[]
 
@@ -82,22 +76,53 @@ export interface EntityFormConfig<TEntity = unknown> {
 export interface FormField {
   name: string
   label: string
+  icon?: React.ComponentType<{ className?: string }>
+  prefix?: string
+  suffix?: string
   type: FormFieldType
   required?: boolean
-  validation?: FieldValidation
+  validation?: FieldValidation[]
   defaultValue?: unknown
   placeholder?: string
   helpText?: string
   disabled?: boolean
   readOnly?: boolean
   hidden?: boolean
-  condition?: (formData: unknown) => boolean
+  condition?: (formData: Record<string, unknown>) => boolean
   options?: FieldOption[]
   grid?: { col?: number; row?: number }
+  
+  // HTML input attributes
+  min?: number | string
+  max?: number | string
+  step?: number | string
+  pattern?: string
+  minLength?: number
+  maxLength?: number
+  rows?: number
+  searchable?: boolean
+  multiple?: boolean
+  
+  // File upload properties
+  enableDragDrop?: boolean
+  showPreview?: boolean
+  maxSize?: number
+  minSize?: number
   
   // Advanced
   dependsOn?: string[]
   transform?: (value: unknown) => unknown
+  format?: (value: unknown) => string
+  render?: (props: {
+    field: FormField
+    value: unknown
+    onChange: (value: unknown) => void
+    onBlur: () => void
+    error?: string
+    touched?: boolean
+    disabled?: boolean
+    required?: boolean
+  }) => React.ReactNode
   component?: React.ComponentType<{
     field: FormField
     value: unknown
@@ -109,9 +134,28 @@ export interface FormField {
     required?: boolean
   }>
   
+  // Relationship properties for foreign keys and associations
+  /** Whether this field is a foreign key reference */
+  foreignKey?: boolean
+  /** The related entity name this field references */
+  relatedEntity?: string
+  /** API endpoint to fetch related data from */
+  endpoint?: string
+  /** The related field name (usually 'id') */
+  relatedField?: string
+  /** Field to display from the related entity (e.g., 'name', 'title') */
+  displayField?: string
+  /** Whether to allow creating new related entities inline */
+  allowCreateNew?: boolean
+  /** Whether to allow editing related entities inline */
+  allowEditRelated?: boolean
+  /** Relationship type */
+  relationshipType?: 'one-to-one' | 'many-to-one' | 'one-to-many' | 'many-to-many'
+  
   // Styling
   className?: string
   containerClassName?: string
+  width?: string | number
 }
 
 

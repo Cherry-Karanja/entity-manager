@@ -16,30 +16,31 @@ import { EntityListFilters } from './components/EntityListFilters'
 import { EntityListPagination } from './components/EntityListPagination'
 import { EntityListActions } from './components/EntityListActions'
 
-export const EntityList = <TEntity extends BaseEntity = BaseEntity>({
-  config,
-  data = [],
-  loading = false,
-  error,
-  selectedKeys = [],
-  searchTerm = '',
-  activeFilters = {},
-  sortConfig,
-  pagination,
-  onDataChange,
-  onSelectionChange,
-  onSearch,
-  onFilter,
-  onSort,
-  onPageChange,
-  onAction,
-  onBulkAction,
-  onExport,
-  onRefresh,
-  onRowClick
-}: EntityListProps<TEntity> & {
+export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: EntityListProps<TEntity> & {
   onRowClick?: (item: TEntity) => void
 }) => {
+  const {
+    config,
+    data = [],
+    loading = false,
+    error,
+    selectedKeys = [],
+    searchTerm = '',
+    activeFilters = {},
+    sortConfig,
+    pagination,
+    onDataChange,
+    onSelectionChange,
+    onSearch,
+    onFilter,
+    onSort,
+    onPageChange,
+    onAction,
+    onBulkAction,
+    onExport,
+    onRefresh,
+    onRowClick
+  } = props
   // ESLint disable for props that are part of the interface but not fully implemented
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _onDataChange = onDataChange
@@ -65,7 +66,9 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>({
 
   // Filtering
   const filteredData = useMemo(() => {
-    let filtered = data
+    let filtered = data || config.data || []
+
+    console.log('EntityList data:', { data, configData: config.data, filteredLength: filtered.length })
 
     // Apply search filter
     if (localSearchTerm && config.searchable) {
@@ -95,7 +98,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>({
     }
 
     return filtered
-  }, [data, localSearchTerm, config.searchable, config.searchFields, config.columns, activeFiltersState, config.filters])
+  }, [data, localSearchTerm, config.searchable, config.searchFields, config.columns, activeFiltersState, config.filters, config.data])
 
   // Sorting
   const sortedData = useMemo(() => {
@@ -253,7 +256,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between w-full">
           <CardTitle>{config.title}</CardTitle>
           <EntityListToolbar
             config={config}
@@ -291,7 +294,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>({
         </div>
 
         {/* Filters Panel */}
-        {showFilters && config.filters && config.filters.length > 0 && (
+        {config.filters && config.filters.length > 0 && (
           <EntityListFilters
             filters={config.filters}
             activeFilters={activeFiltersState}
@@ -304,7 +307,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>({
             showReset={config.showFilterReset}
             showCount={true}
             collapsible={true}
-            defaultCollapsed={!showFilters}
+            defaultCollapsed={false}
           />
         )}
       </CardHeader>

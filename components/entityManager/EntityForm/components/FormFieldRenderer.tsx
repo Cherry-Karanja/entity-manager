@@ -114,7 +114,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 }) => {
   const fieldId = `field-${field.name}`
   const hasError = error && touched
-  const helpText = field.helpText || field.description
+  const helpText = field.helpText
 
   // Search state for searchable selects
   const [searchValue, setSearchValue] = React.useState('')
@@ -419,9 +419,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               onValueChange={([val]) => onChange(field.transform ? field.transform(val) : val)}
               onBlur={onBlur}
               disabled={disabled}
-              min={field.min}
-              max={field.max}
-              step={field.step}
+              min={field.min ? Number(field.min) : undefined}
+              max={field.max ? Number(field.max) : undefined}
+              step={field.step ? Number(field.step) : undefined}
               className={field.className}
             />
             <div className="flex justify-between text-xs text-gray-500">
@@ -478,7 +478,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                   accept={accept.length > 0 ? { [accept[0].split('/')[0] || '*']: accept } : undefined}
                   maxSize={maxSize}
                   minSize={minSize}
-                  maxFiles={field.multiple ? field.max || 10 : 1}
+                  maxFiles={field.multiple ? (typeof field.max === 'number' ? field.max : 10) : 1}
                   disabled={disabled}
                   className={cn(
                     hasError && 'border-red-500',

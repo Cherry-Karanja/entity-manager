@@ -28,7 +28,7 @@ export interface FormField {
   disabled?: boolean
   readOnly?: boolean
   hidden?: boolean
-  condition?: (formData: unknown) => boolean
+  condition?: (formData: Record<string, unknown>) => boolean
   options?: FieldOption[]
   grid?: { col?: number; row?: number }
   
@@ -156,6 +156,12 @@ export interface EntityHooks<TEntity = Entity> {
   // Validation hooks
   validateCreate?: (data: Partial<TEntity>) => string | null | Promise<string | null>
   validateUpdate?: (data: Partial<TEntity>) => string | null | Promise<string | null>
+
+  // Form hooks
+  onFormChange?: (data: Partial<TEntity>, field: string, value: unknown) => void
+  onValidationError?: (errors: Record<string, string[]>) => void
+  onSubmitStart?: (data: Partial<TEntity>) => void
+  onSubmitSuccess?: (data: TEntity) => void
 }
 
 // ===== COMMON UTILITIES =====
