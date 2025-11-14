@@ -196,6 +196,8 @@ export const EntityOrchestrator = <TEntity extends Entity = Entity>({
     onUpdate: handleUpdate,
     onDelete: handleDelete,
   }
+  // Prevent lint error for now (will be used when wiring EntityActions)
+  const __unused = actionContext; void __unused
 
   // ===== RENDER =====
   if (loading && entities.length === 0) {
