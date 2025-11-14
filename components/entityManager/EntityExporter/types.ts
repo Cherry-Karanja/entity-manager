@@ -2,18 +2,18 @@ import React from "react"
 
 // ===== TYPE DEFINITIONS =====
 
-export interface EntityExporterConfig {
+export interface EntityExporterConfig<TEntity = unknown> {
   // Export formats
   formats: ExportFormat[]
 
-  // Data source
-  data?: unknown[]
-  dataFetcher?: () => Promise<unknown[]>
-  dataTransformer?: (data: unknown[]) => unknown[]
+  // Data source (NO API ENDPOINT - moved to EntityManagerConfig)
+  data?: TEntity[]
+  dataFetcher?: () => Promise<TEntity[]>
+  dataTransformer?: (data: TEntity[]) => TEntity[]
 
   // Field configuration
   fields?: ExportField[]
-  fieldMapper?: (item: unknown) => Record<string, unknown>
+  fieldMapper?: (item: TEntity) => Record<string, unknown>
 
   // Export options
   defaultFormat?: ExportFormatType
@@ -32,7 +32,7 @@ export interface EntityExporterConfig {
     check: (permission: string) => boolean
   }
   hooks?: {
-    onExportStart?: (format: ExportFormatType, data: unknown[]) => void
+    onExportStart?: (format: ExportFormatType, data: TEntity[]) => void
     onExportComplete?: (format: ExportFormatType, result: ExportResult) => void
     onExportError?: (format: ExportFormatType, error: unknown) => void
   }
@@ -75,9 +75,9 @@ export interface ExportResult {
   errorType?: 'validation' | 'no-data' | 'format' | 'serialization' | 'size-limit' | 'general'
 }
 
-export interface EntityExporterProps {
-  config: EntityExporterConfig
-  data?: unknown[]
+export interface EntityExporterProps<TEntity = unknown> {
+  config: EntityExporterConfig<TEntity>
+  data?: TEntity[]
   onExport?: (result: ExportResult) => void
   disabled?: boolean
   loading?: boolean

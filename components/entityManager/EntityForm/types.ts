@@ -1,28 +1,48 @@
 import React from "react"
+import {EntityHooks } from '../types'
 
 // ===== TYPE DEFINITIONS =====
 
-export interface EntityFormConfig {
-  // Form fields configuration
+export type FormFieldType =
+  | 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
+  | 'textarea' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'switch' | 'slider'
+  | 'date' | 'datetime' | 'time' | 'color' | 'file' | 'image'
+  | 'rich-text' | 'markdown' | 'json' | 'custom'
+
+export interface FieldValidation {
+  type: 'required' | 'min' | 'max' | 'minLength' | 'maxLength' | 'pattern' | 'email' | 'url' | 'custom'
+  value?: unknown
+  message?: string
+}
+
+export interface FieldOption {
+  value: string | number
+  label: string
+  disabled?: boolean
+  icon?: React.ComponentType<{ className?: string }>
+  description?: string
+}
+export interface EntityFormConfig<TEntity = Entity> {
+  // Form fields configuration (SINGLE SOURCE OF TRUTH - from unified types)
   fields: FormField[]
 
   // Form behavior
   mode?: 'create' | 'edit' | 'view'
-  layout?: 'vertical' | 'horizontal' | 'grid'
+  layout?: FormLayout
   columns?: number
 
   // Data handling
-  initialData?: Record<string, unknown>
-  dataTransformer?: (data: Record<string, unknown>) => Record<string, unknown>
-  submitTransformer?: (data: Record<string, unknown>) => Record<string, unknown>
+  initialData?: Partial<TEntity>
+  dataTransformer?: (data: Partial<TEntity>) => Partial<TEntity>
+  submitTransformer?: (data: Partial<TEntity>) => Partial<TEntity>
 
   // Validation
-  validationSchema?: Record<string, ValidationRule[]>
+  validationMode?: 'onBlur' | 'onChange' | 'onSubmit'
   validateOnChange?: boolean
   validateOnBlur?: boolean
 
   // Submission
-  onSubmit?: (data: Record<string, unknown>) => Promise<void> | void
+  onSubmit?: (data: Partial<TEntity>) => Promise<void> | void
   onCancel?: () => void
   submitButtonText?: string
   cancelButtonText?: string
@@ -31,7 +51,7 @@ export interface EntityFormConfig {
   // Bulk import
   enableBulkImport?: boolean
   bulkImportFormats?: BulkImportFormat[]
-  onBulkImport?: (data: Record<string, unknown>[]) => Promise<void> | void
+  onBulkImport?: (data: Partial<TEntity>[]) => Promise<void> | void
 
   // UI configuration
   showProgress?: boolean
@@ -39,128 +59,119 @@ export interface EntityFormConfig {
   autoFocus?: boolean
   disabled?: boolean
 
-  // Permissions & hooks
-  permissions?: {
-    create?: boolean
-    edit?: boolean
-    delete?: boolean
-    import?: boolean
-  }
-  hooks?: {
-    onFormChange?: (data: Record<string, unknown>, field: string, value: unknown) => void
-    onValidationError?: (errors: Record<string, string>) => void
-    onSubmitStart?: (data: Record<string, unknown>) => void
-    onSubmitSuccess?: (data: Record<string, unknown>) => void
-    onSubmitError?: (error: unknown) => void
-    onBulkImportStart?: (file: File) => void
-    onBulkImportSuccess?: (data: Record<string, unknown>[]) => void
-    onBulkImportError?: (error: unknown) => void
-  }
+  // Permissions & hooks (from EntityManagerConfig)
+  permissions?: FormPermissions
+  hooks?: EntityHooks<TEntity>
 
   // Styling
   className?: string
   fieldSpacing?: 'sm' | 'md' | 'lg'
   buttonVariant?: 'default' | 'outline' | 'ghost' | 'link'
   buttonSize?: 'sm' | 'default' | 'lg'
+  
+  // Advanced
+  customComponents?: FormCustomComponents
 }
 
 export interface FormField {
   name: string
   label: string
-  type: FieldType
+  icon?: React.ComponentType<{ className?: string }>
+  prefix?: string
+  suffix?: string
+  type: FormFieldType
   required?: boolean
-  disabled?: boolean
-  hidden?: boolean
+  validation?: FieldValidation[]
+  defaultValue?: unknown
   placeholder?: string
-  description?: string
   helpText?: string
-
-  // Field-specific options
+  disabled?: boolean
+  readOnly?: boolean
+  hidden?: boolean
+  condition?: (formData: Record<string, unknown>) => boolean
   options?: FieldOption[]
-  multiple?: boolean
-  min?: number
-  max?: number
-  step?: number
+  grid?: { col?: number; row?: number }
+  
+  // HTML input attributes
+  min?: number | string
+  max?: number | string
+  step?: number | string
   pattern?: string
   minLength?: number
   maxLength?: number
   rows?: number
-  cols?: number
-
-  // Validation
-  validation?: ValidationRule[]
-
-  // UI customization
-  width?: number | string
-  className?: string
-  icon?: React.ComponentType<{ className?: string }>
-  prefix?: string
-  suffix?: string
-
-  // Advanced features
-  dependsOn?: string[]
-  condition?: (values: Record<string, unknown>) => boolean
-  transform?: (value: unknown) => unknown
-  format?: (value: unknown) => string
-  parse?: (value: string) => unknown
-
-  // Custom rendering
-  render?: (props: FieldRenderProps) => React.ReactNode
-  component?: React.ComponentType<FieldRenderProps>
-
-  // Relationship properties for foreign keys
-  foreignKey?: boolean
-  relatedEntity?: string
-  endpoint?: string
-  relatedField?: string
-  displayField?: string
-  relationshipType?: 'one-to-one' | 'many-to-one' | 'one-to-many' | 'many-to-many'
-
-  // Search functionality
   searchable?: boolean
-
+  multiple?: boolean
+  
   // File upload properties
   enableDragDrop?: boolean
   showPreview?: boolean
   maxSize?: number
   minSize?: number
+  
+  // Advanced
+  dependsOn?: string[]
+  transform?: (value: unknown) => unknown
+  format?: (value: unknown) => string
+  render?: (props: {
+    field: FormField
+    value: unknown
+    onChange: (value: unknown) => void
+    onBlur: () => void
+    error?: string
+    touched?: boolean
+    disabled?: boolean
+    required?: boolean
+  }) => React.ReactNode
+  component?: React.ComponentType<{
+    field: FormField
+    value: unknown
+    onChange: (value: unknown) => void
+    onBlur: () => void
+    error?: string
+    touched?: boolean
+    disabled?: boolean
+    required?: boolean
+  }>
+  
+  // Relationship properties for foreign keys and associations
+  /** Whether this field is a foreign key reference */
+  foreignKey?: boolean
+  /** The related entity name this field references */
+  relatedEntity?: string
+  /** API endpoint to fetch related data from */
+  endpoint?: string
+  /** The related field name (usually 'id') */
+  relatedField?: string
+  /** Field to display from the related entity (e.g., 'name', 'title') */
+  displayField?: string
+  /** Whether to allow creating new related entities inline */
+  allowCreateNew?: boolean
+  /** Whether to allow editing related entities inline */
+  allowEditRelated?: boolean
+  /** Relationship type */
+  relationshipType?: 'one-to-one' | 'many-to-one' | 'one-to-many' | 'many-to-many'
+  
+  // Styling
+  className?: string
+  containerClassName?: string
+  width?: string | number
 }
 
-export type FieldType =
-  | 'text'
-  | 'email'
-  | 'password'
-  | 'number'
-  | 'tel'
-  | 'url'
-  | 'textarea'
-  | 'select'
-  | 'multiselect'
-  | 'checkbox'
-  | 'radio'
-  | 'date'
-  | 'datetime'
-  | 'time'
-  | 'file'
-  | 'switch'
-  | 'slider'
-  | 'color'
-  | 'json'
-  | 'custom'
 
-export interface FieldOption {
-  label: string
-  value: unknown
-  disabled?: boolean
-  icon?: React.ComponentType<{ className?: string }>
-  description?: string
+export interface FormPermissions {
+  create?: boolean
+  edit?: boolean
+  delete?: boolean
+  import?: boolean
 }
 
-export interface ValidationRule {
-  type: 'required' | 'min' | 'max' | 'minLength' | 'maxLength' | 'pattern' | 'email' | 'url' | 'custom'
-  value?: unknown
-  message?: string
-  validator?: (value: unknown, data: Record<string, unknown>) => boolean | string
+export interface FormCustomComponents {
+  field?: React.ComponentType<FieldRenderProps>
+  submit?: React.ComponentType<FormButtonProps>
+  cancel?: React.ComponentType<FormButtonProps>
+  wrapper?: React.ComponentType<FormWrapperProps>
+  bulkImport?: React.ComponentType<BulkImportProps>
 }
 
 export interface FieldRenderProps {
@@ -174,6 +185,23 @@ export interface FieldRenderProps {
   required?: boolean
 }
 
+export interface FormButtonProps {
+  onClick?: () => void
+  disabled?: boolean
+  loading?: boolean
+  children?: React.ReactNode
+}
+
+export interface FormWrapperProps {
+  children: React.ReactNode
+  config: EntityFormConfig
+}
+
+export interface BulkImportProps {
+  config: EntityFormConfig
+  onImport: (data: unknown[]) => void | Promise<void>
+}
+
 export interface BulkImportFormat {
   type: 'csv' | 'json' | 'xml' | 'xlsx'
   label: string
@@ -184,18 +212,18 @@ export interface BulkImportFormat {
   fieldMapping?: Record<string, string>
 }
 
-export interface EntityFormProps {
-  config: EntityFormConfig
-  data?: Record<string, unknown>
-  onSubmit?: (data: Record<string, unknown>) => Promise<void> | void
+export interface EntityFormProps<TEntity = unknown> {
+  config: EntityFormConfig<TEntity>
+  data?: Partial<TEntity>
+  onSubmit?: (data: Partial<TEntity>) => Promise<void> | void
   onCancel?: () => void
   disabled?: boolean
   loading?: boolean
   validationErrors?: Record<string, string[]>
 }
 
-export interface FormState {
-  data: Record<string, unknown>
+export interface FormState<TEntity = unknown> {
+  data: Partial<TEntity>
   errors: Record<string, string>
   touched: Record<string, boolean>
   isSubmitting: boolean

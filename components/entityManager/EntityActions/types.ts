@@ -137,10 +137,10 @@ export interface EntityBulkAction extends Omit<EntityAction, 'condition' | 'onEx
   onExecute?: (selectedItems: unknown[], context?: unknown) => void | Promise<void>
 }
 
-export interface EntityActionsConfig {
+export interface EntityActionsConfig<TEntity = unknown> {
   actions: EntityAction[]
   bulkActions?: EntityBulkAction[]
-  context?: unknown
+  context?: TEntity | TEntity[]
   maxVisibleActions?: number
   showLabels?: boolean
   groupActions?: boolean
@@ -153,19 +153,19 @@ export interface EntityActionsConfig {
     fallback?: 'hide' | 'disable'
   }
   hooks?: {
-    onActionStart?: (action: EntityAction, item: unknown) => void
-    onActionComplete?: (action: EntityAction, item: unknown, result: unknown) => void
-    onActionError?: (action: EntityAction, item: unknown, error: unknown) => void
-    onBulkActionStart?: (action: EntityBulkAction, items: unknown[]) => void
-    onBulkActionComplete?: (action: EntityBulkAction, items: unknown[], result: unknown) => void
-    onBulkActionError?: (action: EntityBulkAction, items: unknown[], error: unknown) => void
+    onActionStart?: (action: EntityAction, item: TEntity) => void
+    onActionComplete?: (action: EntityAction, item: TEntity, result: unknown) => void
+    onActionError?: (action: EntityAction, item: TEntity, error: unknown) => void
+    onBulkActionStart?: (action: EntityBulkAction, items: TEntity[]) => void
+    onBulkActionComplete?: (action: EntityBulkAction, items: TEntity[], result: unknown) => void
+    onBulkActionError?: (action: EntityBulkAction, items: TEntity[], error: unknown) => void
   }
 }
 
-export interface EntityActionsProps {
-  config: EntityActionsConfig
-  item?: unknown
-  selectedItems?: unknown[]
+export interface EntityActionsProps<TEntity = unknown> {
+  config: EntityActionsConfig<TEntity>
+  item?: TEntity
+  selectedItems?: TEntity[]
   className?: string
   disabled?: boolean
 }

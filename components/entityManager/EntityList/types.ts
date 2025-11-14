@@ -1,5 +1,7 @@
 import React from "react"
+import { FormField as UnifiedFormField } from '../types'
 import { EntityActionsConfig } from "../EntityActions/types"
+import { BaseEntity } from "../manager"
 
 // ===== TYPE DEFINITIONS =====
 
@@ -31,24 +33,15 @@ export interface EntityListColumn {
 }
 
 export interface EntityListFilter {
-  id: string
-  label: string
-  type: 'text' | 'select' | 'multiselect' | 'date' | 'daterange' | 'number' | 'boolean' | 'range'
-  field?: string
+  // Use unified FormField for filter configuration
+  field: UnifiedFormField
   operator?: DjangoLookupOperator
   operators?: DjangoLookupOperator[] // Available operators for this filter
   djangoField?: string // Override for backend field name
-  options?: Array<{ value: string | number; label: string; disabled?: boolean }>
-  placeholder?: string
-  min?: number
-  max?: number
-  step?: number
   defaultValue?: unknown
-  validation?: (value: unknown) => boolean | string
   transform?: (value: unknown, operator: DjangoLookupOperator) => unknown // Enhanced transform with operator
   helpText?: string | React.ReactNode
   tooltip?: string
-  icon?: React.ComponentType<{ className?: string }>
   className?: string
   required?: boolean
 }
@@ -177,17 +170,17 @@ export interface EntityListExportConfig {
   customTransformers?: Record<string, (data: EntityListItem[]) => unknown>
 }
 
-export interface EntityListConfig {
+export interface EntityListConfig<TEntity extends BaseEntity = BaseEntity> {
   // Basic configuration
   id?: string
   name?: string
   title?: string | React.ReactNode
   description?: string | React.ReactNode
 
-  // Data configuration
-  data: EntityListItem[]
+  // Data configuration (NO API ENDPOINTS - moved to EntityManagerConfig)
+  data?: TEntity[]
   columns: EntityListColumn[]
-  rowKey?: string | ((item: EntityListItem) => string | number)
+  rowKey?: string | ((item: TEntity) => string | number)
 
   // Loading and error states
   loading?: boolean
@@ -228,7 +221,7 @@ export interface EntityListConfig {
 
   // Actions configuration
   actions?: EntityListAction[]
-  entityActions?: EntityActionsConfig
+  entityActions?: EntityActionsConfig<TEntity>
   bulkActions?: EntityListBulkAction[]
   actionColumnWidth?: string | number
   showActions?: boolean
@@ -257,7 +250,7 @@ export interface EntityListConfig {
   }
 
   // Event handlers
-  onRow?: (record: EntityListItem, index?: number) => {
+  onRow?: (record: TEntity, index?: number) => {
     onClick?: (event: React.MouseEvent) => void
     onDoubleClick?: (event: React.MouseEvent) => void
     onContextMenu?: (event: React.MouseEvent) => void
@@ -268,23 +261,23 @@ export interface EntityListConfig {
     pagination: EntityListPagination,
     filters: Record<string, unknown>,
     sorter: EntityListSort[],
-    extra: { currentDataSource: EntityListItem[]; action: 'paginate' | 'sort' | 'filter' }
+    extra: { currentDataSource: TEntity[]; action: 'paginate' | 'sort' | 'filter' }
   ) => void
   onRefresh?: () => void
   onCreate?: () => void
 
   // Custom components
   components?: {
-    header?: React.ComponentType<{ config: EntityListConfig }>
-    footer?: React.ComponentType<{ config: EntityListConfig }>
-    empty?: React.ComponentType<{ config: EntityListConfig }>
-    loading?: React.ComponentType<{ config: EntityListConfig }>
+    header?: React.ComponentType<{ config: EntityListConfig<TEntity> }>
+    footer?: React.ComponentType<{ config: EntityListConfig<TEntity> }>
+    empty?: React.ComponentType<{ config: EntityListConfig<TEntity> }>
+    loading?: React.ComponentType<{ config: EntityListConfig<TEntity> }>
   }
 
   // Styling
   className?: string
   style?: React.CSSProperties
-  rowClassName?: string | ((record: EntityListItem, index: number) => string)
+  rowClassName?: string | ((record: TEntity, index: number) => string)
 
   // Field selection configuration
   fields?: string | string[]
@@ -295,8 +288,8 @@ export interface EntityListConfig {
   expandable?: boolean
 }
 
-export interface EntityListProps {
-  config: EntityListConfig
+export interface EntityListProps  <TEntity extends BaseEntity = BaseEntity> {
+  config: EntityListConfig<TEntity>
   // Override props
   data?: EntityListItem[]
   loading?: boolean
@@ -306,8 +299,6 @@ export interface EntityListProps {
   activeFilters?: Record<string, unknown>
   sortConfig?: EntityListSort[]
   pagination?: Partial<EntityListPagination>
-  fields?: string | string[]
-  expand?: string | string[]
   // Event handlers
   onDataChange?: (data: EntityListItem[]) => void
   onSelectionChange?: (selectedKeys: (string | number)[], selectedItems: EntityListItem[]) => void

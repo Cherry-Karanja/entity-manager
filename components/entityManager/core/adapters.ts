@@ -14,12 +14,32 @@ import {
   UnifiedActionConfig,
   UnifiedFilterConfig,
   BaseEntity,
-  FieldGroup
+  FieldGroup,
+  ValidationRule
 } from './types'
 import { EntityListColumn, EntityListFilter, EntityListAction } from '../EntityList/types'
-import { FormField, EntityFormConfig } from '../EntityForm/types'
-import { EntityViewConfig, ViewField, ViewFieldGroup } from '../EntityView/types'
+import { FormField, EntityFormConfig, FieldValidation } from '../EntityForm/types'
+import { ViewField, ViewFieldGroup, EntityViewConfig } from '../EntityView/types'
 import { EntityAction } from '../EntityActions/types'
+
+/**
+ * Convert ValidationRule[] to FieldValidation[]
+ */
+function convertValidationRules(rules?: ValidationRule[]): FieldValidation[] | undefined {
+  if (!rules || rules.length === 0) return undefined
+  
+  const validations: FieldValidation[] = []
+  
+  for (const rule of rules) {
+    validations.push({
+      type: rule.type,
+      value: rule.value,
+      message: rule.message
+    })
+  }
+  
+  return validations.length > 0 ? validations : undefined
+}
 
 /**
  * Convert unified field to EntityListColumn
@@ -108,6 +128,14 @@ export function fieldToFormField<TEntity extends BaseEntity, TFormData extends R
       formType = field.renderType as FormField['type'] || 'text'
   }
 
+  // Build validation array
+  const validation = convertValidationRules(field.validation) || []
+  if (field.min !== undefined) validation.push({ type: 'min', value: field.min })
+  if (field.max !== undefined) validation.push({ type: 'max', value: field.max })
+  if (field.minLength !== undefined) validation.push({ type: 'minLength', value: field.minLength })
+  if (field.maxLength !== undefined) validation.push({ type: 'maxLength', value: field.maxLength })
+  if (field.pattern) validation.push({ type: 'pattern', value: field.pattern.source })
+
   return {
     name: field.key,
     label: field.label,
@@ -116,34 +144,13 @@ export function fieldToFormField<TEntity extends BaseEntity, TFormData extends R
     disabled: field.disabled,
     hidden: field.hidden,
     placeholder: field.placeholder,
-    description: field.description,
     helpText: field.description,
     options: field.options,
-    multiple: field.multiple,
-    min: field.min,
-    max: field.max,
-    minLength: field.minLength,
-    maxLength: field.maxLength,
-    pattern: field.pattern?.source,
-    validation: field.validation,
+    validation: validation.length > 0 ? validation : undefined,
     className: field.className,
-    icon: field.icon,
     dependsOn: field.dependsOn,
     condition: field.condition as any,
     transform: field.transformInput,
-    format: field.format as any,
-    parse: field.parse,
-    render: field.renderForm as any,
-    foreignKey: !!field.relationship,
-    relatedEntity: field.relationship?.entity,
-    endpoint: field.relationship?.endpoint,
-    relatedField: field.relationship?.valueField || 'id',
-    displayField: field.relationship?.displayField,
-    relationshipType: field.relationship ? 'many-to-one' as const : undefined,
-    searchable: field.relationship?.search?.enabled ?? field.searchable,
-    enableDragDrop: field.enableDragDrop,
-    showPreview: field.showPreview,
-    maxSize: field.maxFileSize,
   }
 }
 
@@ -331,24 +338,29 @@ export function actionToEntityAction<TEntity extends BaseEntity>(
  */
 export function filterToListFilter(filter: UnifiedFilterConfig): EntityListFilter {
   return {
-    id: filter.id,
-    label: filter.label,
-    type: filter.type,
-    field: filter.field,
+    field: {
+      name: filter.field,
+      label: filter.label,
+      type: filter.type === 'text' ? 'text' :
+            filter.type === 'select' ? 'select' :
+            filter.type === 'multiselect' ? 'multiselect' :
+            filter.type === 'date' ? 'date' :
+            filter.type === 'daterange' ? 'date' :
+            filter.type === 'number' ? 'number' :
+            filter.type === 'range' ? 'number' :
+            filter.type === 'boolean' ? 'checkbox' : 'text',
+      required: filter.required,
+      options: filter.options,
+      placeholder: filter.placeholder,
+      defaultValue: filter.defaultValue
+    },
     operator: filter.operator as any,
     operators: filter.operators as any,
-    options: filter.options,
-    placeholder: filter.placeholder,
-    min: filter.min,
-    max: filter.max,
-    step: filter.step,
     defaultValue: filter.defaultValue,
-    validation: filter.validate,
     transform: filter.transform as any,
     helpText: filter.helpText as any,
-    icon: filter.icon,
-    required: filter.required,
-    className: filter.className
+    className: filter.className,
+    required: filter.required
   }
 }
 
@@ -371,7 +383,7 @@ export function toListConfig<TEntity extends BaseEntity, TFormData extends Recor
     : config.fields.filter(f => !f.hidden)
 
   return {
-    columns: listFields.map(f => fieldToListColumn(f)),
+    columns: listFields.map(f => fieldToListColumn(f as UnifiedFieldConfig<TEntity>)),
     searchableFields: config.list?.searchableFields || config.fields.filter(f => f.searchableInList).map(f => f.key),
     defaultSort: config.list?.defaultSort,
     pageSize: config.list?.pageSize || 10,

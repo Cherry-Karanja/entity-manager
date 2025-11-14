@@ -53,6 +53,7 @@ export interface BaseWebSocketMessage {
   userId?: string;
   sessionId?: string;
   correlationId?: string;
+  userName?: string;
 }
 
 export interface EntityMessage extends BaseWebSocketMessage {
@@ -74,7 +75,6 @@ export interface EntityChange {
 export interface PresenceMessage extends BaseWebSocketMessage {
   type: MessageType.USER_JOINED | MessageType.USER_LEFT | MessageType.USER_VIEWING | MessageType.USER_EDITING | MessageType.USER_EDITING_STARTED | MessageType.USER_EDITING_STOPPED;
   userId: string;
-  userName?: string;
   userAvatar?: string;
   entityType?: string;
   entityId?: string | number;

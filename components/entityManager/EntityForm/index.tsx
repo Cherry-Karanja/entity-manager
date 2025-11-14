@@ -1,326 +1,290 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
-import { toast } from 'sonner'
-import { EntityFormConfig, EntityFormProps, FormState, BulkImportState } from './types'
-import { DEFAULT_FORM_CONFIG, DEFAULT_BULK_IMPORT_FORMATS } from './types'
-import { validateField, validateForm } from './utils/validation'
-import { transformData } from './utils/dataTransform'
-import { useIsMobile } from '@/hooks/use-mobile'
+// ===== ENTITY FORM V3 - STANDALONE COMPONENT =====
+// Pure presentation component that works with EntityFormConfig<TEntity>
 
-// Import modular layouts
-import { SingleColumnLayout } from './layouts/SingleColumnLayout'
-import { TwoColumnLayout } from './layouts/TwoColumnLayout'
+'use client'
 
-const EntityFormComponent: React.FC<EntityFormProps> = ({
+import React, { useState, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Entity, EntityFormConfig, FormField } from '../types'
+
+export interface EntityFormProps<TEntity extends Entity = Entity> {
+  config: EntityFormConfig<TEntity>
+  data?: TEntity
+  onSubmit: (data: Partial<TEntity>) => void | Promise<void>
+  onCancel?: () => void
+}
+
+export const EntityForm = <TEntity extends Entity = Entity>({
   config,
   data,
   onSubmit,
   onCancel,
-  disabled = false,
-  loading = false,
-  validationErrors,
-}) => {
-  // Mobile detection
-  const isMobile = useIsMobile()
-
-  // Merge config with defaults
-  const mergedConfig = useMemo(() => ({
-    ...DEFAULT_FORM_CONFIG,
-    ...config,
-    bulkImportFormats: config.bulkImportFormats || DEFAULT_BULK_IMPORT_FORMATS,
-  }), [config])
-
-  // Form state
-  const [formState, setFormState] = useState<FormState>({
-    data: mergedConfig.initialData || data || {},
-    errors: {},
-    touched: {},
-    isSubmitting: false,
-    isValid: true,
-    submitCount: 0,
+}: EntityFormProps<TEntity>) => {
+  // Initialize form data from existing data or defaults
+  const [formData, setFormData] = useState<Record<string, unknown>>(() => {
+    const initial: Record<string, unknown> = {}
+    
+    config.fields.forEach(field => {
+      if (data && field.name in data) {
+        initial[field.name] = (data as Record<string, unknown>)[field.name]
+      } else if (field.defaultValue !== undefined) {
+        initial[field.name] = field.defaultValue
+      }
+    })
+    
+    return initial
   })
 
-  // Bulk import state
-  const [bulkImportState, setBulkImportState] = useState<BulkImportState>({
-    isImporting: false,
-    progress: 0,
-    totalRecords: 0,
-    processedRecords: 0,
-    errors: [],
-  })
-
-  // UI state
-  const [showBulkImport, setShowBulkImport] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-
-  // Initialize form data when data prop changes
-  useEffect(() => {
-    if (data) {
-      const transformedData = mergedConfig.dataTransformer
-        ? mergedConfig.dataTransformer(data)
-        : data
-
-      setFormState(prev => ({
-        ...prev,
-        data: transformedData,
-        errors: {},
-        touched: {},
-      }))
-    }
-  }, [data, mergedConfig.dataTransformer])
-
-  // Validate form when data changes
-  useEffect(() => {
-    if (mergedConfig.validateOnChange) {
-      const errors = validateForm(formState.data, mergedConfig.fields, mergedConfig.validationSchema)
-      setFormState(prev => ({
-        ...prev,
-        errors,
-        isValid: Object.keys(errors).length === 0,
-      }))
-    }
-  }, [formState.data, mergedConfig.fields, mergedConfig.validationSchema, mergedConfig.validateOnChange])
-
-  // Handle server validation errors
-  useEffect(() => {
-    if (validationErrors) {
-      const serverErrors: Record<string, string> = {}
-      Object.entries(validationErrors).forEach(([field, messages]) => {
-        if (field === 'non_field_errors' || field === 'nonFieldErrors') {
-          serverErrors.root = messages.join(', ')
-        } else {
-          serverErrors[field] = messages.join(', ')
-        }
-      })
-      setFormState(prev => ({
-        ...prev,
-        errors: { ...prev.errors, ...serverErrors },
-        isValid: false,
-      }))
-    }
-  }, [validationErrors])
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Handle field change
-  const handleFieldChange = useCallback((fieldName: string, value: unknown) => {
-    setFormState(prev => {
-      const newData = { ...prev.data, [fieldName]: value }
-      const newTouched = { ...prev.touched, [fieldName]: true }
+  const handleChange = useCallback((fieldName: string, value: unknown) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }))
+    
+    // Clear error for this field
+    if (errors[fieldName]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
+    }
+  }, [errors])
 
-      // Validate field if validateOnChange is enabled
-      const newErrors = { ...prev.errors }
-      if (mergedConfig.validateOnChange) {
-        const field = mergedConfig.fields.find(f => f.name === fieldName)
-        if (field) {
-          const fieldErrors = validateField(value, field, mergedConfig.validationSchema?.[fieldName])
-          if (fieldErrors.length > 0) {
-            newErrors[fieldName] = fieldErrors[0]
-          } else {
-            delete newErrors[fieldName]
-          }
+  // Validate field
+  const validateField = useCallback((field: FormField, value: unknown): string | null => {
+    if (!field.validation) return null
+
+    // Required validation
+    if (field.validation.required && !value) {
+      return typeof field.validation.required === 'string'
+        ? field.validation.required
+        : `${field.label} is required`
+    }
+
+    // String validations
+    if (typeof value === 'string') {
+      if (field.validation.minLength && value.length < field.validation.minLength) {
+        return typeof field.validation.minLength === 'string'
+          ? field.validation.minLength
+          : `${field.label} must be at least ${field.validation.minLength} characters`
+      }
+      
+      if (field.validation.maxLength && value.length > field.validation.maxLength) {
+        return typeof field.validation.maxLength === 'string'
+          ? field.validation.maxLength
+          : `${field.label} must be at most ${field.validation.maxLength} characters`
+      }
+
+      if (field.validation.pattern) {
+        const regex = typeof field.validation.pattern === 'string'
+          ? new RegExp(field.validation.pattern)
+          : field.validation.pattern
+        if (!regex.test(value)) {
+          return `${field.label} format is invalid`
         }
       }
 
-      const newState = {
-        ...prev,
-        data: newData,
-        touched: newTouched,
-        errors: newErrors,
-        isValid: Object.keys(newErrors).length === 0,
+      if (field.validation.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return typeof field.validation.email === 'string'
+          ? field.validation.email
+          : `${field.label} must be a valid email`
       }
+    }
 
-      // Call form change hook
-      mergedConfig.hooks?.onFormChange?.(newData, fieldName, value)
-
-      return newState
-    })
-  }, [mergedConfig])
-
-  // Handle field blur
-  const handleFieldBlur = useCallback((fieldName: string) => {
-    setFormState(prev => {
-      const newTouched = { ...prev.touched, [fieldName]: true }
-
-      // Validate field on blur if validateOnBlur is enabled
-      const newErrors = { ...prev.errors }
-      if (mergedConfig.validateOnBlur) {
-        const field = mergedConfig.fields.find(f => f.name === fieldName)
-        const value = prev.data[fieldName]
-        if (field) {
-          const fieldErrors = validateField(value, field, mergedConfig.validationSchema?.[fieldName])
-          if (fieldErrors.length > 0) {
-            newErrors[fieldName] = fieldErrors[0]
-          } else {
-            delete newErrors[fieldName]
-          }
-        }
+    // Number validations
+    if (typeof value === 'number') {
+      if (field.validation.min !== undefined && value < Number(field.validation.min)) {
+        return `${field.label} must be at least ${field.validation.min}`
       }
-
-      return {
-        ...prev,
-        touched: newTouched,
-        errors: newErrors,
-        isValid: Object.keys(newErrors).length === 0,
+      
+      if (field.validation.max !== undefined && value > Number(field.validation.max)) {
+        return `${field.label} must be at most ${field.validation.max}`
       }
-    })
-  }, [mergedConfig])
+    }
 
-  // Handle form submission
+    // Custom validation
+    if (field.validation.custom) {
+      const result = field.validation.custom(value)
+      if (typeof result === 'string') return result
+      if (result === false) return `${field.label} is invalid`
+    }
+
+    return null
+  }, [])
+
+  // Handle submit
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate all fields
+    const newErrors: Record<string, string> = {}
+    config.fields.forEach(field => {
+      const value = formData[field.name]
+      const error = validateField(field, value)
+      if (error) {
+        newErrors[field.name] = error
+      }
+    })
 
-    // Validate entire form
-    const errors = validateForm(formState.data, mergedConfig.fields, mergedConfig.validationSchema)
-    const isValid = Object.keys(errors).length === 0
-
-    setFormState(prev => ({
-      ...prev,
-      errors,
-      touched: mergedConfig.fields.reduce((acc, field) => ({ ...acc, [field.name]: true }), {}),
-      isValid,
-      submitCount: prev.submitCount + 1,
-    }))
-
-    if (!isValid) {
-      mergedConfig.hooks?.onValidationError?.(errors)
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
       return
     }
 
-    setSubmitError(null)
-
+    // Submit
+    setIsSubmitting(true)
     try {
-      setFormState(prev => ({ ...prev, isSubmitting: true }))
-
-      // Call submit start hook
-      mergedConfig.hooks?.onSubmitStart?.(formState.data)
-
-      // Transform data for submission
-      const submitData = mergedConfig.submitTransformer
-        ? mergedConfig.submitTransformer(formState.data)
-        : formState.data
-
-      // Call config submit handler
-      if (mergedConfig.onSubmit) {
-        await mergedConfig.onSubmit(submitData)
-      }
-
-      // Call prop submit handler
-      if (onSubmit) {
-        await onSubmit(submitData)
-      }
-
-      // Call success hook
-      mergedConfig.hooks?.onSubmitSuccess?.(submitData)
-
-      // Reset form if in create mode
-      if (mergedConfig.mode === 'create') {
-        setFormState(prev => ({
-          ...prev,
-          data: mergedConfig.initialData || {},
-          errors: {},
-          touched: {},
-          isSubmitting: false,
-        }))
-      } else {
-        setFormState(prev => ({ ...prev, isSubmitting: false }))
-      }
-
-      // Show success toast (only after everything succeeded)
-      toast.success(mergedConfig.submitSuccessMessage || 'Form submitted successfully!')
-
+      await onSubmit(formData as Partial<TEntity>)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred during submission'
-      setSubmitError(errorMessage)
-      mergedConfig.hooks?.onSubmitError?.(error)
-      setFormState(prev => ({ ...prev, isSubmitting: false }))
+      console.error('Form submission error:', error)
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [formState.data, mergedConfig, onSubmit])
+  }, [config.fields, formData, onSubmit, validateField])
 
-  // Handle cancel
-  const handleCancel = useCallback(() => {
-    mergedConfig.onCancel?.()
-    onCancel?.()
-  }, [mergedConfig, onCancel])
+  // Render field based on type
+  const renderField = useCallback((field: FormField) => {
+    if (field.hidden) return null
+    if (field.condition && !field.condition(formData)) return null
 
-  // Handle bulk import
-  const handleBulkImport = useCallback(async (importData: Record<string, unknown>[]) => {
-    try {
-      setBulkImportState(prev => ({ ...prev, isImporting: true, progress: 0, errors: [] }))
+    const value = formData[field.name]
+    const error = errors[field.name]
+    const isDisabled = field.disabled || field.readOnly || isSubmitting
 
-      mergedConfig.hooks?.onBulkImportStart?.({} as File)
+    const fieldId = `field-${field.name}`
 
-      if (mergedConfig.onBulkImport) {
-        await mergedConfig.onBulkImport(importData)
-      }
+    return (
+      <div key={field.name} className="space-y-2">
+        <Label htmlFor={fieldId} className={field.required ? 'after:content-["*"] after:ml-1 after:text-destructive' : ''}>
+          {field.label}
+        </Label>
 
-      mergedConfig.hooks?.onBulkImportSuccess?.(importData)
+        {/* Text inputs */}
+        {['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'datetime', 'time'].includes(field.type) && (
+          <Input
+            id={fieldId}
+            type={field.type}
+            value={String(value ?? '')}
+            onChange={(e) => handleChange(field.name, field.type === 'number' ? Number(e.target.value) : e.target.value)}
+            placeholder={field.placeholder}
+            disabled={isDisabled}
+            className={error ? 'border-destructive' : ''}
+          />
+        )}
 
-      setBulkImportState(prev => ({
-        ...prev,
-        isImporting: false,
-        progress: 100,
-        processedRecords: importData.length,
-        totalRecords: importData.length,
-      }))
+        {/* Textarea */}
+        {field.type === 'textarea' && (
+          <Textarea
+            id={fieldId}
+            value={String(value ?? '')}
+            onChange={(e) => handleChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            disabled={isDisabled}
+            className={error ? 'border-destructive' : ''}
+            rows={4}
+          />
+        )}
 
-      setShowBulkImport(false)
+        {/* Select */}
+        {field.type === 'select' && field.options && (
+          <Select
+            value={String(value ?? '')}
+            onValueChange={(val) => handleChange(field.name, val)}
+            disabled={isDisabled}
+          >
+            <SelectTrigger className={error ? 'border-destructive' : ''}>
+              <SelectValue placeholder={field.placeholder || 'Select...'} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options.map(option => (
+                <SelectItem
+                  key={String(option.value)}
+                  value={String(option.value)}
+                  disabled={option.disabled}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Import failed'
-      mergedConfig.hooks?.onBulkImportError?.(error)
-      setBulkImportState(prev => ({
-        ...prev,
-        isImporting: false,
-        errors: [{ row: 0, field: 'general', message: errorMessage }],
-      }))
-    }
-  }, [mergedConfig])
+        {/* Checkbox */}
+        {field.type === 'checkbox' && (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={fieldId}
+              checked={Boolean(value)}
+              onCheckedChange={(checked) => handleChange(field.name, checked)}
+              disabled={isDisabled}
+            />
+            <label
+              htmlFor={fieldId}
+              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              {field.label}
+            </label>
+          </div>
+        )}
 
-  // Filter visible fields based on conditions
-  const visibleFields = useMemo(() => {
-    return mergedConfig.fields.filter(field => {
-      if (field.hidden) return false
-      if (field.condition) return field.condition(formState.data)
-      return true
-    })
-  }, [mergedConfig.fields, formState.data])
+        {/* Help text */}
+        {field.helpText && field.type !== 'checkbox' && (
+          <p className="text-sm text-muted-foreground">{field.helpText}</p>
+        )}
 
-  // Check permissions
-  const canSubmit = mergedConfig.permissions?.[mergedConfig.mode === 'create' ? 'create' : 'edit'] !== false
-  const canImport = !!(mergedConfig.permissions?.import !== false && mergedConfig.enableBulkImport)
+        {/* Error message */}
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
+      </div>
+    )
+  }, [formData, errors, isSubmitting, handleChange])
 
-  const isFormDisabled = !!(disabled || loading || formState.isSubmitting || mergedConfig.disabled)
-  const isViewMode = mergedConfig.mode === 'view'
+  // Layout
+  const gridCols = config.columns || 1
+  const gridClass = gridCols === 1
+    ? 'space-y-4'
+    : `grid gap-4 ${gridCols === 2 ? 'grid-cols-2' : `grid-cols-${gridCols}`}`
 
-  // Common props for all layouts
-  const layoutProps = {
-    config: mergedConfig,
-    formState,
-    bulkImportState,
-    visibleFields,
-    showBulkImport,
-    submitError: submitError || null,
-    isFormDisabled,
-    isViewMode,
-    canSubmit,
-    canImport,
-    onFieldChange: handleFieldChange,
-    onFieldBlur: handleFieldBlur,
-    onSubmit: handleSubmit,
-    onCancel: handleCancel,
-    onBulkImportClick: () => setShowBulkImport(true),
-    onBulkImport: handleBulkImport,
-    onBulkImportClose: () => setShowBulkImport(false),
-  }
+  return (
+    <form onSubmit={handleSubmit}>
+      <Card>
+        <CardHeader>
+          <CardTitle>{data ? 'Edit' : 'Create'} {config.fields.length > 0 ? '' : 'Form'}</CardTitle>
+        </CardHeader>
 
-  // Render appropriate layout based on configuration
-  if (mergedConfig.layout === 'grid' && (mergedConfig.columns || 2) > 1) {
-    return <TwoColumnLayout {...layoutProps} />
-  }
+        <CardContent>
+          <div className={gridClass}>
+            {config.fields.map(field => renderField(field))}
+          </div>
+        </CardContent>
 
-  // Default to single column layout
-  return <SingleColumnLayout {...layoutProps} />
+        <CardFooter className="flex justify-end gap-2">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              {config.cancelText || 'Cancel'}
+            </Button>
+          )}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : (config.submitText || 'Save')}
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
+  )
 }
 
-// Memoize the component to prevent unnecessary re-renders
-export const EntityForm = memo(EntityFormComponent)
-
-export default EntityForm
+EntityForm.displayName = 'EntityForm'

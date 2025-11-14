@@ -1,7 +1,7 @@
 'use client'
 
 import { EntityManager } from '@/components/entityManager/manager/orchestrator'
-import userRoleEntityConfig from '@/components/features/accounts/configs/userRole'
+import { userRoleEntityConfig } from '@/components/features/accounts/configs'
 
 export default function UserRolesPage() {
   return (

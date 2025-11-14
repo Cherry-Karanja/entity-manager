@@ -1,7 +1,7 @@
 'use client'
 
 import { EntityManager } from '@/components/entityManager/manager/orchestrator'
-import userProfileEntityConfig from '@/components/features/accounts/configs/userProfile'
+import { userProfileEntityConfig } from '@/components/features/accounts/configs'
 
 export default function UserProfilesPage() {
   return (
