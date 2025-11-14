@@ -1133,22 +1133,34 @@ Add v3.0 documentation, examples, and migration guide link.
 
 The project is actively in progress on the feature branch `feat/entity-manager-v3`. The following phases are complete:
 
-- Phase 1: Standardize Configuration Interfaces
+- **Phase 1: Standardize Configuration Interfaces** ✅ COMPLETE
   - Created unified types at `components/entityManager/types/index.ts`
   - Made all component configs generic and removed duplicate field definitions
   - Removed API endpoints from component configs
 
-- Phase 2: Create Centralized EntityManagerConfig
+- **Phase 2: Create Centralized EntityManagerConfig** ✅ COMPLETE
   - Added manager types at `components/entityManager/manager/types-v3.ts`
   - Implemented a complete example at `components/features/accounts/configs/user-v3/` (fields, form, list, view, actions, exporter, index)
   - Centralized all API endpoints and hooks in the `EntityManagerConfig`
 
-- Phase 3: Rewrite Orchestrator
+- **Phase 3: Rewrite Orchestrator** ✅ COMPLETE
   - Implemented new thin coordinator at `components/entityManager/manager/orchestrator-v3.tsx` (~158 lines)
   - Handles navigation, CRUD via centralized endpoints, and lifecycle hooks
   - No transformation logic; components will receive configs directly
 
-Next active phase: Phase 4 — Update Feature Configurations (migrating entities to the new v3 config structure).
+- **Phase 4: Update Feature Configurations** ✅ COMPLETE
+  - Migrated all 6 account entities to v3 structure:
+    * `user-v3/` - Fully CRUD-enabled with lifecycle hooks (8 files)
+    * `loginAttempt-v3/` - Read-only security audit log (7 files)
+    * `userProfile-v3/` - CRUD with approval workflow (9 files)
+    * `userRole-v3/` - CRUD with permissions management (8 files)
+    * `userRoleHistory-v3/` - Read-only audit trail (7 files)
+    * `userSession-v3/` - Read-only with delete/revoke (7 files)
+  - Created centralized exports at `components/features/accounts/configs/index-v3.ts`
+  - Updated all 6 dashboard pages to use orchestrator-v3
+  - Total: 45 files changed, 4618 insertions
+
+Next active phase: Phase 5 — Update Components for Standalone Use
 
 ---
 
@@ -1185,10 +1197,18 @@ Next active phase: Phase 4 — Update Feature Configurations (migrating entities
 - [ ] Test orchestrator with new config
 
 ### Phase 4: Feature Configs
-- [ ] Update all feature configs to EntityManagerConfig (create `*-v3` configs alongside v2)
-- [ ] Centralize all API endpoints
-- [ ] Centralize all field definitions
-- [ ] Pilot migration with Accounts → Users using `user-v3`
+- [x] Create v3 configs for all 6 account entities
+- [x] Centralize all API endpoints in EntityManagerConfig.endpoints
+- [x] Centralize all field definitions in fields.ts
+- [x] Create index-v3.ts for centralized exports
+- [x] Update all 6 dashboard pages to use orchestrator-v3
+- [x] Total: 45 files changed, 4618 insertions
+  - user-v3 (8 files)
+  - loginAttempt-v3 (7 files)
+  - userProfile-v3 (9 files)
+  - userRole-v3 (8 files)
+  - userRoleHistory-v3 (7 files)
+  - userSession-v3 (7 files)
 
 ### Phase 5: Components
 - [ ] Update EntityList component
@@ -1290,5 +1310,5 @@ Next active phase: Phase 4 — Update Feature Configurations (migrating entities
 ---
 
 **Last Updated:** November 14, 2025  
-**Status:** In progress — Phase 4 (Feature Configs)  
-**Next Step:** Migrate feature configs to v3 structure starting with Accounts → Users
+**Status:** In progress — Phase 5 (Update Components for Standalone Use)  
+**Next Step:** Update EntityList, EntityForm, EntityView, EntityActions, EntityExporter components
