@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useDebounceSearch } from '@/hooks/useDebounce'
-import { EntityConfig, BaseEntity } from '../types'
+import {  BaseEntity } from '../types'
+import { EntityConfig } from '../types/manager' 
 import { EntityListSort } from '../../EntityList/types'
 import { validateEntityConfig } from '../validation'
 
@@ -146,8 +147,8 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
 
   // Persistence key
   const storageKey = useMemo(() => {
-    return persistenceKey || `${STORAGE_KEY_PREFIX}${config.name}`
-  }, [persistenceKey, config.name])
+    return persistenceKey || `${STORAGE_KEY_PREFIX}${config.entityName}`
+  }, [persistenceKey, config.entityName])
 
   // Load persisted state
   const persistedState = useMemo(() => {
@@ -156,7 +157,7 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
 
   // Navigation state
   const [currentPage, setCurrentPage] = useState(persistedState?.currentPage ?? 1)
-  const [pageSize, setPageSize] = useState(persistedState?.pageSize ?? config.listConfig.pageSize ?? DEFAULT_PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(persistedState?.pageSize ?? config.list?.pagination?.pageSize ?? DEFAULT_PAGE_SIZE)
   const [mode, setMode] = useState<'list' | 'create' | 'edit' | 'view'>(initialMode)
   const [selectedItem, setSelectedItem] = useState<TEntity | null>(null)
   const [selectedIds, setSelectedIds] = useState<readonly (string | number)[]>([])
@@ -164,15 +165,15 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
   // List state
   const [sortConfig, setSortConfig] = useState<readonly EntityListSort[] | undefined>(
     persistedState?.sortConfig ?? (
-      config.listConfig.defaultSort
-        ? [{ field: config.listConfig.defaultSort.field, direction: config.listConfig.defaultSort.direction }]
+      config.list?.defaultSort
+        ? [{ field: config.list.defaultSort[0].field, direction: config.list.defaultSort[0].direction }]
         : undefined
     )
   )
   const [filterValues, setFilterValues] = useState<Record<string, unknown>>(persistedState?.filterValues ?? {})
   const { searchTerm, debouncedSearchTerm, setSearchTerm } = useDebounceSearch(persistedState?.searchTerm ?? '', 300)
-  const [fields, setFields] = useState<string | string[] | undefined>(config.listConfig.fields)
-  const [expand, setExpand] = useState<string | string[] | undefined>(config.listConfig.expand)
+  const [fields, setFields] = useState<string | string[] | undefined>(config.list?.fields)
+  const [expand, setExpand] = useState<string | string[] | undefined>(config.list?.expand)
 
   // UI state
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string | number }>({ open: false })
@@ -211,7 +212,6 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
   useEffect(() => {
     const cleanup = () => {
       setPaginationCache(prev => {
-        const now = Date.now()
         const cleaned: typeof prev = {}
 
         Object.entries(prev).forEach(([key, entry]) => {
@@ -292,7 +292,7 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
     setSearchTerm(term)
     setCurrentPage(1) // Reset to first page when searching
     setError(null)
-  }, [])
+  }, [setSearchTerm])
 
   const setDeleteDialogAction = useCallback((dialog: { open: boolean; id?: string | number }) => {
     setDeleteDialog(dialog)
@@ -338,28 +338,28 @@ export function useEntityState<TEntity extends BaseEntity, TFormData extends Rec
     setMode('list')
     setSelectedItem(null)
     setSelectedIds([])
-    setSortConfig(config.listConfig.defaultSort
-      ? [{ field: config.listConfig.defaultSort.field, direction: config.listConfig.defaultSort.direction }]
+    setSortConfig(config.list?.defaultSort
+      ? [{ field: config.list.defaultSort[0].field, direction: config.list.defaultSort[0].direction }]
       : undefined
     )
     setFilterValues({})
     setSearchTerm('')
-    setFields(config.listConfig.fields)
-    setExpand(config.listConfig.expand)
+    setFields(config.list?.fields)
+    setExpand(config.list?.expand)
     setDeleteDialog({ open: false })
     setBatchDeleteDialog({ open: false })
     setError(null)
     setPaginationCache({})
     setHasLoadedOnce(false)
     setLastUpdated(Date.now())
-  }, [config.listConfig.defaultSort])
+  }, [config.list?.defaultSort, config.list?.fields, config.list?.expand , setSearchTerm])
 
   const resetFiltersAction = useCallback(() => {
     setFilterValues({})
     setSearchTerm('')
     setCurrentPage(1)
     setError(null)
-  }, [])
+  }, [setSearchTerm])
 
   const resetSelectionAction = useCallback(() => {
     setSelectedItem(null)

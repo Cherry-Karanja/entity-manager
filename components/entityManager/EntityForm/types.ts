@@ -1,11 +1,36 @@
 import React from "react"
-import { FormField as UnifiedFormField, EntityHooks } from '../types'
+import {EntityHooks } from '../types'
 
 // ===== TYPE DEFINITIONS =====
 
+export type FormFieldType =
+  | 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
+  | 'textarea' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'switch'
+  | 'date' | 'datetime' | 'time' | 'file' | 'image'
+  | 'rich-text' | 'markdown' | 'json' | 'custom'
+
+export interface FieldValidation {
+  required?: boolean | string
+  min?: number | string
+  max?: number | string
+  minLength?: number | string
+  maxLength?: number | string
+  pattern?: RegExp | string
+  email?: boolean | string
+  url?: boolean | string
+  custom?: (value: unknown) => string | boolean
+}
+
+export interface FieldOption {
+  value: string | number
+  label: string
+  disabled?: boolean
+  icon?: React.ComponentType<{ className?: string }>
+  description?: string
+}
 export interface EntityFormConfig<TEntity = unknown> {
   // Form fields configuration (SINGLE SOURCE OF TRUTH - from unified types)
-  fields: UnifiedFormField[]
+  fields: FormField[]
 
   // Form behavior
   mode?: 'create' | 'edit' | 'view'
@@ -54,8 +79,41 @@ export interface EntityFormConfig<TEntity = unknown> {
   customComponents?: FormCustomComponents
 }
 
-// Legacy type alias for backwards compatibility during migration
-export type FormField = UnifiedFormField
+export interface FormField {
+  name: string
+  label: string
+  type: FormFieldType
+  required?: boolean
+  validation?: FieldValidation
+  defaultValue?: unknown
+  placeholder?: string
+  helpText?: string
+  disabled?: boolean
+  readOnly?: boolean
+  hidden?: boolean
+  condition?: (formData: unknown) => boolean
+  options?: FieldOption[]
+  grid?: { col?: number; row?: number }
+  
+  // Advanced
+  dependsOn?: string[]
+  transform?: (value: unknown) => unknown
+  component?: React.ComponentType<{
+    field: FormField
+    value: unknown
+    onChange: (value: unknown) => void
+    onBlur: () => void
+    error?: string
+    touched?: boolean
+    disabled?: boolean
+    required?: boolean
+  }>
+  
+  // Styling
+  className?: string
+  containerClassName?: string
+}
+
 
 export interface FormPermissions {
   create?: boolean
@@ -73,7 +131,7 @@ export interface FormCustomComponents {
 }
 
 export interface FieldRenderProps {
-  field: UnifiedFormField
+  field: FormField
   value: unknown
   onChange: (value: unknown) => void
   onBlur: () => void

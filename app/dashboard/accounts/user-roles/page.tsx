@@ -1,7 +1,7 @@
 'use client'
 
-import { EntityOrchestrator } from '@/components/entityManager/manager/orchestrator-v3'
-import { userRoleEntityConfig } from '@/components/features/accounts/configs/index-v3'
+import { EntityOrchestrator } from '@/components/entityManager/manager/orchestrator'
+import { userRoleEntityConfig } from '@/components/features/accounts/configs'
 
 export default function UserRolesPage() {
   return (

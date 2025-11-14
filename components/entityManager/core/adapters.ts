@@ -14,12 +14,59 @@ import {
   UnifiedActionConfig,
   UnifiedFilterConfig,
   BaseEntity,
-  FieldGroup
+  FieldGroup,
+  ValidationRule
 } from './types'
 import { EntityListColumn, EntityListFilter, EntityListAction } from '../EntityList/types'
 import { FormField, EntityFormConfig } from '../EntityForm/types'
-import { EntityViewConfig, ViewField, ViewFieldGroup } from '../EntityView/types'
+import { ViewField, EntityViewConfig } from '../EntityView/types'
 import { EntityAction } from '../EntityActions/types'
+import { FieldValidation } from '../types'
+
+/**
+ * Convert ValidationRule[] to FieldValidation
+ */
+function convertValidationRules(rules?: ValidationRule[]): FieldValidation | undefined {
+  if (!rules || rules.length === 0) return undefined
+  
+  const validation: FieldValidation = {}
+  
+  for (const rule of rules) {
+    switch (rule.type) {
+      case 'required':
+        validation.required = rule.message || true
+        break
+      case 'min':
+        validation.min = rule.value as number | string
+        break
+      case 'max':
+        validation.max = rule.value as number | string
+        break
+      case 'minLength':
+        validation.minLength = rule.value as number | string
+        break
+      case 'maxLength':
+        validation.maxLength = rule.value as number | string
+        break
+      case 'pattern':
+        validation.pattern = rule.value as RegExp | string
+        break
+      case 'email':
+        validation.email = rule.message || true
+        break
+      case 'url':
+        validation.url = rule.message || true
+        break
+      case 'custom':
+        if (rule.validator) {
+          validation.custom = rule.validator
+        }
+        break
+    }
+  }
+  
+  return Object.keys(validation).length > 0 ? validation : undefined
+}
 
 /**
  * Convert unified field to EntityListColumn
@@ -108,6 +155,14 @@ export function fieldToFormField<TEntity extends BaseEntity, TFormData extends R
       formType = field.renderType as FormField['type'] || 'text'
   }
 
+  // Build validation object
+  const validation = convertValidationRules(field.validation) || {}
+  if (field.min !== undefined) validation.min = field.min
+  if (field.max !== undefined) validation.max = field.max
+  if (field.minLength !== undefined) validation.minLength = field.minLength
+  if (field.maxLength !== undefined) validation.maxLength = field.maxLength
+  if (field.pattern) validation.pattern = field.pattern.source
+
   return {
     name: field.key,
     label: field.label,
@@ -116,34 +171,13 @@ export function fieldToFormField<TEntity extends BaseEntity, TFormData extends R
     disabled: field.disabled,
     hidden: field.hidden,
     placeholder: field.placeholder,
-    description: field.description,
     helpText: field.description,
     options: field.options,
-    multiple: field.multiple,
-    min: field.min,
-    max: field.max,
-    minLength: field.minLength,
-    maxLength: field.maxLength,
-    pattern: field.pattern?.source,
-    validation: field.validation,
+    validation: Object.keys(validation).length > 0 ? validation : undefined,
     className: field.className,
-    icon: field.icon,
     dependsOn: field.dependsOn,
     condition: field.condition as any,
     transform: field.transformInput,
-    format: field.format as any,
-    parse: field.parse,
-    render: field.renderForm as any,
-    foreignKey: !!field.relationship,
-    relatedEntity: field.relationship?.entity,
-    endpoint: field.relationship?.endpoint,
-    relatedField: field.relationship?.valueField || 'id',
-    displayField: field.relationship?.displayField,
-    relationshipType: field.relationship ? 'many-to-one' as const : undefined,
-    searchable: field.relationship?.search?.enabled ?? field.searchable,
-    enableDragDrop: field.enableDragDrop,
-    showPreview: field.showPreview,
-    maxSize: field.maxFileSize,
   }
 }
 

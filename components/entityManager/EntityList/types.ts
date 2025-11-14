@@ -1,6 +1,7 @@
 import React from "react"
 import { FormField as UnifiedFormField } from '../types'
 import { EntityActionsConfig } from "../EntityActions/types"
+import { BaseEntity } from "../manager"
 
 // ===== TYPE DEFINITIONS =====
 
@@ -169,7 +170,7 @@ export interface EntityListExportConfig {
   customTransformers?: Record<string, (data: EntityListItem[]) => unknown>
 }
 
-export interface EntityListConfig<TEntity = EntityListItem> {
+export interface EntityListConfig<TEntity extends BaseEntity = BaseEntity> {
   // Basic configuration
   id?: string
   name?: string
@@ -287,8 +288,8 @@ export interface EntityListConfig<TEntity = EntityListItem> {
   expandable?: boolean
 }
 
-export interface EntityListProps {
-  config: EntityListConfig
+export interface EntityListProps  <TEntity extends BaseEntity = BaseEntity> {
+  config: EntityListConfig<TEntity>
   // Override props
   data?: EntityListItem[]
   loading?: boolean
@@ -298,8 +299,6 @@ export interface EntityListProps {
   activeFilters?: Record<string, unknown>
   sortConfig?: EntityListSort[]
   pagination?: Partial<EntityListPagination>
-  fields?: string | string[]
-  expand?: string | string[]
   // Event handlers
   onDataChange?: (data: EntityListItem[]) => void
   onSelectionChange?: (selectedKeys: (string | number)[], selectedItems: EntityListItem[]) => void

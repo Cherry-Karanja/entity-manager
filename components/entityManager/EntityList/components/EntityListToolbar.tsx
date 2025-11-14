@@ -25,6 +25,7 @@ interface EntityListToolbarProps {
   selectedKeys: (string | number)[]
   onBulkAction: (action: EntityListBulkAction, items: any[]) => void
   onExport?: (format: 'csv' | 'xlsx' | 'pdf' | 'json') => void
+  onRefresh?: () => void
   views?: EntityListConfig['views']
   filters?: EntityListFilter[]
   bulkActions?: EntityListBulkAction[]
@@ -55,6 +56,7 @@ export const EntityListToolbar: React.FC<EntityListToolbarProps> = ({
   selectedKeys,
   onBulkAction,
   onExport,
+  onRefresh,
   views = [],
   filters = [],
   bulkActions = [],
@@ -188,10 +190,10 @@ export const EntityListToolbar: React.FC<EntityListToolbarProps> = ({
           )}
 
           {/* Refresh */}
-          {config.onRefresh && (
+          {(onRefresh || config.onRefresh) && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={config.onRefresh}>
+                <Button variant="outline" size="sm" onClick={onRefresh || config.onRefresh}>
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>

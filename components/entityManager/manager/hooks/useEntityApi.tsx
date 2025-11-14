@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { createApiService } from '@/components/connectionManager/http'
-import { EntityConfig, BaseEntity } from '../types'
+import {  BaseEntity } from '../types'
+import { EntityConfig } from '../types/manager'
 import { EntityState, EntityStateActions } from './useEntityState'
 import { authApi as api } from '@/components/connectionManager/http'
 import { DjangoPaginatedResponse } from '@/components/connectionManager/http'
@@ -11,10 +12,11 @@ import { buildCompleteQueryParams } from '../../utils/queryBuilding'
 import { analyzeCascadeOperations, executeCascadeOperations, CascadeOperation, CascadeResult } from '@/components/entityManager/utils/cascadeOperations'
 import { offlineStorage, useOfflineState, OfflineOperation, SyncResult, startAutoSync, stopAutoSync } from '@/components/entityManager//utils/offlineStorage'
 import { useEntityWebSocket } from '@/components/connectionManager/websockets'
-import { MessageType, ConnectionState } from '@/components/connectionManager/websockets/types'
+import { MessageType, ConnectionState, EntityMessage, WebSocketMessage } from '@/components/connectionManager/websockets/types'
 import { OptimisticOperation, OptimisticState, OptimisticConfig, ConflictResolution, OptimisticApiResult } from '../../utils/types/optimistic'
 import { ConflictResolutionDialog, ConflictNotification } from '../../utils/ConflictResolution'
 import { UserPresenceData, CursorPosition, EntityLock } from '../../utils/types/collaborative'
+import { UnknownKeysParam } from 'zod'
 
 // ===== UTILITY FUNCTIONS =====
 
@@ -26,7 +28,7 @@ function buildOrderingParam(sortConfig?: readonly EntityListSort[]): string | un
 // ===== TYPES =====
 
 export interface UseEntityApiOptions<TEntity extends BaseEntity, TFormData extends Record<string, unknown>> {
-  config: EntityConfig<TEntity, TFormData>
+  config: EntityConfig
   state: EntityState<TEntity>
   actions: EntityStateActions<TEntity>
   enableOptimisticUpdates?: boolean
@@ -229,13 +231,13 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   const offlineState = useOfflineState()
 
   // Message handler ref for WebSocket
-  const messageHandlerRef = useRef<(message: any) => void>(() => {})
+  const messageHandlerRef = useRef<(message: WebSocketMessage) => void>(() => {})
 
   // Real-time updates via WebSocket
   const webSocket = useEntityWebSocket({
     url: webSocketUrl || '',
     // No authToken needed - authentication handled via HTTP-only cookies
-    entityType: config.name,
+    entityType: config.entityName,
     autoConnect: enableRealTimeUpdates && !!webSocketUrl,
     onMessage: (message) => messageHandlerRef.current(message)
   })
@@ -285,14 +287,14 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         payload: {
           userId: presenceState.currentUser.id,
           userName: presenceState.currentUser.name,
-          entityType: config.name,
+          entityType: config.entityName,
           entityId,
           action,
           lastActivity: Date.now()
         }
-      } as any)
+      } as WebSocketMessage)
     }
-  }, [enableRealTimeUpdates, webSocket, presenceState.currentUser, config.name])
+  }, [enableRealTimeUpdates, webSocket, presenceState.currentUser, config.entityName])
 
   // Update presence when viewing an entity
   const updatePresenceViewing = useCallback((entityId: string | number) => {
@@ -306,13 +308,13 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   }, [sendPresenceMessage])
 
   // Handle presence messages from other users
-  const handlePresenceMessage = useCallback((message: any) => {
+  const handlePresenceMessage = useCallback((message: WebSocketMessage) => {
     if (!presenceState.currentUser || message.userId === presenceState.currentUser.id) {
       return // Ignore our own messages
     }
 
     const presenceData = {
-      userId: message.userId,
+      userId: message.userId || '',
       userName: message.userName || 'Unknown User',
       lastActivity: Date.now()
     }
@@ -328,17 +330,21 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
           break
 
         case MessageType.USER_EDITING_STARTED:
-          // Add or update editor
-          newState.editors = newState.editors.filter(e => !(e.userId === message.userId && e.entityId === message.entityId))
-          newState.editors.push({
-            ...presenceData,
-            entityId: message.entityId
-          })
+          // Add or update editor only if entityId is defined
+          if (message.entityId !== undefined) {
+            newState.editors = newState.editors.filter(e => !(e.userId === message.userId && e.entityId === message.entityId))
+            newState.editors.push({
+              ...presenceData,
+              entityId: message.entityId
+            })
+          }
           break
 
         case MessageType.USER_EDITING_STOPPED:
-          // Remove editor
-          newState.editors = newState.editors.filter(e => !(e.userId === message.userId && e.entityId === message.entityId))
+          // Remove editor only if entityId is defined
+          if (message.entityId !== undefined) {
+            newState.editors = newState.editors.filter(e => !(e.userId === message.userId && e.entityId === message.entityId))
+          }
           break
 
         case MessageType.USER_LEFT:
@@ -362,20 +368,11 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   const pendingRequestsRef = useRef<Map<string, Promise<unknown>>>(new Map())
 
   // Create API services for mutations - call hooks at top level
-  const createApi = createApiService<TFormData, TEntity>(
-    config,
-  )
-  const updateApi = createApiService<TFormData, TEntity>(
-    config,
-  )
-  const deleteApi = createApiService<{ id: string | number }, null>(
-    config,
-
-  )
-
-  // Get mutation hooks - call them at top level
+  const createApi = createApiService<TEntity, TFormData>(config)
   const addItemMutation = createApi().useAddItem()
+  const updateApi = createApiService<TEntity, Partial<TFormData>>(config)
   const updateItemMutation = updateApi().useUpdateItem()
+  const deleteApi = createApiService<{ id: string | number }, null>(config)
   const deleteItemMutation = deleteApi().useDeleteItem()
 
   // Create API services object for mutations
@@ -678,7 +675,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
           pageSize: state.pageSize,
           search: state.debouncedSearchTerm,
           sortBy: buildOrderingParam(state.sortConfig),
-          filters: config.listConfig.filters || [],
+          filters: config.list?.filters || [],
           filterValues: state.filterValues,
           fields: state.fields,
           expand: state.expand
@@ -696,7 +693,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [state, actions, getCacheKey, getDeduplicatedRequest, retryWithBackoff, fetchListData])
+  }, [state, actions, getCacheKey, getDeduplicatedRequest, retryWithBackoff, fetchListData, config.list?.filters])
 
   // Provide a stable reference to fetchEntities for consumers so they can safely
   // include it in effect dependency arrays without creating loops when the
@@ -782,7 +779,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       console.error('Failed to resolve conflict:', error)
       // Keep the conflict in state for retry
     }
-  }, [optimisticState.conflicts, apiServices.mutations, actions])
+  }, [optimisticState.conflicts, apiServices.mutations, actions, fetchEntitiesStable])
 
   // Dismiss conflict without resolving
   const dismissConflict = useCallback((conflictId: string) => {
@@ -846,13 +843,13 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   // Perform optimistic create operation
   const performOptimisticCreate = useCallback(async (data: TFormData): Promise<EntityOperationResult<TEntity>> => {
     const tempId = generateTempId()
-    const operationId = generateOperationId(config.name, 'create', tempId)
+    const operationId = generateOperationId(config.entityName, 'create', tempId)
 
     // Create optimistic operation
     const optimisticOperation: OptimisticOperation = {
       id: operationId,
       type: 'create',
-      entityType: config.name,
+      entityType: config.entityName,
       entityId: tempId,
       tempId,
       localData: data as Record<string, unknown>,
@@ -871,7 +868,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     try {
       // Perform server operation
       const result = await retryWithBackoff(async () => {
-        const response = await apiServices.mutations.addItem.mutateAsync(data as unknown as TEntity)
+        const response = await apiServices.mutations.addItem.mutateAsync(data)
         return response
       })
 
@@ -887,7 +884,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         webSocket.sendMessage({
           type: MessageType.ENTITY_CREATED,
           payload: {
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: (result as any)?.id,
             entityData: result
           }
@@ -909,11 +906,11 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
       return { success: false as const, validationErrors: { fieldErrors: {}, nonFieldErrors: [apiError.message] } }
     }
-  }, [config.name, addOptimisticOperation, updateOptimisticOperation, removeOptimisticOperation, rollbackOptimisticOperation, retryWithBackoff, apiServices.mutations.addItem, invalidateCache, fetchEntitiesStable, enableRealTimeUpdates, webSocket])
+  }, [config.entityName, addOptimisticOperation, updateOptimisticOperation, removeOptimisticOperation, rollbackOptimisticOperation, retryWithBackoff, apiServices.mutations.addItem, invalidateCache, fetchEntitiesStable, enableRealTimeUpdates, webSocket])
 
   // Perform optimistic update operation
   const performOptimisticUpdate = useCallback(async (id: string | number, data: Partial<TFormData>): Promise<EntityOperationResult<TEntity>> => {
-    const operationId = generateOperationId(config.name, 'update', id)
+    const operationId = generateOperationId(config.entityName, 'update', id)
 
     // Get current entity data for rollback purposes (from cache if available)
     let currentData: Record<string, unknown> = {}
@@ -930,7 +927,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     const optimisticOperation: OptimisticOperation = {
       id: operationId,
       type: 'update',
-      entityType: config.name,
+      entityType: config.entityName,
       entityId: id,
       localData: data as Record<string, unknown>,
       serverData: currentData,
@@ -956,7 +953,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     try {
       // Perform server operation
       const result = await retryWithBackoff(async () => {
-        const response = await apiServices.mutations.updateItem.mutateAsync({ id, data: data as unknown as TEntity })
+        const response = await apiServices.mutations.updateItem.mutateAsync({ id, data })
         return response
       })
 
@@ -972,7 +969,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         webSocket.sendMessage({
           type: MessageType.ENTITY_UPDATED,
           payload: {
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: id,
             entityData: result,
             changes: data
@@ -1018,11 +1015,11 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
       return { success: false as const, validationErrors: { fieldErrors: {}, nonFieldErrors: [apiError.message] } }
     }
-  }, [config.name, state.paginationCache, getCacheKey, addOptimisticOperation, updateOptimisticOperation, removeOptimisticOperation, rollbackOptimisticOperation, retryWithBackoff, apiServices.mutations.updateItem, invalidateCache, fetchEntitiesStable, enableRealTimeUpdates, webSocket])
+  }, [config.entityName, state.paginationCache, getCacheKey, addOptimisticOperation, updateOptimisticOperation, removeOptimisticOperation, rollbackOptimisticOperation, retryWithBackoff, apiServices.mutations.updateItem, invalidateCache, fetchEntitiesStable, enableRealTimeUpdates, webSocket, detectConflict, formatUrl, config.endpoints.update])
 
   // Perform optimistic delete operation
   const performOptimisticDelete = useCallback(async (id: string | number): Promise<EntityOperationResult<TEntity>> => {
-    const operationId = generateOperationId(config.name, 'delete', id)
+    const operationId = generateOperationId(config.entityName, 'delete', id)
 
     // Get current entity data for rollback purposes (from cache if available)
     let currentData: Record<string, unknown> = {}
@@ -1039,7 +1036,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     const optimisticOperation: OptimisticOperation = {
       id: operationId,
       type: 'delete',
-      entityType: config.name,
+      entityType: config.entityName,
       entityId: id,
       localData: {} as Record<string, unknown>, // Empty for delete operations
       serverData: currentData as Record<string, unknown>,
@@ -1073,7 +1070,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         webSocket.sendMessage({
           type: MessageType.ENTITY_DELETED,
           payload: {
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: id
           }
         } as any)
@@ -1094,7 +1091,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
       return { success: false as const, validationErrors: { fieldErrors: {}, nonFieldErrors: [apiError.message] } }
     }
-  }, [config.name, state.paginationCache, getCacheKey, addOptimisticOperation, updateOptimisticOperation, removeOptimisticOperation, rollbackOptimisticOperation, retryWithBackoff, apiServices.mutations.deleteItem, invalidateCache, fetchEntitiesStable, enableRealTimeUpdates, webSocket])
+  }, [config.entityName, state.paginationCache, getCacheKey, addOptimisticOperation, updateOptimisticOperation, removeOptimisticOperation, rollbackOptimisticOperation, retryWithBackoff, apiServices.mutations.deleteItem, invalidateCache, fetchEntitiesStable, enableRealTimeUpdates, webSocket])
 
   // Handle real-time updates from WebSocket
   const handleRealTimeUpdate = useCallback((message: any) => {
@@ -1107,7 +1104,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     }
 
     // Handle entity updates
-    if ('entityType' in message && message.entityType === config.name) {
+    if ('entityType' in message && message.entityType === config.entityName) {
       switch (message.type) {
         case MessageType.ENTITY_CREATED:
         case MessageType.ENTITY_UPDATED:
@@ -1118,7 +1115,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
           break
       }
     }
-  }, [enableRealTimeUpdates, config.name, fetchEntities, handlePresenceMessage])
+  }, [enableRealTimeUpdates, config.entityName, fetchEntities, handlePresenceMessage])
 
   // Update message handler ref when handleRealTimeUpdate changes
   useEffect(() => {
@@ -1165,9 +1162,9 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       if (!offlineState.isOnline) {
         // Queue operation for offline execution
         const operation: OfflineOperation = {
-          id: `create_${config.name}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `create_${config.entityName}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'create',
-          entityType: config.name,
+          entityType: config.entityName,
           entityId: undefined, // Will be assigned when synced
           data: data as Record<string, unknown>,
           timestamp: Date.now(),
@@ -1183,7 +1180,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       }
 
       const result = await retryWithBackoff(async () => {
-        const response = await apiServices.mutations.addItem.mutateAsync(data as unknown as TEntity)
+        const response = await apiServices.mutations.addItem.mutateAsync(data)
         return response
       })
 
@@ -1196,7 +1193,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         webSocket.sendMessage({
           type: MessageType.ENTITY_CREATED,
           payload: {
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: (result as any)?.id,
             entityData: result
           }
@@ -1211,9 +1208,9 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       if (!offlineState.isOnline || (apiError.statusCode && apiError.statusCode >= 500)) {
         try {
           const operation: OfflineOperation = {
-            id: `create_${config.name}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `create_${config.entityName}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: 'create',
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: undefined,
             data: data as Record<string, unknown>,
             timestamp: Date.now(),
@@ -1261,7 +1258,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   } finally {
     setIsLoading(false)
   }
-}, [enableOptimisticUpdates, performOptimisticCreate, setIsLoading, setError, actions, offlineState.isOnline, offlineStorage, retryWithBackoff, apiServices.mutations.addItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.name])  // Update entity with optimistic updates
+}, [enableOptimisticUpdates, performOptimisticCreate, setIsLoading, setError, actions, offlineState.isOnline, retryWithBackoff, apiServices.mutations.addItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.entityName])  // Update entity with optimistic updates
   const updateEntity = useCallback(async (id: string | number, data: Partial<TFormData>): Promise<EntityOperationResult<TEntity>> => {
     // Use optimistic updates if enabled
     if (enableOptimisticUpdates) {
@@ -1277,9 +1274,9 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       if (!offlineState.isOnline) {
         // Queue operation for offline execution
         const operation: OfflineOperation = {
-          id: `update_${config.name}_${id}_${Date.now()}`,
+          id: `update_${config.entityName}_${id}_${Date.now()}`,
           type: 'update',
-          entityType: config.name,
+          entityType: config.entityName,
           entityId: id,
           data: data as Record<string, unknown>,
           timestamp: Date.now(),
@@ -1297,7 +1294,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       const result = await retryWithBackoff(async () => {
         const response = await apiServices.mutations.updateItem.mutateAsync({
           id,
-          data: data as unknown as TEntity
+          data: data 
         })
         return response
       })
@@ -1311,7 +1308,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         webSocket.sendMessage({
           type: MessageType.ENTITY_UPDATED,
           payload: {
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: id,
             entityData: result
           }
@@ -1326,9 +1323,9 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       if (!offlineState.isOnline || (apiError.statusCode && apiError.statusCode >= 500)) {
         try {
           const operation: OfflineOperation = {
-            id: `update_${config.name}_${id}_${Date.now()}`,
+            id: `update_${config.entityName}_${id}_${Date.now()}`,
             type: 'update',
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: id,
             data: data as Record<string, unknown>,
             timestamp: Date.now(),
@@ -1376,7 +1373,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [enableOptimisticUpdates, performOptimisticUpdate, setIsLoading, setError, actions, offlineState.isOnline, offlineStorage, retryWithBackoff, apiServices.mutations.updateItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.name])
+  }, [enableOptimisticUpdates, performOptimisticUpdate, setIsLoading, setError, actions, offlineState.isOnline, retryWithBackoff, apiServices.mutations.updateItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.entityName])
 
   // Delete entity with cascade operations
   const deleteEntity = useCallback(async (id: string | number): Promise<boolean> => {
@@ -1396,9 +1393,9 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         // For offline deletes, we skip cascade operations analysis since they require network
         // Queue operation for offline execution
         const operation: OfflineOperation = {
-          id: `delete_${config.name}_${id}_${Date.now()}`,
+          id: `delete_${config.entityName}_${id}_${Date.now()}`,
           type: 'delete',
-          entityType: config.name,
+          entityType: config.entityName,
           entityId: id,
           data: {}, // No additional data needed for delete
           timestamp: Date.now(),
@@ -1415,7 +1412,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
       // Analyze cascade operations before deleting
       const cascadeOperations = await analyzeCascadeOperations({
-        entityType: config.name,
+        entityType: config.entityName,
         entityId: id.toString(),
         operation: 'delete'
       })
@@ -1446,7 +1443,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
         webSocket.sendMessage({
           type: MessageType.ENTITY_DELETED,
           payload: {
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: id
           }
         } as any)
@@ -1460,9 +1457,9 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       if (!offlineState.isOnline || (apiError.statusCode && apiError.statusCode >= 500)) {
         try {
           const operation: OfflineOperation = {
-            id: `delete_${config.name}_${id}_${Date.now()}`,
+            id: `delete_${config.entityName}_${id}_${Date.now()}`,
             type: 'delete',
-            entityType: config.name,
+            entityType: config.entityName,
             entityId: id,
             data: {},
             timestamp: Date.now(),
@@ -1487,7 +1484,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [enableOptimisticUpdates, performOptimisticDelete, setIsLoading, setError, actions, offlineState.isOnline, offlineStorage, retryWithBackoff, apiServices.mutations.deleteItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.name])
+  }, [enableOptimisticUpdates, performOptimisticDelete, setIsLoading, setError, actions, offlineState.isOnline, retryWithBackoff, apiServices.mutations.deleteItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.entityName])
 
   // Batch delete with progress tracking
   const batchDeleteEntities = useCallback(async (
@@ -1520,7 +1517,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
 
             // Analyze cascade operations for this entity
             const cascadeOperations = await analyzeCascadeOperations({
-              entityType: config.name,
+              entityType: config.entityName,
               entityId: id.toString(),
               operation: 'delete'
             })
@@ -1586,7 +1583,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [apiServices.mutations.deleteItem, retryWithBackoff, invalidateCache, fetchEntities, actions, config.name])
+  }, [apiServices.mutations.deleteItem, retryWithBackoff, invalidateCache, fetchEntities, actions, config.entityName])
 
   // Batch update with progress tracking
   const batchUpdateEntities = useCallback(async (
@@ -1620,7 +1617,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
             await retryWithBackoff(() =>
               apiServices.mutations.updateItem.mutateAsync({
                 id: update.id,
-                data: update.data as unknown as TEntity
+                data: update.data 
               })
             )
             progress.completed++
@@ -1703,7 +1700,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
             onProgress?.(progress)
 
             const result = await retryWithBackoff(() =>
-              apiServices.mutations.addItem.mutateAsync(item as unknown as TEntity)
+              apiServices.mutations.addItem.mutateAsync(item)
             )
             progress.completed++
             return { id: (result as TEntity).id, success: true, data: result as TEntity }
@@ -1803,7 +1800,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
       actions.setError(null)
 
       const operations = await offlineStorage.getPendingOperations()
-      const entityOperations = operations.filter(op => op.entityType === config.name)
+      const entityOperations = operations.filter(op => op.entityType === config.entityName)
 
       let successful = 0
       let failed = 0
@@ -1894,7 +1891,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     } finally {
       setIsLoading(false)
     }
-  }, [offlineState.isOnline, offlineStorage, config.name, createEntity, updateEntity, deleteEntity, invalidateCache, fetchEntities, actions])
+  }, [offlineState.isOnline, config.entityName, createEntity, updateEntity, deleteEntity, invalidateCache, fetchEntities, actions])
 
   // ===== UTILITY FUNCTIONS =====
 
@@ -1931,8 +1928,6 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     cancelPendingRequests,
     retryFailedOperation,
     syncPendingOperations,
-    analyzeCascadeOperations,
-    executeCascadeOperations
   ])
 
   // Retry failed optimistic operation

@@ -1,242 +1,136 @@
+// ===== ENTITY VIEW V3 - STANDALONE COMPONENT =====
+// Pure presentation component that works with EntityViewConfig<TEntity>
+
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import React from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  EntityViewConfig,
-  EntityViewProps,
-  ViewAction,
-  DEFAULT_VIEW_CONFIG,
-  DEFAULT_VIEW_ACTIONS,
-} from './types'
-import { cn } from '@/lib/utils'
-import { useIsMobile } from '@/hooks/use-mobile'
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+import { Entity, EntityViewConfig } from '../types'
 
-// Import modular components
-import { ViewHeader } from './components/ViewHeader'
-import { CardView } from './views/CardView'
-import { DetailView } from './views/DetailView'
-import { SummaryView } from './views/SummaryView'
-import { TimelineView } from './views/TimelineView'
+export interface EntityViewProps<TEntity extends Entity = Entity> {
+  config: EntityViewConfig<TEntity>
+  data: TEntity
+  onEdit?: () => void
+  onDelete?: () => void
+  onBack?: () => void
+}
 
-// ===== MAIN COMPONENT =====
-
-const EntityViewComponent: React.FC<EntityViewProps> = ({
+export const EntityView = <TEntity extends Entity = Entity>({
   config,
-  data: initialData,
-  onActionClick,
-  onNavigate,
-  className,
-}) => {
-  const [data, setData] = useState<unknown>(initialData)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Mobile detection
-  const isMobile = useIsMobile()
-
-  const mergedConfig = useMemo(() => ({
-    ...DEFAULT_VIEW_CONFIG,
-    ...config,
-    actions: config.actions || DEFAULT_VIEW_ACTIONS,
-  }), [config])
-
-  // Load data if dataFetcher is provided
-  useEffect(() => {
-    if (mergedConfig.dataFetcher && !initialData) {
-      setLoading(true)
-      setError(null)
-      mergedConfig.dataFetcher()
-        .then(fetchedData => {
-          const transformedData = mergedConfig.dataTransformer
-            ? mergedConfig.dataTransformer(fetchedData)
-            : fetchedData
-          setData(transformedData)
-          mergedConfig.hooks?.onViewLoad?.(transformedData)
-        })
-        .catch(err => {
-          setError(err.message || 'Failed to load data')
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    } else if (initialData) {
-      setData(initialData)
-    }
-  }, [mergedConfig, initialData])
-
-  // Call onViewChange hook when data changes
-  useEffect(() => {
-    if (data && mergedConfig.hooks?.onViewChange) {
-      mergedConfig.hooks.onViewChange(data)
-    }
-  }, [data, mergedConfig])
-
-  const handleActionClick = useCallback((action: ViewAction) => {
-    mergedConfig.hooks?.onActionClick?.(action, data)
-    onActionClick?.(action, data)
-  }, [mergedConfig, data, onActionClick])
-
-  const handleNavigate = useCallback((direction: 'prev' | 'next') => {
-    mergedConfig.hooks?.onNavigate?.(direction)
-    onNavigate?.(direction)
-  }, [mergedConfig, onNavigate])
-
-  const processedFields = useMemo(() => {
-    const fields = mergedConfig.fields || []
-    return fields.filter(field => !field.hidden && (!field.condition || field.condition(data)))
-  }, [mergedConfig.fields, data])
-
-  const processedFieldGroups = useMemo(() => {
-    const groups = mergedConfig.fieldGroups || []
-    return groups.map(group => ({
-      ...group,
-      fields: group.fields.filter(field =>
-        !field.hidden && (!field.condition || field.condition(data))
-      ),
-    })).filter(group => group.fields.length > 0)
-  }, [mergedConfig.fieldGroups, data])
-
-  if (loading) {
-    return (
-      <div className={cn('flex items-center justify-center p-8', className)}>
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading...</span>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive" className={className}>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )
-  }
-
-  if (!data) {
-    return (
-      <Alert className={className}>
-        <AlertDescription>No data to display</AlertDescription>
-      </Alert>
-    )
-  }
-
-  // Render the appropriate view based on mode
-  const renderView = () => {
-    const viewProps = {
-      data,
-      config: mergedConfig,
-      onActionClick: handleActionClick,
+  data,
+  onEdit,
+  onDelete,
+  onBack,
+}: EntityViewProps<TEntity>) => {
+  // Render field value
+  const renderValue = (field: string, value: unknown) => {
+    // Check if there's a custom format function in field groups
+    for (const group of config.fieldGroups || []) {
+      const fieldDef = group.fields.find(f => f.key === field)
+      if (fieldDef?.format) {
+        return fieldDef.format(value, data)
+      }
     }
 
-    switch (mergedConfig.mode) {
-      case 'card':
-        return (
-          <CardView
-            {...viewProps}
-            fields={processedFields}
-          />
-        )
-
-      case 'summary':
-        // For summary view, extract fields from fieldGroups or use fields directly
-        const summaryFields = processedFieldGroups.length > 0
-          ? processedFieldGroups.flatMap(group => group.fields)
-          : processedFields
-        return (
-          <SummaryView
-            {...viewProps}
-            fields={summaryFields}
-          />
-        )
-
-      case 'timeline':
-        return (
-          <TimelineView
-            {...viewProps}
-            fieldGroups={processedFieldGroups}
-          />
-        )
-
-      case 'detail':
-      default:
-        return (
-          <DetailView
-            {...viewProps}
-            fieldGroups={processedFieldGroups}
-          />
-        )
+    // Default rendering
+    if (value === null || value === undefined) {
+      return <span className="text-muted-foreground italic">Not set</span>
     }
+
+    if (typeof value === 'boolean') {
+      return value ? <Badge>Yes</Badge> : <Badge variant="outline">No</Badge>
+    }
+
+    if (value instanceof Date) {
+      return value.toLocaleString()
+    }
+
+    if (typeof value === 'object') {
+      return <pre className="text-xs">{JSON.stringify(value, null, 2)}</pre>
+    }
+
+    return String(value)
   }
 
   return (
-    <div 
-      className={cn('w-full', className)}
-      role="article"
-      aria-label="Entity details"
-    >
-      {/* Navigation */}
-      {mergedConfig.showNavigation && mergedConfig.navigation && (
-        <nav 
-          className={`flex items-center mb-4 ${isMobile ? 'flex-col gap-2' : 'justify-between'}`}
-          aria-label="Entity navigation"
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!mergedConfig.navigation.canGoPrev}
-            onClick={() => handleNavigate('prev')}
-            className={isMobile ? 'w-full' : ''}
-            aria-label="Go to previous entity"
-          >
-            <ChevronLeft className="h-4 w-4 mr-2" aria-hidden="true" />
-            Previous
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        {onBack && (
+          <Button variant="ghost" onClick={onBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!mergedConfig.navigation.canGoNext}
-            onClick={() => handleNavigate('next')}
-            className={isMobile ? 'w-full' : ''}
-            aria-label="Go to next entity"
-          >
-            Next
-            <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
-          </Button>
-        </nav>
-      )}
+        )}
 
-      {/* Custom Header */}
-      {mergedConfig.showHeader && mergedConfig.customComponents?.header && (
-        <mergedConfig.customComponents.header
-          data={data}
-          config={mergedConfig}
-        />
-      )}
-
-      {/* Main Content */}
-      <ScrollArea className="w-full">
-        {renderView()}
-      </ScrollArea>
-
-      {/* Metadata */}
-      {mergedConfig.showMetadata && mergedConfig.customComponents?.metadata && (
-        <div className="mt-4">
-          <mergedConfig.customComponents.metadata
-            data={data}
-            config={mergedConfig}
-          />
+        <div className="flex gap-2">
+          {onEdit && (
+            <Button variant="outline" onClick={onEdit}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="destructive" onClick={onDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          )}
         </div>
+      </div>
+
+      {/* Field Groups */}
+      {config.fieldGroups && config.fieldGroups.length > 0 ? (
+        <div className="space-y-4">
+          {config.fieldGroups.map(group => (
+            <Card key={group.title}>
+              <CardHeader>
+                <CardTitle className="text-lg">{group.title}</CardTitle>
+                {group.description && (
+                  <p className="text-sm text-muted-foreground">{group.description}</p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className={group.layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'space-y-4'}>
+                  {group.fields.map(field => (
+                    <div key={field.key} className="space-y-1">
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {field.label}
+                      </div>
+                      <div className="text-base">
+                        {renderValue(field.key, (data as Record<string, unknown>)[field.key])}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        // Simple key-value display if no field groups defined
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {Object.entries(data).map(([key, value]) => (
+                <div key={key} className="grid grid-cols-3 gap-4">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </div>
+                  <div className="col-span-2">
+                    {renderValue(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )
 }
 
-// Memoize the component to prevent unnecessary re-renders
-export const EntityView = memo(EntityViewComponent)
-
-export default EntityView
+EntityView.displayName = 'EntityView'
