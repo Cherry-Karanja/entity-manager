@@ -19,6 +19,7 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
   emptyText = 'No data available',
   entityActions,
   onAction,
+  onRow,
   className
 }) => {
   if (error) {
@@ -47,11 +48,18 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
 
   return (
     <div className={cn("space-y-3", className)}>
-      {data.map((item, index) => (
-        <div 
-          key={item.id || index} 
-          className="flex items-start gap-4 p-5 border rounded-lg bg-card hover:shadow-lg transition-all duration-300 hover:border-primary/50 hover:bg-accent/5 group cursor-pointer"
-        >
+      {data.map((item, index) => {
+        const rowProps = onRow?.(item, index)
+        
+        return (
+          <div 
+            key={item.id || index} 
+            className={cn(
+              "flex items-start gap-4 p-5 border rounded-lg bg-card hover:shadow-lg transition-all duration-300 hover:border-primary/50 hover:bg-accent/5 group",
+              rowProps && "cursor-pointer"
+            )}
+            onClick={rowProps?.onClick}
+          >
           {/* Avatar/Icon Section */}
           <div className="flex-shrink-0">
             <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-primary/10 group-hover:border-primary/30 transition-colors">
@@ -118,8 +126,9 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
             </div>
           )}
         </div>
-      ))}
-    </div>
+      )
+    })}
+  </div>
   )
 }
 

@@ -23,6 +23,7 @@ export const EntityTimelineView: React.FC<EntityTimelineViewProps> = ({
   emptyText = 'No data available',
   entityActions,
   onAction,
+  onRow,
   dateField = 'createdAt',
   className
 }) => {
@@ -77,20 +78,27 @@ export const EntityTimelineView: React.FC<EntityTimelineViewProps> = ({
   return (
     <div className={cn("relative", className)}>
       {/* Timeline line */}
-      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border" />
-      
-      <div className="space-y-6">
-        {sortedData.map((item, index) => (
-          <div key={item.id || index} className="relative pl-20 group">
-            {/* Timeline dot */}
-            <div className="absolute left-6 top-6 w-4 h-4 rounded-full bg-primary border-4 border-background ring-4 ring-primary/20 group-hover:ring-primary/40 transition-all z-10" />
-            
-            {/* Date label */}
-            <div className="absolute left-0 top-5 w-12 text-xs text-muted-foreground text-right">
-              <Clock className="h-3 w-3 inline mr-1" />
-            </div>
+      <div className=" space-y-6 absolute left-8 top-0 bottom-0 w-0.5 bg-border">
+        {sortedData.map((item, index) => {
+          const rowProps = onRow?.(item, index)
+          
+          return (
+            <div key={item.id || index} className="relative pl-20 group">
+              {/* Timeline dot */}
+              <div className="absolute left-6 top-6 w-4 h-4 rounded-full bg-primary border-4 border-background ring-4 ring-primary/20 group-hover:ring-primary/40 transition-all z-10" />
+              
+              {/* Date label */}
+              <div className="absolute left-0 top-5 w-12 text-xs text-muted-foreground text-right">
+                <Clock className="h-3 w-3 inline mr-1" />
+              </div>
 
-            <Card className="hover:shadow-lg transition-all duration-200 hover:border-primary/50">
+              <Card 
+                className={cn(
+                  "hover:shadow-lg transition-all duration-200 hover:border-primary/50",
+                  rowProps && "cursor-pointer"
+                )}
+                onClick={rowProps?.onClick}
+              >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -147,10 +155,12 @@ export const EntityTimelineView: React.FC<EntityTimelineViewProps> = ({
               </CardContent>
             </Card>
           </div>
-        ))}
+        )
+      })}
       </div>
     </div>
   )
 }
 
 export default EntityTimelineView
+

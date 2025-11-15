@@ -37,6 +37,9 @@ const UserDetailsModal: React.FC<{ item: unknown; onClose: () => void }> = ({ it
           <p className="text-sm">{String(userItem.status || '')}</p>
         </div>
       </div>
+      <div className="pt-4 text-right">
+        <button onClick={onClose} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md">Close</button>
+      </div>
     </div>
   )
 }
@@ -506,7 +509,28 @@ const userListConfig: EntityListConfig = {
     export: true
   },
   onCreate: () => console.log('Create new user'),
-  onRefresh: () => console.log('Refresh users')
+  onRefresh: () => console.log('Refresh users'),
+  onRow: (record: EntityListItem, index?: number) => ({
+    onClick: (event: React.MouseEvent) => {
+      console.log('Row clicked:', record, index, event)
+    },
+    onDoubleClick: (event: React.MouseEvent) => {
+      console.log('Row double-clicked:', record, index, event)
+    },
+    onContextMenu: (event: React.MouseEvent) => {
+      event.preventDefault()
+      console.log('Row context menu:', record, index, event)
+    },
+    onMouseEnter: (event: React.MouseEvent) => {
+      console.log('Mouse entered row:', record, index, event)
+    },
+    onMouseLeave: (event: React.MouseEvent) => {
+      console.log('Mouse left row:', record, index, event)
+    }
+  }),
+  onChange: (pagination, filters, sorter, extra) => {
+    console.log('EntityList onChange:', { pagination, filters, sorter, extra })
+  },
 }
 
 export const BasicEntityListExample: React.FC = () => {

@@ -21,6 +21,7 @@ const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
   emptyText = 'No data available',
   entityActions,
   onAction,
+  onRow,
   className
 }) => {
   if (error) {
@@ -51,11 +52,16 @@ const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
     <div className={cn("grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6", className)}>
       {data.map((item, index) => {
         const itemName = String(item.title || item.name || item.full_name  || `Item ${index + 1}`)
+        const rowProps = onRow?.(item, index)
         
         return (
           <Card 
             key={item.id || index} 
-            className="h-full hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 group overflow-hidden"
+            className={cn(
+              "h-full hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 group overflow-hidden",
+              rowProps && "cursor-pointer"
+            )}
+            onClick={rowProps?.onClick}
           >
             <CardHeader className="pb-3 bg-gradient-to-br from-primary/5 to-primary/10 border-b">
               <div className="flex items-start justify-between gap-3">

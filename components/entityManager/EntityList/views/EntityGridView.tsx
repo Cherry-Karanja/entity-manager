@@ -20,6 +20,7 @@ const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
   emptyText = 'No data available',
   entityActions,
   onAction,
+  onRow,
   className
 }) => {
   if (error) {
@@ -68,11 +69,16 @@ const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
       {data.map((item, index) => {
         const itemName = String(item.title || item.name || item.full_name  || `Item ${index + 1}`)
         const gradient = getColorFromString(itemName)
+        const rowProps = onRow?.(item, index)
         
         return (
           <Card 
             key={item.id || index} 
-            className="h-full hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 group cursor-pointer overflow-hidden"
+            className={cn(
+              "h-full hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 group overflow-hidden",
+              rowProps && "cursor-pointer"
+            )}
+            onClick={rowProps?.onClick}
           >
             {/* Gradient header */}
             <div className={cn("h-20 bg-gradient-to-br", gradient, "relative")}>

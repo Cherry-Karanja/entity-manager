@@ -34,46 +34,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-
-// ===== BREADCRUMB COMPONENT =====
-
-interface BreadcrumbProps {
-  items: BreadcrumbItem[]
-  className?: string
-}
-
-function Breadcrumb({ items, className }: BreadcrumbProps) {
-  if (items.length <= 1) return null
-
-  return (
-    <nav className={`flex items-center space-x-2 text-sm text-muted-foreground mb-4 ${className || ''}`}>
-      {items.map((item, index) => (
-        <div key={index} className="flex items-center">
-          {index > 0 && <span className="mx-2">/</span>}
-          {item.onClick ? (
-            <button
-              onClick={item.onClick}
-              className="hover:text-foreground transition-colors underline underline-offset-2"
-            >
-              {item.label}
-            </button>
-          ) : (
-            <span className="text-foreground font-medium">{item.label}</span>
-          )}
-        </div>
-      ))}
-    </nav>
-  )
-}
+import { Breadcrumb,BreadcrumbItem } from './components/breadcrumbs'
 
 // ===== TYPES =====
 
-export interface BreadcrumbItem {
-  label: string
-  mode: 'list' | 'view' | 'create' | 'edit'
-  entity?: BaseEntity
-  onClick?: () => void
-}
 
 export interface EntityManagerProps<TEntity extends BaseEntity, TFormData extends Record<string, unknown>> {
   config: EntityConfig<TEntity, TFormData>
@@ -158,7 +122,6 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           }
         })
       }
-
       return newBreadcrumbs
     })
   }, [config.entityName, config.entityNamePlural])

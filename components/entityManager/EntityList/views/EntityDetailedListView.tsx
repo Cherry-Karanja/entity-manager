@@ -23,6 +23,7 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
   emptyText = 'No data available',
   entityActions,
   onAction,
+  onRow,
   className
 }) => {
   if (error) {
@@ -51,11 +52,18 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {data.map((item, index) => (
-        <Card 
-          key={item.id || index}
-          className="hover:shadow-xl transition-all duration-300 hover:border-primary/50 group overflow-hidden"
-        >
+      {data.map((item, index) => {
+        const rowProps = onRow?.(item, index)
+        
+        return (
+          <Card 
+            key={item.id || index}
+            className={cn(
+              "hover:shadow-xl transition-all duration-300 hover:border-primary/50 group overflow-hidden",
+              rowProps && "cursor-pointer"
+            )}
+            onClick={rowProps?.onClick}
+          >
           <CardContent className="p-0">
             {/* Header Section with Gradient */}
             <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b">
@@ -145,9 +153,11 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
             </div>
           </CardContent>
         </Card>
-      ))}
-    </div>
+      )
+    })}
+  </div>
   )
 }
 
 export default EntityDetailedListView
+

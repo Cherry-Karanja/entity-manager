@@ -19,6 +19,7 @@ const EntityCompactViewComponent: React.FC<EntityCompactViewProps> = ({
   emptyText = 'No data available',
   entityActions,
   onAction,
+  onRow,
   className
 }) => {
   if (error) {
@@ -47,35 +48,44 @@ const EntityCompactViewComponent: React.FC<EntityCompactViewProps> = ({
 
   return (
     <div className={cn("space-y-1", className)}>
-      {data.map((item, index) => (
-        <div 
-          key={item.id || index} 
-          className="flex items-center gap-2 p-3 text-sm border-b last:border-b-0 bg-card rounded-md hover:bg-accent/50 transition-colors duration-150 group cursor-pointer"
-        >
-          <div className="flex-1 font-medium truncate group-hover:text-primary transition-colors">
-            {String(item.title || item.name || item.full_name || `Item ${index + 1}`)}
-          </div>
-          {columns.slice(1, 3).map((column) => {
-            const value = item[column.accessorKey || column.id]
-            if (!value) return null
-            return (
-              <div key={column.id} className="text-muted-foreground truncate max-w-32">
-                {column.cell ? column.cell(value, item, index) : String(value)}
-              </div>
-            )
-          })}
-          {entityActions && (
-            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-              <EntityActions
-                config={entityActions as any}
-                context={{ entity: item }}
-                maxVisibleActions={2}
-              />
+      {data.map((item, index) => {
+        const rowProps = onRow?.(item, index)
+        
+        return (
+          <div 
+            key={item.id || index} 
+            className={cn(
+              "flex items-center gap-2 p-3 text-sm border-b last:border-b-0 bg-card rounded-md hover:bg-accent/50 transition-colors duration-150 group",
+              rowProps && "cursor-pointer"
+            )}
+            onClick={rowProps?.onClick}
+          >
+            <div className="flex-1 font-medium truncate group-hover:text-primary transition-colors">
+              {String(item.title || item.name || item.full_name || `Item ${index + 1}`)}
             </div>
-          )}
-        </div>
-      ))}
-    </div>
+            {columns.slice(1, 3).map((column) => {
+              const value = item[column.accessorKey || column.id]
+              if (!value) return null
+              return (
+                <div key={column.id} className="text-muted-foreground truncate max-w-32">
+                  {column.cell ? column.cell(value, item, index) : String(value)}
+                </div>
+              )
+            })}
+            {entityActions && (
+              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <EntityActions
+                  config={entityActions as any}
+                  context={{ entity: item }}
+                  maxVisibleActions={2}
+                />
+              </div>
+            )}
+          </div>
+      ) 
+
+    })}
+  </div>
   )
 }
 
@@ -83,3 +93,4 @@ const EntityCompactViewComponent: React.FC<EntityCompactViewProps> = ({
 export const EntityCompactView = memo(EntityCompactViewComponent)
 
 export default EntityCompactView
+

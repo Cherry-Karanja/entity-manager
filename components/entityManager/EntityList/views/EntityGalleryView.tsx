@@ -25,6 +25,7 @@ export const EntityGalleryView: React.FC<EntityGalleryViewProps> = ({
   emptyText = 'No data available',
   entityActions,
   onAction,
+  onRow,
   avatarField = 'name',
   className
 }) => {
@@ -87,11 +88,16 @@ export const EntityGalleryView: React.FC<EntityGalleryViewProps> = ({
       {data.map((item, index) => {
         const avatarName = String(item[avatarField] || item.name || item.title || item.full_name || `Item ${index + 1}`)
         const bgColor = getColorFromString(avatarName)
+        const rowProps = onRow?.(item, index)
         
         return (
           <Card 
             key={item.id || index}
-            className="hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] hover:border-primary/60 group overflow-hidden"
+            className={cn(
+              "hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] hover:border-primary/60 group overflow-hidden",
+              rowProps && "cursor-pointer"
+            )}
+            onClick={rowProps?.onClick}
           >
             <CardContent className="p-0">
               {/* Header with gradient background and larger avatar */}

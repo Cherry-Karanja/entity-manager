@@ -5,6 +5,7 @@ import { useApi } from './hooks';
 import { httpClient } from './client';
 import { EntityConfig } from "@/components/entityManager/manager";
 import { handleApiError } from "./client";
+import { AxiosError } from "axios";
 
 /**
  * Get endpoint URL for an entity operation
@@ -90,7 +91,8 @@ export function createApiService<T, U = T>(
           const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.endpoints.list;
           queryClient.invalidateQueries({ queryKey: [invalidateUrl] });
         },
-        onError: (error) => {
+        onError: (error:AxiosError) => {
+          handleApiError(error);
           console.error('Add item error:', error);
         }
       });
@@ -116,7 +118,8 @@ export function createApiService<T, U = T>(
           const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.endpoints.list;
           queryClient.invalidateQueries({ queryKey: [invalidateUrl] });
         },
-        onError: (error) => {
+        onError: (error:AxiosError) => {
+          handleApiError(error);
           console.error('Update item error:', error);
         }
       });
@@ -142,7 +145,8 @@ export function createApiService<T, U = T>(
           const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.endpoints.list;
           queryClient.invalidateQueries({ queryKey: [invalidateUrl] });
         },
-        onError: (error) => {
+        onError: (error:AxiosError) => {
+          handleApiError(error);
           console.error('Delete item error:', error);
         }
       });

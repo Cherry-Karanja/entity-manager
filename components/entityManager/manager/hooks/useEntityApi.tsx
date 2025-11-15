@@ -1259,6 +1259,7 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
     setIsLoading(false)
   }
 }, [enableOptimisticUpdates, performOptimisticCreate, setIsLoading, setError, actions, offlineState.isOnline, retryWithBackoff, apiServices.mutations.addItem, invalidateCache, fetchEntities, enableRealTimeUpdates, webSocket, config.entityName])  // Update entity with optimistic updates
+ 
   const updateEntity = useCallback(async (id: string | number, data: Partial<TFormData>): Promise<EntityOperationResult<TEntity>> => {
     // Use optimistic updates if enabled
     if (enableOptimisticUpdates) {
