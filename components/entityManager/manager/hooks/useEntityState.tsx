@@ -2,8 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useDebounceSearch } from '@/hooks/useDebounce'
-import {  BaseEntity } from '../types'
-import { EntityConfig } from '../types/manager' 
+import {  BaseEntity, EntityConfig } from '../types' 
 import { EntityListSort } from '../../EntityList/types'
 import { validateEntityConfig } from '../validation'
 

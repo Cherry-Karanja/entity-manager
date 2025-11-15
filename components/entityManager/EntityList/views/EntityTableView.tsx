@@ -4,7 +4,7 @@ import React, { memo } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { HelpCircle } from 'lucide-react'
+import { HelpCircle, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListColumn, EntityListItem, EntityListSelection } from '../types'
 import { EntityActionsConfig, EntityAction } from '../../EntityActions/types'
@@ -27,6 +27,10 @@ interface EntityTableViewProps extends EntityListViewProps {
   scroll?: { x?: string | number; y?: string | number }
   size?: 'small' | 'middle' | 'large'
   bordered?: boolean
+  // Sorting props
+  sortField?: string
+  sortDirection?: 'asc' | 'desc'
+  onSort?: (field: string) => void
 }
 
 const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
@@ -44,7 +48,11 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
   scroll,
   size = 'middle',
   bordered = true,
-  className
+  className,
+  // Sorting props
+  sortField,
+  sortDirection,
+  onSort
 }) => {
   // Get row key
   const getRowKey = (item: EntityListItem, index: number): string | number => {
@@ -183,6 +191,7 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
                   className={cn(
                     column.align === 'center' && 'text-center',
                     column.align === 'right' && 'text-right',
+                    column.sortable && onSort ? 'cursor-pointer select-none hover:bg-muted/50' : '',
                     column.className
                   )}
                   style={{
@@ -190,9 +199,23 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
                     minWidth: column.minWidth,
                     maxWidth: column.maxWidth
                   }}
+                  onClick={column.sortable && onSort ? () => onSort(column.accessorKey || column.id) : undefined}
                 >
                   <div className="flex items-center gap-2">
                     <span>{column.header}</span>
+                    {column.sortable && onSort && (
+                      <div className="flex items-center">
+                        {sortField === (column.accessorKey || column.id) ? (
+                          sortDirection === 'asc' ? (
+                            <ChevronUp className="h-4 w-4 text-primary" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-primary" />
+                          )
+                        ) : (
+                          <ChevronsUpDown className="h-4 w-4 text-muted-foreground opacity-50" />
+                        )}
+                      </div>
+                    )}
                     {column.tooltip && (
                       <TooltipProvider>
                         <Tooltip>

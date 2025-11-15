@@ -17,6 +17,7 @@ export interface EntityListColumn {
   accessorFn?: (item: EntityListItem) => unknown
   cell?: (value: unknown, item: EntityListItem, index: number) => React.ReactNode
   sortable?: boolean
+  sortingFn?: (a: unknown, b: unknown, options?: { desc?: boolean }) => number
   filterable?: boolean
   searchable?: boolean
   width?: string | number
@@ -292,6 +293,7 @@ export interface EntityListConfig<TEntity extends BaseEntity = BaseEntity> {
 export interface EntityListProps  <TEntity extends BaseEntity = BaseEntity> {
   config: EntityListConfig<TEntity>
   searchTerm?: string
+  sort?: EntityListSort[]
 
   // Event handlers
   onDataChange?: (data: EntityListItem[]) => void

@@ -38,6 +38,9 @@ import { Breadcrumb,BreadcrumbItem } from './components/breadcrumbs'
 
 // ===== TYPES =====
 
+// Re-export types for external use
+export type { BreadcrumbItem }
+
 
 export interface EntityManagerProps<TEntity extends BaseEntity, TFormData extends Record<string, unknown>> {
   config: EntityConfig<TEntity, TFormData>
@@ -402,6 +405,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         return (
           <EntityList
             config={listConfig}
+            sort={entityState.state.sortConfig ? [...entityState.state.sortConfig] : undefined}
             onSelectionChange={(keys, items) => {
               // Handle selection changes if needed
               console.log('Selection changed:', keys, items)
