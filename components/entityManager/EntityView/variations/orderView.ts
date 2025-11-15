@@ -1,7 +1,8 @@
 import { ShoppingCart, User, MapPin, CreditCard, Truck, Calendar, DollarSign } from 'lucide-react'
 import { EntityViewConfig } from '../types'
+import { BaseEntity } from '../../manager/types'
 
-export const orderViewVariation: EntityViewConfig = {
+export const orderViewVariation: EntityViewConfig<BaseEntity> = {
   mode: 'detail',
   layout: 'single',
   theme: 'card',

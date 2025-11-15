@@ -4,12 +4,14 @@ import React, { memo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
 import { EntityListActions } from '../components/EntityListActions'
+import { BaseEntity } from '../../manager'
 
 interface EntityGridViewProps extends EntityListViewProps {
   actions?: EntityListAction[]
-  entityActions?: import('../../EntityActions/types').EntityActionsConfig
+  entityActions?: EntityActionsConfig
   onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
@@ -124,8 +126,8 @@ const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
                 <div className="mt-4 pt-3 border-t opacity-0 group-hover:opacity-100 transition-opacity">
                   {entityActions ? (
                     <EntityActions
-                      config={entityActions}
-                      item={item}
+                      config={entityActions as any}
+                      context={{ entity: item }}
                     />
                   ) : (
                     <EntityListActions

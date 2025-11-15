@@ -1,7 +1,8 @@
 import { Package, DollarSign, Star, Tag, Box, TrendingUp } from 'lucide-react'
 import { EntityViewConfig } from '../types'
+import { BaseEntity } from '../../manager/types'
 
-export const productDetailsVariation: EntityViewConfig = {
+export const productDetailsVariation: EntityViewConfig<BaseEntity> = {
   mode: 'detail',
   layout: 'single',
   theme: 'card',

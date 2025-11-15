@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import EntityView from '../index'
+import { EntityView } from '../index'
 import {
   EntityViewConfig,
   ViewField,
   ViewAction,
   ViewFieldGroup,
 } from '../types'
+import { BaseEntity } from '../../manager/types'
 
 // ===== SAMPLE DATA =====
 
@@ -62,7 +63,7 @@ const sampleProductData = {
 // ===== BASIC VIEW EXAMPLE =====
 
 const BasicViewExample: React.FC = () => {
-  const config: EntityViewConfig = {
+  const config: EntityViewConfig<BaseEntity> = {
     mode: 'detail',
     layout: 'single',
     theme: 'default',
@@ -142,9 +143,6 @@ const BasicViewExample: React.FC = () => {
     <EntityView
       config={config}
       data={sampleUserData}
-      onActionClick={(action: ViewAction, data: unknown) => {
-        console.log('Action clicked:', action.id, data)
-      }}
     />
   )
 }
@@ -152,7 +150,7 @@ const BasicViewExample: React.FC = () => {
 // ===== CARD VIEW EXAMPLE =====
 
 const CardViewExample: React.FC = () => {
-  const config: EntityViewConfig = {
+  const config: EntityViewConfig<BaseEntity> = {
     mode: 'card',
     theme: 'card',
     showHeader: true,
@@ -215,7 +213,7 @@ const CardViewExample: React.FC = () => {
 // ===== ADVANCED VIEW EXAMPLE =====
 
 const AdvancedViewExample: React.FC = () => {
-  const config: EntityViewConfig = {
+  const config: EntityViewConfig<BaseEntity> = {
     mode: 'detail',
     layout: 'single',
     theme: 'default',
@@ -358,7 +356,7 @@ const AdvancedViewExample: React.FC = () => {
 // ===== PRODUCT VIEW EXAMPLE =====
 
 const ProductViewExample: React.FC = () => {
-  const config: EntityViewConfig = {
+  const config: EntityViewConfig<BaseEntity> = {
     mode: 'detail',
     layout: 'single',
     theme: 'card',
@@ -516,7 +514,7 @@ const ProductViewExample: React.FC = () => {
 // ===== CONDITIONAL FIELDS EXAMPLE =====
 
 const ConditionalFieldsExample: React.FC = () => {
-  const config: EntityViewConfig = {
+  const config: EntityViewConfig<BaseEntity> = {
     mode: 'detail',
     layout: 'single',
     theme: 'default',

@@ -1,5 +1,6 @@
 import React from "react"
-import {EntityHooks } from '../types'
+import { EntityHooks } from "../manager/types"
+import { BaseEntity } from "../manager/types"
 
 // ===== TYPE DEFINITIONS =====
 
@@ -22,7 +23,7 @@ export interface FieldOption {
   icon?: React.ComponentType<{ className?: string }>
   description?: string
 }
-export interface EntityFormConfig<TEntity = Entity> {
+export interface EntityFormConfig<TEntity extends BaseEntity = BaseEntity> {
   // Form fields configuration (SINGLE SOURCE OF TRUTH - from unified types)
   fields: FormField[]
 
@@ -212,7 +213,7 @@ export interface BulkImportFormat {
   fieldMapping?: Record<string, string>
 }
 
-export interface EntityFormProps<TEntity = unknown> {
+export interface EntityFormProps<TEntity extends BaseEntity = BaseEntity> {
   config: EntityFormConfig<TEntity>
   data?: Partial<TEntity>
   onSubmit?: (data: Partial<TEntity>) => Promise<void> | void

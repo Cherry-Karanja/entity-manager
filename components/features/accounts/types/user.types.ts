@@ -1,6 +1,6 @@
 // ===== USER ENTITY TYPES =====
 
-import { BaseEntity } from '../../../entityManager/manager/types'
+import { BaseEntity } from '@/components/entityManager/manager'
 import { UserRole } from './userRole.types'
 import { UserProfile } from './userProfile.types'
 
@@ -8,7 +8,7 @@ import { UserProfile } from './userProfile.types'
 
 export interface User extends BaseEntity {
   id: string // UUID
-  email: string
+  email: string 
   first_name: string
   last_name: string
   username?: string

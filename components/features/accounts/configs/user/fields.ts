@@ -1,6 +1,6 @@
 // ===== USER FIELDS CONFIGURATION =====
 
-import { EntityField } from '@/components/entityManager/manager/types'
+import { EntityField } from "@/components/entityManager/manager"
 import { User, UserFormData } from '../../types'
 
 // ===== USER FIELDS CONFIGURATION =====

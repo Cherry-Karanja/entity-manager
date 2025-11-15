@@ -4,29 +4,25 @@ import { EntityConfig } from '@/components/entityManager/manager/types'
 import { UserRoleHistory, UserRoleHistoryFormData } from '../../types'
 import { userRoleHistoryFields } from './fields'
 import { userRoleHistoryListColumns } from './list'
+import { userRoleHistoryFormConfig } from './form'
 import { userRoleHistoryViewConfig } from './view'
 
 export const userRoleHistoryConfig: EntityConfig<UserRoleHistory, UserRoleHistoryFormData> = {
-  name: 'userRoleHistory',
-  namePlural: 'userRoleHistories',
-  displayName: 'Role Change History',
-  fields: userRoleHistoryFields,
+  entityName: 'UserRoleHistory',
+  entityNamePlural: 'userRoleHistories',
   endpoints: {
     list: '/api/accounts/role-history/',
+    read: '/api/accounts/role-history/{id}/',
     create: '/api/accounts/role-history/',
     update: '/api/accounts/role-history/{id}/',
     delete: '/api/accounts/role-history/{id}/'
   },
-  listConfig: {
+  list: {
     columns: userRoleHistoryListColumns,
-    defaultSort: {
-      field: 'created_at',
-      direction: 'desc'
-    },
-    pageSize: 25,
-    allowExport: true
+    defaultSort: [{ field: 'created_at', direction: 'desc' }]
   },
-  viewConfig: userRoleHistoryViewConfig,
+  form: userRoleHistoryFormConfig as any,
+  view: userRoleHistoryViewConfig as any,
   permissions: {
     create: false,
     view: true,

@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { EntityConfig, BaseEntity, FormFieldConfig } from '../types'
+import { EntityConfig, BaseEntity } from '../types'
+import { FormField } from '../../EntityForm/types'
 import { transformEntityFieldsToFormFields } from '../utils'
 import { useRelatedData } from '../../hooks/useRelatedData'
 
@@ -30,7 +31,7 @@ export interface UseEntityFormReturn {
   formConfig: {
     title: string
     description?: string
-    fields: FormFieldConfig[]
+    fields: FormField[]
     onSubmit: (data: Record<string, unknown>) => Promise<void>
     submitLabel: string
     cancelLabel: string
@@ -125,7 +126,7 @@ export function useEntityForm<TEntity extends BaseEntity, TFormData extends Reco
   })
 
   // Related data queries
-  const { relatedDataMap, isLoading: isRelatedDataLoading } = useRelatedDataMap(config.fields)
+  const { relatedDataMap, isLoading: isRelatedDataLoading } = useRelatedDataMap(config.form?.fields || [])
 
   // Handle when a new related entity is created
   const handleEntityCreated = useCallback((newEntity: any) => {
@@ -140,7 +141,7 @@ export function useEntityForm<TEntity extends BaseEntity, TFormData extends Reco
   const handleFieldChange = useCallback((fieldKey: string, value: any) => {
     if (value === '__create_new__') {
       // Find the field config to get the related entity type
-      const field = config.fields.find(f => f.key === fieldKey)
+      const field = (config.form?.fields || []).find(f => f.name === fieldKey)
       if (field?.relatedEntity) {
         setModalState({
           isOpen: true,
@@ -151,14 +152,14 @@ export function useEntityForm<TEntity extends BaseEntity, TFormData extends Reco
       return null // Don't update the field value
     }
     return value // Return the value for normal processing
-  }, [config.fields])
+  }, [config.form?.fields])
 
   // Transform entity config to form config with related data
-  const baseFormFields = useMemo(() => transformEntityFieldsToFormFields(config.fields, { mode }), [config.fields, mode])
+  const baseFormFields = useMemo(() => config.form?.fields || [], [config.form?.fields])
 
   // Enhance fields with related data
   const enhancedFormFields = useMemo(() => baseFormFields.map(field => {
-    const entityField = config.fields.find(f => f.key === field.name)
+    const entityField = (config.form?.fields || []).find(f => f.name === field.name)
     if (entityField?.foreignKey && entityField.relatedEntity && relatedDataMap[entityField.relatedEntity]) {
       const options = [...relatedDataMap[entityField.relatedEntity]]
 
@@ -179,24 +180,24 @@ export function useEntityForm<TEntity extends BaseEntity, TFormData extends Reco
       }
     }
     return field
-  }), [baseFormFields, config.fields, relatedDataMap, handleFieldChange])
+  }), [baseFormFields, config.form?.fields, relatedDataMap, handleFieldChange])
 
   // Form configuration
   const formConfig = useMemo(() => ({
     title: mode === 'create'
-      ? (config.formConfig?.createTitle || `Create ${config.displayName}`)
-      : (config.formConfig?.editTitle || `Edit ${config.displayName}`),
-    description: config.formConfig?.description,
+      ? `Create ${config.entityName}`
+      : `Edit ${config.entityName}`,
+    description: undefined,
     fields: enhancedFormFields,
     onSubmit: async (data: Record<string, unknown>) => {
       // This will be overridden by the component using this hook
       throw new Error('onSubmit must be provided by the component')
     },
-    submitLabel: config.formConfig?.submitLabel || (mode === 'create' ? 'Create' : 'Update'),
-    cancelLabel: config.formConfig?.cancelLabel || 'Cancel',
-    maxWidth: config.formConfig?.maxWidth,
-    layout: config.formConfig?.layout || 'grid',
-    columns: config.formConfig?.columns || 2,
+    submitLabel: config.form?.submitButtonText || (mode === 'create' ? 'Create' : 'Update'),
+    cancelLabel: config.form?.cancelButtonText || 'Cancel',
+    maxWidth: undefined,
+    layout: (config.form?.layout === 'vertical' ? 'stack' : config.form?.layout as 'grid' | 'flex' | 'stack') || 'grid',
+    columns: config.form?.columns || 2,
   }), [config, enhancedFormFields, mode])
 
   return {

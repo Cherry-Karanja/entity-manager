@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { X, Plus, Filter, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EntityListFilter, DjangoLookupOperator } from '../types'
+import { FieldOption } from '../../EntityForm/types'
 
 interface FilterCondition {
   id: string
@@ -64,15 +65,16 @@ const OPERATOR_LABELS: Record<DjangoLookupOperator, string> = {
 const getDefaultOperator = (filter: EntityListFilter): DjangoLookupOperator => {
   if (filter.operator) return filter.operator
 
-  switch (filter.type) {
+  switch (filter.field.type) {
     case 'text':
       return 'icontains'
     case 'number':
       return 'exact'
     case 'date':
-    case 'daterange':
+    case 'datetime':
       return 'gte'
-    case 'boolean':
+    case 'checkbox':
+    case 'switch':
       return 'exact'
     case 'select':
     case 'multiselect':
@@ -87,22 +89,20 @@ const getAvailableOperators = (filter: EntityListFilter): DjangoLookupOperator[]
     return filter.operators
   }
 
-  switch (filter.type) {
+  switch (filter.field.type) {
     case 'text':
       return ['exact', 'iexact', 'contains', 'icontains', 'startswith', 'istartswith', 'endswith', 'iendswith']
     case 'number':
       return ['exact', 'gt', 'gte', 'lt', 'lte']
     case 'date':
       return ['exact', 'gt', 'gte', 'lt', 'lte', 'date', 'year', 'month', 'day']
-    case 'daterange':
-      return ['range', 'gt', 'gte', 'lt', 'lte']
-    case 'boolean':
+    case 'checkbox':
       return ['exact', 'isnull']
     case 'select':
       return ['exact', 'in', 'isnull']
     case 'multiselect':
       return ['in', 'isnull']
-    case 'range':
+    case 'slider':
       return ['range', 'gt', 'gte', 'lt', 'lte']
     default:
       return ['exact']
@@ -123,7 +123,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
     const newConditions: FilterCondition[] = []
 
     Object.entries(activeFilters).forEach(([filterId, value]) => {
-      const filter = filters.find(f => f.id === filterId)
+      const filter = filters.find(f => f.field.name === filterId)
       if (filter && filter.field) {
         // Try to parse operator from the key (e.g., "name__icontains" -> "icontains")
         const parts = filterId.split('__')
@@ -135,7 +135,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
           field: fieldName,
           operator,
           value,
-          label: filter.label
+          label: filter.field.label
         })
       }
     })
@@ -146,16 +146,16 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   const handleAddCondition = () => {
     if (filters.length === 0) return
 
-    const firstAvailableFilter = filters.find(f => f.field && !conditions.some(c => c.field === f.field))
+    const firstAvailableFilter = filters.find(f => f.field && !conditions.some(c => c.field === f.field.name))
     if (!firstAvailableFilter || !firstAvailableFilter.field) return
 
     const operator = getDefaultOperator(firstAvailableFilter)
     const newCondition: FilterCondition = {
       id: `${firstAvailableFilter.field}__${operator}`,
-      field: firstAvailableFilter.field,
+      field: firstAvailableFilter.field.name,
       operator,
       value: '',
-      label: firstAvailableFilter.label
+      label: firstAvailableFilter.field.label
     }
 
     setConditions(prev => [...prev, newCondition])
@@ -206,14 +206,14 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   const activeFilterCount = conditions.length
 
   const renderConditionValue = (condition: FilterCondition, filter: EntityListFilter) => {
-    switch (filter.type) {
+    switch (filter.field.type) {
       case 'text':
       case 'number':
         return (
           <Input
             value={condition.value as string || ''}
             onChange={(e) => handleConditionChange(condition.id, { value: e.target.value })}
-            placeholder={`Enter ${filter.label.toLowerCase()}`}
+            placeholder={`Enter ${filter.field.label.toLowerCase()}`}
             className="h-8"
           />
         )
@@ -225,10 +225,10 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             onValueChange={(value) => handleConditionChange(condition.id, { value })}
           >
             <SelectTrigger className="h-8">
-              <SelectValue placeholder={`Select ${filter.label.toLowerCase()}`} />
+              <SelectValue placeholder={`Select ${filter.field.label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>
-              {filter.options?.map((option) => (
+              {filter.field.options?.map((option: FieldOption) => (
                 <SelectItem key={option.value} value={String(option.value)}>
                   {option.label}
                 </SelectItem>
@@ -237,7 +237,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
           </Select>
         )
 
-      case 'boolean':
+      case 'checkbox':
         return (
           <Select
             value={condition.value === undefined ? '' : String(condition.value)}
@@ -262,7 +262,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
           <Input
             value={String(condition.value || '')}
             onChange={(e) => handleConditionChange(condition.id, { value: e.target.value })}
-            placeholder={`Enter ${filter.label.toLowerCase()}`}
+            placeholder={`Enter ${filter.field.label.toLowerCase()}`}
             className="h-8"
           />
         )
@@ -298,7 +298,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               ) : (
                 <div className="space-y-3">
                   {conditions.map((condition) => {
-                    const filter = filters.find(f => f.field === condition.field)
+                    const filter = filters.find(f => f.field.name === condition.field)
                     if (!filter) return null
 
                     const availableOperators = getAvailableOperators(filter)

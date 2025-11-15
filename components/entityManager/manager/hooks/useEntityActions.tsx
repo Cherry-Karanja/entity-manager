@@ -433,7 +433,7 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
           const url = window.URL.createObjectURL(blob)
           const link = document.createElement('a')
           link.href = url
-          link.download = `${config.name.toLowerCase()}_export.${format}`
+          link.download = `${config.entityName.toLowerCase()}_export.${format}`
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
@@ -442,7 +442,7 @@ export function useEntityActions<TEntity extends BaseEntity, TFormData extends R
       }
     })
     return result !== null
-  }, [executeAction, apiActions, config.name])
+  }, [executeAction, apiActions, config.entityName])
 
   // UI actions
   const handleOpenDeleteDialog = useCallback((id: string | number) => {

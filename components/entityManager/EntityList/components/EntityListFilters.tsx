@@ -81,16 +81,16 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
   )
 
   const renderFilterControl = (filter: EntityListFilter) => {
-    const value = activeFilters[filter.id]
+    const value = activeFilters[filter.field.name]
 
-    switch (filter.type) {
+    switch (filter.field.type) {
       case 'text':
         return (
           <div className="space-y-1">
             <Input
               placeholder={filter.placeholder || `Filter by ${filter.label}`}
               value={value as string || ''}
-              onChange={(e) => handleFilterChange(filter.id, e.target.value)}
+              onChange={(e) => handleFilterChange(filter.field.name, e.target.value)}
               className={cn("w-full", filter.className)}
             />
             {filter.helpText && (
@@ -104,13 +104,13 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
           <div className="space-y-1">
             <Select
               value={value as string || ''}
-              onValueChange={(newValue) => handleFilterChange(filter.id, newValue)}
+              onValueChange={(newValue) => handleFilterChange(filter.field.name, newValue)}
             >
               <SelectTrigger className={cn("w-full", filter.className)}>
                 <SelectValue placeholder={filter.placeholder || `Select ${filter.label}`} />
               </SelectTrigger>
               <SelectContent>
-                {filter.options?.map((option) => (
+                {filter.field.options?.map((option) => (
                   <SelectItem
                     key={option.value}
                     value={String(option.value)}
@@ -132,7 +132,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
         return (
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">
-              {filter.options?.map((option) => (
+              {filter.field.options?.map((option) => (
                 <label key={option.value} className="flex items-center space-x-2 text-sm cursor-pointer">
                   <Checkbox
                     checked={selectedValues.includes(String(option.value))}
@@ -140,7 +140,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
                       const newValues = checked
                         ? [...selectedValues, String(option.value)]
                         : selectedValues.filter(v => v !== String(option.value))
-                      handleFilterChange(filter.id, newValues.length > 0 ? newValues : null)
+                      handleFilterChange(filter.field.name, newValues.length > 0 ? newValues : null)
                     }}
                     disabled={option.disabled}
                   />
@@ -154,16 +154,16 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
           </div>
         )
 
-      case 'boolean':
+      case 'boolean' as any:
         return (
           <div className="space-y-1">
             <Select
               value={value === undefined ? '' : String(value)}
               onValueChange={(newValue) => {
                 if (newValue === '') {
-                  handleFilterChange(filter.id, null)
+                  handleFilterChange(filter.field.name, null)
                 } else {
-                  handleFilterChange(filter.id, newValue === 'true')
+                  handleFilterChange(filter.field.name, newValue === 'true')
                 }
               }}
             >
@@ -190,11 +190,11 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
               value={value as number || ''}
               onChange={(e) => {
                 const numValue = e.target.value ? Number(e.target.value) : null
-                handleFilterChange(filter.id, numValue)
+                handleFilterChange(filter.field.name, numValue)
               }}
-              min={filter.min}
-              max={filter.max}
-              step={filter.step}
+              min={filter.field.min}
+              max={filter.field.max}
+              step={filter.field.step}
               className={cn("w-full", filter.className)}
             />
             {filter.helpText && (
@@ -203,7 +203,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
           </div>
         )
 
-      case 'range':
+      case 'range' as any:
         const rangeValue = (value as { min?: number; max?: number }) || {}
         return (
           <div className="space-y-1">
@@ -217,11 +217,11 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
                     ...rangeValue,
                     min: e.target.value ? Number(e.target.value) : undefined
                   }
-                  handleFilterChange(filter.id, Object.keys(newRange).length > 0 ? newRange : null)
+                  handleFilterChange(filter.field.name, Object.keys(newRange).length > 0 ? newRange : null)
                 }}
-                min={filter.min}
-                max={filter.max}
-                step={filter.step}
+                min={filter.field.min}
+                max={filter.field.max}
+                step={filter.field.step}
                 className="flex-1"
               />
               <Input
@@ -233,11 +233,11 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
                     ...rangeValue,
                     max: e.target.value ? Number(e.target.value) : undefined
                   }
-                  handleFilterChange(filter.id, Object.keys(newRange).length > 0 ? newRange : null)
+                  handleFilterChange(filter.field.name, Object.keys(newRange).length > 0 ? newRange : null)
                 }}
-                min={filter.min}
-                max={filter.max}
-                step={filter.step}
+                min={filter.field.min}
+                max={filter.field.max}
+                step={filter.field.step}
                 className="flex-1"
               />
             </div>
@@ -259,7 +259,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {value ? format(value as Date, "PPP") : <span>{filter.placeholder || "Pick a date"}</span>}
+                {value ? format(value as Date, "PPP") : <span>{filter.field.placeholder || "Pick a date"}</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -267,14 +267,14 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
                 mode="single"
                 selected={value as Date}
                 required={true}
-                onSelect={(date: Date) => handleFilterChange(filter.id, date)}
+                onSelect={(date: Date) => handleFilterChange(filter.field.name, date)}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
         )
 
-      case 'daterange':
+      case 'daterange' as any:
         const dateRangeValue = (value as { start?: Date; end?: Date }) || {}
         return (
           <div className="flex gap-2">
@@ -297,7 +297,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
                     required={true}
                     onSelect={(date) => {
                       const newRange = { ...dateRangeValue, start: date }
-                      handleFilterChange(filter.id, newRange.start || newRange.end ? newRange : null)
+                      handleFilterChange(filter.field.name, newRange.start || newRange.end ? newRange : null)
                     }}
                     initialFocus
                   />
@@ -322,7 +322,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
                   required={true}
                   onSelect={(date) => {
                     const newRange = { ...dateRangeValue, end: date }
-                    handleFilterChange(filter.id, newRange.start || newRange.end ? newRange : null)
+                    handleFilterChange(filter.field.name, newRange.start || newRange.end ? newRange : null)
                   }}
                   initialFocus
                 />
@@ -335,7 +335,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
       default:
         return (
           <div className="text-sm text-muted-foreground">
-            Unsupported filter type: {filter.type}
+            Unsupported filter type: {filter.field.type}
           </div>
         )
     }
@@ -396,7 +396,7 @@ export const EntityListFilters: React.FC<EntityListFiltersProps> = ({
           >
             {filters.map((filter) => (
               <div
-                key={filter.id}
+                key={filter.field.name}
                 className={cn(
                   'flex flex-col gap-2',
                   layout === 'horizontal' && 'min-h-[100px]',

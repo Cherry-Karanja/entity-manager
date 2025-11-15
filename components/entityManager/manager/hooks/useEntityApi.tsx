@@ -28,7 +28,7 @@ function buildOrderingParam(sortConfig?: readonly EntityListSort[]): string | un
 // ===== TYPES =====
 
 export interface UseEntityApiOptions<TEntity extends BaseEntity, TFormData extends Record<string, unknown>> {
-  config: EntityConfig
+  config: EntityConfig<TEntity, TFormData>
   state: EntityState<TEntity>
   actions: EntityStateActions<TEntity>
   enableOptimisticUpdates?: boolean
@@ -368,11 +368,11 @@ export function useEntityApi<TEntity extends BaseEntity, TFormData extends Recor
   const pendingRequestsRef = useRef<Map<string, Promise<unknown>>>(new Map())
 
   // Create API services for mutations - call hooks at top level
-  const createApi = createApiService<TEntity, TFormData>(config)
+  const createApi = createApiService<TEntity, TFormData>(config.endpoints.create)
   const addItemMutation = createApi().useAddItem()
-  const updateApi = createApiService<TEntity, Partial<TFormData>>(config)
+  const updateApi = createApiService<TEntity, Partial<TFormData>>(config.endpoints.update)
   const updateItemMutation = updateApi().useUpdateItem()
-  const deleteApi = createApiService<{ id: string | number }, null>(config)
+  const deleteApi = createApiService<{ id: string | number }, null>(config.endpoints.delete)
   const deleteItemMutation = deleteApi().useDeleteItem()
 
   // Create API services object for mutations

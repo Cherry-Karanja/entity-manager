@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { EntityActions } from '../../EntityActions'
 import { EntityActionsConfig } from '../../EntityActions/types'
+import { BaseEntity } from '../../manager'
 import { ViewAction } from '../types'
 import { cn } from '@/lib/utils'
 
@@ -29,8 +30,8 @@ export const ViewActions: React.FC<ViewActionsProps> = ({
     return (
       <div className={cn('flex items-center gap-2', className)}>
         <EntityActions
-          config={entityActions}
-          item={data}
+          config={entityActions as any}
+          context={{ entity: data as BaseEntity }}
         />
       </div>
     )

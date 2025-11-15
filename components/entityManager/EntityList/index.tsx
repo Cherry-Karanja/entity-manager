@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { BaseEntity } from '../manager'
-import type { EntityListColumn, EntityListAction, EntityListBulkAction } from '../EntityList/types'
+import type { EntityListColumn, EntityListAction, EntityListBulkAction, EntityListConfig } from '../EntityList/types'
 import { EntityListProps } from '../EntityList/types'
 import { EntityListToolbar } from './components/EntityListToolbar'
 import { EntityListFilters } from './components/EntityListFilters'
@@ -38,7 +38,6 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
     onAction,
     onBulkAction,
     onExport,
-    onRefresh,
     onRowClick
   } = props
   // ESLint disable for props that are part of the interface but not fully implemented
@@ -117,6 +116,9 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
     })
   }, [filteredData, sortField, sortDirection])
 
+  // Computed values
+  const allSelected = filteredData.length > 0 && filteredData.every(item => selectedIds.has(item.id))
+
   // Pagination
   const pageSize = config.pagination?.pageSize || 10
   const totalPages = Math.ceil(sortedData.length / pageSize)
@@ -177,7 +179,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
   const handleBulkActionClick = useCallback((action: EntityListBulkAction) => {
     const selectedItems = data.filter(item => selectedIds.has(item.id))
     if (action.confirm) {
-      setConfirmAction({ action, items: selectedItems })
+      setConfirmAction({ action, items: selectedItems as TEntity[] })
     } else {
       onBulkAction?.(action, selectedItems)
     }
@@ -259,7 +261,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
         <div className="flex items-center justify-between w-full">
           <CardTitle>{config.title}</CardTitle>
           <EntityListToolbar
-            config={config}
+            config={config as unknown as EntityListConfig<BaseEntity>}
             currentView="table"
             onViewChange={() => {}} // Not implemented yet
             searchTerm={localSearchTerm}
@@ -286,7 +288,6 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
             selectedKeys={Array.from(selectedIds)}
             onBulkAction={handleBulkActionClick}
             onExport={handleExportClick}
-            onRefresh={onRefresh}
             filters={config.filters}
             bulkActions={config.bulkActions}
             exportConfig={config.export}
@@ -360,8 +361,8 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
                   <TableRow
                     key={row.id}
                     onClick={() => {
-                      onRowClick?.(row)
-                      config.onRow?.(row)?.onClick?.({} as React.MouseEvent)
+                      onRowClick?.(row as TEntity)
+                      config.onRow?.(row as TEntity)?.onClick?.({} as React.MouseEvent)
                     }}
                     className={(onRowClick || config.onRow) ? 'cursor-pointer' : ''}
                   >
@@ -378,7 +379,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
                       .filter(col => !col.hidden)
                       .map((column) => (
                         <TableCell key={column.id} style={{ textAlign: column.align || 'left' }}>
-                          {renderCellValue(column, row)}
+                          {renderCellValue(column, row as TEntity)}
                         </TableCell>
                       ))}
                     {config.showActions && config.actions && config.actions.length > 0 && (
@@ -386,7 +387,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
                         <EntityListActions
                           actions={config.actions}
                           item={row}
-                          onAction={(action) => handleActionClick(action, row)}
+                          onAction={(action) => handleActionClick(action, row as TEntity)}
                         />
                       </TableCell>
                     )}
@@ -405,7 +406,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
                 }}
                 onChange={(page) => {
                   setCurrentPage(page)
-                  onPageChange?.(page)
+                  onPageChange?.(page, pageSize)
                 }}
                 showSizeChanger={false} // Keep simple for now
                 showQuickJumper={false}
@@ -421,12 +422,16 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction?.action.confirm?.title ||
-                (confirmAction?.items ? 'Confirm Bulk Action' : 'Confirm Action')}
+              {typeof confirmAction?.action.confirm?.title === 'function'
+                ? confirmAction.action.confirm.title(confirmAction?.items?.length || 1)
+                : confirmAction?.action.confirm?.title ||
+                  (confirmAction?.items ? 'Confirm Bulk Action' : 'Confirm Action')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction?.action.confirm?.content ||
-                `Are you sure you want to ${confirmAction?.action.label.toLowerCase()}?`}
+              {typeof confirmAction?.action.confirm?.content === 'function'
+                ? confirmAction.action.confirm.content(confirmAction?.items || [])
+                : confirmAction?.action.confirm?.content ||
+                  `Are you sure you want to ${confirmAction?.action.label.toLowerCase()}?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

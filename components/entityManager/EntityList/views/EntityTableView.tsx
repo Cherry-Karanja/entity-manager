@@ -8,12 +8,14 @@ import { HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListColumn, EntityListItem, EntityListSelection, EntityListAction } from '../types'
 import { EntityListActions } from '../components/EntityListActions'
+import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
+import { BaseEntity } from '../../manager'
 
 interface EntityTableViewProps extends EntityListViewProps {
   selection?: EntityListSelection & { selectedKeys: (string | number)[]; onChange: (keys: (string | number)[], items: EntityListItem[]) => void }
   actions?: EntityListAction[]
-  entityActions?: import('../../EntityActions/types').EntityActionsConfig
+  entityActions?: EntityActionsConfig
   onAction?: (action: EntityListAction, item: EntityListItem) => void
   entityType?: string
   rowKey?: string | ((item: EntityListItem) => string | number)
@@ -272,9 +274,11 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
                     <TableCell>
                       {entityActions ? (
                         <EntityActions
-                          config={entityActions}
-                          item={item}
-                          selectedItems={selection?.selectedKeys.map(key => data.find(d => getRowKey(d, 0) === key)).filter(Boolean) || []}
+                          config={entityActions as any}
+                          context={{
+                            entity: item,
+                            entities: selection?.selectedKeys.map(key => data.find(d => getRowKey(d, 0) === key)).filter(Boolean) as BaseEntity[]
+                          }}
                         />
                       ) : (
                         <EntityListActions

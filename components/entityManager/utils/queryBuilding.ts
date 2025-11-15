@@ -41,7 +41,7 @@ export function buildFilterQueryParams(
       return // Skip empty values
     }
 
-    const filter = filters.find(f => f.id === filterId)
+    const filter = filters.find(f => f.field.name === filterId)
     if (!filter) {
       // Fallback: use filter ID as field name with exact lookup
       params[filterId] = value

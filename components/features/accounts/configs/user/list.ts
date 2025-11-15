@@ -1,17 +1,11 @@
 // ===== USER LIST CONFIGURATION =====
 
-import { EntityListColumn } from '@/components/entityManager/EntityList/types'
+import { EntityListConfig } from "@/components/entityManager/EntityList/types"
+import { userCustomActions } from "./actions"
 
 // ===== USER LIST CONFIGURATION =====
 
-export const userListConfig: {
-  columns: EntityListColumn[]
-  searchableFields?: string[]
-  defaultSort?: { field: string; direction: 'asc' | 'desc' }
-  pageSize?: number
-  allowBatchActions?: boolean
-  allowExport?: boolean
-} = {
+export const userListConfig: EntityListConfig =  {
   columns: [
     {
       id: 'id',
@@ -111,9 +105,12 @@ export const userListConfig: {
       sortable: true
     }
   ],
-  searchableFields: ['email', 'first_name', 'last_name', 'full_name', 'employee_id'],
-  defaultSort: { field: 'date_joined', direction: 'desc' },
-  pageSize: 10,
-  allowBatchActions: true,
-  allowExport: true
+  searchFields: ['email', 'first_name', 'last_name', 'full_name', 'employee_id'],
+  defaultSort:[ { field: 'date_joined', direction: 'desc' }],
+  pagination: {
+    pageSize: 10,
+  },
+  actions: [
+    ...userCustomActions.item
+  ]
 }

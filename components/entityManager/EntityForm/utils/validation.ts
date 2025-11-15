@@ -1,4 +1,5 @@
-import { FormField, ValidationRule } from '../types'
+import { FormField, FieldValidation } from '../types'
+import { ValidationRule } from '../../core/types'
 
 export const validateField = (
   value: unknown,
@@ -87,8 +88,8 @@ export const validateField = (
         break
 
       case 'custom':
-        if (rule.validator) {
-          const result = rule.validator(value, {})
+        if ('validator' in rule && rule.validator) {
+          const result = (rule as any).validator(value, {})
           if (result === false) {
             errors.push(rule.message || `${field.label || field.name} is invalid`)
           } else if (typeof result === 'string') {

@@ -9,27 +9,25 @@ import { userRoleActionsConfig } from './actions'
 import { UserRole, UserRoleFormData } from '../../types'
 
 export const userRoleConfig: EntityConfig<UserRole, UserRoleFormData> = {
-  name: 'UserRole',
-  namePlural: 'UserRoles',
-  displayName: 'User Role',
-  fields: userRoleFields as any,
+  entityName: 'UserRole',
+  entityNamePlural: 'UserRoles',
   endpoints: {
     list: '/api/accounts/roles/',
+    read: '/api/accounts/roles/{id}/',
     create: '/api/accounts/roles/',
     update: '/api/accounts/roles/{id}/',
     delete: '/api/accounts/roles/{id}/'
   },
-  listConfig: userRoleListConfig,
-  formConfig: userRoleFormConfig,
-  viewConfig: userRoleViewConfig as any,
+  list: userRoleListConfig,
+  form: userRoleFormConfig as any,
+  view: userRoleViewConfig as any,
   permissions: {
     create: true,
     view: true,
     update: true,
     delete: true,
     export: true
-  },
-  customActions: userRoleActionsConfig as any
+  }
 }
 
 export default userRoleConfig

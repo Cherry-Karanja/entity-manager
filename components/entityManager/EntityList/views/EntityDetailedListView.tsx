@@ -6,12 +6,14 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
 import { EntityListActions } from '../components/EntityListActions'
+import { BaseEntity } from '../../manager'
 
 interface EntityDetailedListViewProps extends EntityListViewProps {
   actions?: EntityListAction[]
-  entityActions?: import('../../EntityActions/types').EntityActionsConfig
+  entityActions?: EntityActionsConfig
   onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
@@ -89,9 +91,8 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
                   <div className="flex-shrink-0">
                     {entityActions ? (
                       <EntityActions
-                        config={entityActions}
-                        item={item}
-                        className="shadow-sm"
+                        config={entityActions as any}
+                        context={{ entity: item }}
                       />
                     ) : (
                       <EntityListActions

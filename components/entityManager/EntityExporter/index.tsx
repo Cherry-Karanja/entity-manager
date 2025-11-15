@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Entity } from '../types'
+import { BaseEntity as Entity } from '../manager'
 import { EntityExporterConfig, ExportFormat, ExportResult } from './types'
 
 export interface EntityExporterProps<TEntity extends Entity = Entity> {

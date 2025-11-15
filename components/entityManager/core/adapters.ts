@@ -338,6 +338,9 @@ export function actionToEntityAction<TEntity extends BaseEntity>(
  */
 export function filterToListFilter(filter: UnifiedFilterConfig): EntityListFilter {
   return {
+    icon: filter.icon as any,
+    label: filter.label,
+    placeholder: filter.placeholder,
     field: {
       name: filter.field,
       label: filter.label,

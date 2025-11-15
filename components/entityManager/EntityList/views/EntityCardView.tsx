@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
 import { EntityListActions } from '../components/EntityListActions'
+import { BaseEntity } from '../../manager'
 
 interface EntityCardViewProps extends EntityListViewProps {
   actions?: EntityListAction[]
-  entityActions?: import('../../EntityActions/types').EntityActionsConfig
+  entityActions?: EntityActionsConfig
   onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
@@ -110,8 +112,8 @@ const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
                 <div className="mt-6 pt-4 border-t flex justify-center bg-accent/30 -mx-6 px-6 -mb-6 pb-4 group-hover:bg-accent/50 transition-colors">
                   {entityActions ? (
                     <EntityActions
-                      config={entityActions}
-                      item={item}
+                      config={entityActions as any}
+                      context={{ entity: item }}
                     />
                   ) : (
                     <EntityListActions

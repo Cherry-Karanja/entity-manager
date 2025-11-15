@@ -1,7 +1,8 @@
 import { FileText, Building2, Calendar, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react'
 import { EntityViewConfig } from '../types'
+import { BaseEntity } from '../../manager/types'
 
-export const invoiceViewVariation: EntityViewConfig = {
+export const invoiceViewVariation: EntityViewConfig<BaseEntity> = {
   mode: 'detail',
   layout: 'single',
   theme: 'card',

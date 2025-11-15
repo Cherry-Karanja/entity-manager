@@ -1,7 +1,7 @@
 import React from 'react'
 
 // Import component configs to use in EntityManagerConfig
-import type { EntityListConfig } from '../../types'
+import type { EntityListConfig } from '../../EntityList/types'
 import type { EntityFormConfig } from '../../EntityForm/types'
 import type { EntityViewConfig } from '../../EntityView/types'
 import type { EntityActionsConfig } from '../../EntityActions/types'

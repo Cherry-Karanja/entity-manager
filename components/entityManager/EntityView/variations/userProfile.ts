@@ -1,7 +1,8 @@
 import { User, Mail, Phone, MapPin, Calendar, Shield, Activity } from 'lucide-react'
 import { EntityViewConfig } from '../types'
+import { BaseEntity } from '../../manager/types'
 
-export const userProfileVariation: EntityViewConfig = {
+export const userProfileVariation: EntityViewConfig<BaseEntity> = {
   mode: 'detail',
   layout: 'single',
   theme: 'card',

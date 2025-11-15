@@ -9,14 +9,12 @@ import { useEntityState, useEntityApi, useEntityActions, useEntityForm } from '.
 import { EntityConfig, BaseEntity } from './types'
 import { EntityListItem } from '../EntityList/types'
 import { FieldDisplayType, ViewFieldGroup } from '../EntityView/types'
-import { transformEntityFieldsToFormFields } from './utils'
 import EntityTableView from '../EntityList/views/EntityTableView'
 import EntityCardView from '../EntityList/views/EntityCardView'
 import EntityListView from '../EntityList/views/EntityListView'
 import EntityGridView from '../EntityList/views/EntityGridView'
 import EntityCompactView from '../EntityList/views/EntityCompactView'
 // import { usePermissions } from '@/hooks/use-permissions'
-import { ChatPanel } from '@/components/entityManager/chat'
 import { RealTimeIndicator } from '../utils/RealTimeIndicator'
 import OptimisticUI from '../utils/OptimisticUI'
 import { CollaborativeIndicator } from '../utils/CollaborativeIndicator'
@@ -78,10 +76,6 @@ export interface EntityManagerProps<TEntity extends BaseEntity, TFormData extend
   initialMode?: 'list' | 'view' | 'create' | 'edit'
   initialData?: TEntity
   className?: string
-  /** Whether chat is initially open */
-  chatOpen?: boolean
-  /** Callback when chat toggle state changes */
-  onChatToggle?: (isOpen: boolean) => void
 }
 
 // ===== MAIN COMPONENT =====
@@ -90,9 +84,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   config,
   initialMode = 'list',
   initialData,
-  className,
-  chatOpen: initialChatOpen = false,
-  onChatToggle
+  className
 }: EntityManagerProps<TEntity, TFormData>) {
   // ===== STATE MANAGEMENT =====
 
@@ -100,10 +92,6 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   const [mode, setMode] = useState<'list' | 'view' | 'create' | 'edit'>(initialMode)
   const [selectedEntity, setSelectedEntity] = useState<TEntity | null>(initialData || null)
   const [formData, setFormData] = useState<Partial<TFormData> | null>(null)
-  const [validationErrors, setValidationErrors] = useState<Record<string, string[]> | null>(null)
-
-  // Chat state
-  const [chatOpen, setChatOpen] = useState(initialChatOpen)
 
   // Real-time/WebSocket state
   const [isConnected, setIsConnected] = useState(false)
@@ -169,7 +157,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
       return newBreadcrumbs
     })
-  }, [config.displayName, config.namePlural, config.name])
+  }, [config.entityName, config.entityNamePlural])
 
   // Initialize breadcrumbs based on initial mode
   React.useEffect(() => {
@@ -240,15 +228,13 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
   // Chat toggle handler
   const handleChatToggle = useCallback(() => {
-    const newChatOpen = !chatOpen
-    setChatOpen(newChatOpen)
-    onChatToggle?.(newChatOpen)
-  }, [chatOpen, onChatToggle])
+    // Removed - chat not in interface
+  }, [])
 
   // List actions with handlers
   const listActionsWithHandlers = useMemo(() => {
     // Inject onClick handlers for entity actions
-    const actionsWithHandlers = (config.customActions?.item || []).map(action => {
+    const actionsWithHandlers = (config.actions?.actions || []).map(action => {
       // Create the base action without confirm (since EntityListAction.confirm has different signature)
       const { confirm, ...actionWithoutConfirm } = action
 
@@ -282,12 +268,12 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     })
 
     return actionsWithHandlers
-  }, [config.customActions?.item, entityActions, setMode, setSelectedEntity, setFormData, updateBreadcrumbs])
+  }, [config.actions?.actions, entityActions, setMode, setSelectedEntity, setFormData, updateBreadcrumbs])
 
   // Bulk actions with handlers
   const bulkActionsWithHandlers = useMemo(() => {
     // Convert custom bulk actions to EntityList bulk actions
-    const bulkActionsWithHandlers = (config.customActions?.bulk || []).map(action => ({
+    const bulkActionsWithHandlers = (config.actions?.bulkActions || []).map(action => ({
       ...action,
       onClick: async (items: unknown[]) => {
         if (action.onExecute) {
@@ -297,18 +283,18 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     }))
 
     return bulkActionsWithHandlers
-  }, [config.customActions?.bulk])
+  }, [config.actions?.bulkActions])
 
   // Entity List configuration
   const listConfig = useMemo(() => ({
-    name: config.name,
+    name: config.entityName,
     data: entityState.cachedData?.results || [],
-    columns: config.listConfig.columns,
+    columns: config.list?.columns || [],
     filters: [], // Filters can be added to config.filters if needed
     actions: listActionsWithHandlers,
     entityActions: undefined, // Use actions instead of entityActions
     bulkActions: bulkActionsWithHandlers,
-    pagination: { pageSize: config.listConfig.pageSize || 10 },
+    pagination: { pageSize: config.list?.pagination?.pageSize || 10 },
     paginated: true, // Enable pagination
     views: [
       { id: 'table', name: 'Table', component: EntityTableView },
@@ -318,10 +304,10 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       { id: 'compact', name: 'Compact', component: EntityCompactView }
     ],
     defaultView: 'table',
-    searchable: (config.listConfig.searchableFields?.length ?? 0) > 0,
+    searchable: (config.list?.searchFields?.length ?? 0) > 0,
     sortable: true,
-    selectable: config.listConfig.allowBatchActions,
-    export: config.listConfig.allowExport ? {
+    selectable: config.list?.selection?.mode === 'multiple',
+    export: config.list?.export?.enabled ? {
       enabled: true,
       formats: ['csv', 'xlsx', 'json'] as ('csv' | 'xlsx' | 'json' | 'pdf')[]
     } : undefined,
@@ -335,7 +321,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     permissions: config.permissions,
     loading: entityApi.isLoading,
     error: entityState.state.error
-  }), [config, entityState.cachedData, entityApi.isLoading, entityState.state.error, listActionsWithHandlers, bulkActionsWithHandlers, handleRefresh])
+  }), [config, entityState.cachedData, entityApi.isLoading, entityState.state.error, listActionsWithHandlers, bulkActionsWithHandlers, handleRefresh, updateBreadcrumbs])
 
   // Re-fetch list when relevant list parameters change (page, pageSize, search, sort, filters)
   React.useEffect(() => {
@@ -363,18 +349,18 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       if (!data) return {}
       
       const transformed = { ...data }
-      config.fields.forEach(field => {
-        if (field.type === 'date' && transformed[field.key]) {
-          const value = transformed[field.key]
+      config.form?.fields?.forEach(field => {
+        if (field.type === 'date' && transformed[field.name]) {
+          const value = transformed[field.name]
           if (typeof value === 'string') {
             // Convert datetime string to date-only format
             try {
               const date = new Date(value)
               if (!isNaN(date.getTime())) {
-                transformed[field.key] = date.toISOString().split('T')[0] // yyyy-MM-dd format
+                transformed[field.name] = date.toISOString().split('T')[0] // yyyy-MM-dd format
               }
             } catch (error) {
-              console.warn(`Failed to parse date for field ${field.key}:`, value)
+              console.warn(`Failed to parse date for field ${field.name}:`, value)
             }
           }
         }
@@ -383,16 +369,16 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     }
 
     return {
-    fields: transformEntityFieldsToFormFields(config.fields, { includeValidation: true, mode: mode === 'create' ? 'create' : 'edit' }),
+    fields: config.form?.fields || [],
     mode: mode === 'create' ? 'create' as const : 'edit' as const,
-    layout: (config.formConfig?.layout as 'vertical' | 'horizontal' | 'grid') || 'vertical',
-    columns: config.formConfig?.columns || 1,
-    initialData: transformInitialData(formData || (selectedEntity as Record<string, unknown>) || {}),
+    layout: (config.form?.layout as 'vertical' | 'horizontal' | 'grid') || 'vertical',
+    columns: config.form?.columns || 1,
+    initialData: transformInitialData(formData || (selectedEntity as Record<string, unknown>) || {}) as Partial<TEntity>,
     validateOnChange: true,
     validateOnBlur: true,
-    submitButtonText: config.formConfig?.submitLabel,
-    cancelButtonText: config.formConfig?.cancelLabel,
-    enableBulkImport: config.bulkImport?.enabled,
+    submitButtonText: config.form?.submitButtonText,
+    cancelButtonText: config.form?.cancelButtonText,
+    enableBulkImport: config.form?.enableBulkImport,
     showProgress: true,
     showValidationErrors: true,
     autoFocus: true,
@@ -401,53 +387,6 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   }}, [config, mode, formData, selectedEntity])
 
   // ===== EVENT HANDLERS =====
-
-  // Handle list actions
-  const handleListAction = useCallback((action: any, item: any) => {
-    switch (action.id) {
-      case 'view':
-        setMode('view')
-        setSelectedEntity(item)
-        updateBreadcrumbs('view', item)
-        break
-      case 'edit':
-        setMode('edit')
-        setSelectedEntity(item)
-        setFormData(null)
-        updateBreadcrumbs('edit', item)
-        break
-      case 'delete':
-        entityActions.handleOpenDeleteDialog(item.id)
-        break
-      default:
-        console.warn('Unknown action:', action.id)
-    }
-  }, [entityActions, updateBreadcrumbs])
-
-  // Handle view actions
-  const handleViewAction = useCallback((action: any, data?: unknown) => {
-    switch (action.id) {
-      case 'edit':
-        if (selectedEntity) {
-          setMode('edit')
-          setFormData(null)
-          updateBreadcrumbs('edit', selectedEntity)
-        }
-        break
-      case 'back':
-        setMode('list')
-        setSelectedEntity(null)
-        updateBreadcrumbs('list')
-        break
-      case 'delete':
-        if (selectedEntity) {
-          entityActions.handleOpenDeleteDialog(selectedEntity.id)
-        }
-        break
-      default:
-        console.warn('Unknown action:', action.id)
-    }
-  }, [entityActions, selectedEntity, updateBreadcrumbs])
 
   // Handle form submission
   const handleFormSubmit = useCallback(async (data: Record<string, unknown>) => {
@@ -458,10 +397,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           setSelectedEntity(result.data)
           setMode('view')
           updateBreadcrumbs('view', result.data)
-          setValidationErrors(null) // Clear validation errors on success
         } else {
-          // Set validation errors for form to display
-          setValidationErrors(result.validationErrors.fieldErrors)
           // Throw error so EntityForm shows error toast
           throw new Error(result.validationErrors.nonFieldErrors.join(', ') || 'Form submission failed')
         }
@@ -471,10 +407,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           setSelectedEntity(result.data)
           setMode('view')
           updateBreadcrumbs('view', result.data)
-          setValidationErrors(null) // Clear validation errors on success
         } else {
-          // Set validation errors for form to display
-          setValidationErrors(result.validationErrors.fieldErrors)
           // Throw error so EntityForm shows error toast
           throw new Error(result.validationErrors.nonFieldErrors.join(', ') || 'Form submission failed')
         }
@@ -517,9 +450,9 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
             onFilter={(filters: Record<string, unknown>) => {
               entityState.actions.setFilterValues(filters)
             }}
-            onSort={(sorts: any) => {
+            onSort={(sorts: { field: string; direction: 'asc' | 'desc' }[]) => {
               // Pass EntityListSort[] directly to state
-              entityState.actions.setSortConfig(Array.isArray(sorts) ? sorts : undefined)
+              entityState.actions.setSortConfig(sorts)
             }}
             onRowClick={(item: EntityListItem) => {
               const typedItem = item as TEntity
@@ -532,16 +465,15 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
               entityState.actions.setPageSize(pageSize)
               entityState.actions.setCurrentPage(page)
             }}
-            onAction={handleListAction}
+            onAction={undefined}
           />
         )
 
       case 'view':
-        return selectedEntity ? (
+        return selectedEntity && config.view ? (
           <EntityView
-            config={config.viewConfig}
+            config={config.view}
             data={selectedEntity}
-            onActionClick={handleViewAction}
           />
         ) : null
 
@@ -550,11 +482,9 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         return (
           <EntityForm
             config={formConfig}
-            data={formData || (selectedEntity as Record<string, unknown>) || {}}
+            data={selectedEntity || undefined}
             onSubmit={handleFormSubmit}
             onCancel={handleFormCancel}
-            loading={entityState.state.isLoading}
-            validationErrors={validationErrors || undefined}
           />
         )
 
@@ -601,9 +531,9 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {config.name}</AlertDialogTitle>
+            <AlertDialogTitle>Delete {config.entityName}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this {config.name.toLowerCase()}? This action cannot be undone.
+              Are you sure you want to delete this {config.entityName.toLowerCase()}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -624,15 +554,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       </AlertDialog>
 
       {/* Chat Panel */}
-      {config.chat?.enabled && (
-        <ChatPanel
-          config={config.chat}
-          entityType={config.name}
-          entityId={selectedEntity?.id?.toString()}
-          isOpen={chatOpen}
-          onToggle={handleChatToggle}
-        />
-      )}
+      {/* Removed - chat not in EntityConfig interface */}
 
       {/* Optimistic Operation Toast */}
       <OptimisticUI.OptimisticOperationToast

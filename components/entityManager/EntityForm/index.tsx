@@ -1,4 +1,3 @@
-// ===== ENTITY FORM V3 - STANDALONE COMPONENT =====
 // Pure presentation component that works with EntityFormConfig<TEntity>
 
 'use client'
@@ -11,16 +10,17 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Entity, EntityFormConfig, FormField } from '../types'
-
-export interface EntityFormProps<TEntity extends Entity = Entity> {
+import { BaseEntity } from '../manager'
+import { EntityFormConfig, FormField } from './types'
+ 
+export interface EntityFormProps<TEntity extends BaseEntity = BaseEntity> {
   config: EntityFormConfig<TEntity>
   data?: TEntity
   onSubmit: (data: Partial<TEntity>) => void | Promise<void>
   onCancel?: () => void
 }
 
-export const EntityForm = <TEntity extends Entity = Entity>({
+export const EntityForm = <TEntity extends BaseEntity = BaseEntity>({
   config,
   data,
   onSubmit,
@@ -60,61 +60,77 @@ export const EntityForm = <TEntity extends Entity = Entity>({
 
   // Validate field
   const validateField = useCallback((field: FormField, value: unknown): string | null => {
-    if (!field.validation) return null
+    if (!field.validation || field.validation.length === 0) return null
 
-    // Required validation
-    if (field.validation.required && !value) {
-      return typeof field.validation.required === 'string'
-        ? field.validation.required
-        : `${field.label} is required`
-    }
+    // Check each validation rule
+    for (const validation of field.validation) {
+      switch (validation.type) {
+        case 'required':
+          if (!value || (typeof value === 'string' && value.trim() === '')) {
+            return validation.message || `${field.label} is required`
+          }
+          break
 
-    // String validations
-    if (typeof value === 'string') {
-      if (field.validation.minLength && value.length < field.validation.minLength) {
-        return typeof field.validation.minLength === 'string'
-          ? field.validation.minLength
-          : `${field.label} must be at least ${field.validation.minLength} characters`
-      }
-      
-      if (field.validation.maxLength && value.length > field.validation.maxLength) {
-        return typeof field.validation.maxLength === 'string'
-          ? field.validation.maxLength
-          : `${field.label} must be at most ${field.validation.maxLength} characters`
-      }
+        case 'minLength':
+          if (typeof value === 'string' && validation.value && typeof validation.value === 'number' && value.length < validation.value) {
+            return validation.message || `${field.label} must be at least ${validation.value} characters`
+          }
+          break
 
-      if (field.validation.pattern) {
-        const regex = typeof field.validation.pattern === 'string'
-          ? new RegExp(field.validation.pattern)
-          : field.validation.pattern
-        if (!regex.test(value)) {
-          return `${field.label} format is invalid`
-        }
-      }
+        case 'maxLength':
+          if (typeof value === 'string' && validation.value && typeof validation.value === 'number' && value.length > validation.value) {
+            return validation.message || `${field.label} must be at most ${validation.value} characters`
+          }
+          break
 
-      if (field.validation.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        return typeof field.validation.email === 'string'
-          ? field.validation.email
-          : `${field.label} must be a valid email`
-      }
-    }
+        case 'min':
+          if (typeof value === 'number' && validation.value && typeof validation.value === 'number' && value < validation.value) {
+            return validation.message || `${field.label} must be at least ${validation.value}`
+          }
+          break
 
-    // Number validations
-    if (typeof value === 'number') {
-      if (field.validation.min !== undefined && value < Number(field.validation.min)) {
-        return `${field.label} must be at least ${field.validation.min}`
-      }
-      
-      if (field.validation.max !== undefined && value > Number(field.validation.max)) {
-        return `${field.label} must be at most ${field.validation.max}`
-      }
-    }
+        case 'max':
+          if (typeof value === 'number' && validation.value && typeof validation.value === 'number' && value > validation.value) {
+            return validation.message || `${field.label} must be at most ${validation.value}`
+          }
+          break
 
-    // Custom validation
-    if (field.validation.custom) {
-      const result = field.validation.custom(value)
-      if (typeof result === 'string') return result
-      if (result === false) return `${field.label} is invalid`
+        case 'pattern':
+          if (typeof value === 'string' && validation.value) {
+            let regex: RegExp
+            if (typeof validation.value === 'string') {
+              regex = new RegExp(validation.value)
+            } else if (validation.value instanceof RegExp) {
+              regex = validation.value
+            } else {
+              break // Invalid pattern value
+            }
+            if (!regex.test(value)) {
+              return validation.message || `${field.label} format is invalid`
+            }
+          }
+          break
+
+        case 'email':
+          if (typeof value === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            return validation.message || `${field.label} must be a valid email`
+          }
+          break
+
+        case 'url':
+          if (typeof value === 'string') {
+            try {
+              new URL(value)
+            } catch {
+              return validation.message || `${field.label} must be a valid URL`
+            }
+          }
+          break
+
+        case 'custom':
+          // Custom validation would need to be implemented differently
+          break
+      }
     }
 
     return null
@@ -275,11 +291,11 @@ export const EntityForm = <TEntity extends Entity = Entity>({
               onClick={onCancel}
               disabled={isSubmitting}
             >
-              {config.cancelText || 'Cancel'}
+              {config.cancelButtonText || 'Cancel'}
             </Button>
           )}
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : (config.submitText || 'Save')}
+            {isSubmitting ? 'Saving...' : (config.submitButtonText || 'Save')}
           </Button>
         </CardFooter>
       </Card>

@@ -6,11 +6,8 @@ import { EntityListColumn } from '@/components/entityManager/EntityList/types'
 
 export const userRoleListConfig: {
   columns: EntityListColumn[]
-  searchableFields?: string[]
-  defaultSort?: { field: string; direction: 'asc' | 'desc' }
-  pageSize?: number
-  allowBatchActions?: boolean
-  allowExport?: boolean
+  searchFields?: string[]
+  defaultSort?: { field: string; direction: 'asc' | 'desc' }[]
 } = {
   columns: [
     {
@@ -86,9 +83,6 @@ export const userRoleListConfig: {
       sortable: true
     }
   ],
-  searchableFields: ['name', 'display_name', 'description'],
-  defaultSort: { field: 'created_at', direction: 'desc' },
-  pageSize: 10,
-  allowBatchActions: true,
-  allowExport: true
+  searchFields: ['name', 'display_name', 'description'],
+  defaultSort: [{ field: 'created_at', direction: 'desc' }]
 }

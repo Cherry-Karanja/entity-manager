@@ -7,12 +7,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
 import { EntityListActions } from '../components/EntityListActions'
+import { BaseEntity } from '../../manager'
 
 interface EntityGalleryViewProps extends EntityListViewProps {
   actions?: EntityListAction[]
-  entityActions?: import('../../EntityActions/types').EntityActionsConfig
+  entityActions?: EntityActionsConfig
   onAction?: (action: EntityListAction, item: EntityListItem) => void
   avatarField?: string // Field to use for avatar initials (defaults to 'name')
 }
@@ -174,8 +176,8 @@ export const EntityGalleryView: React.FC<EntityGalleryViewProps> = ({
                   <div className="pt-4 border-t flex justify-center group-hover:bg-accent/20 -mx-6 px-6 pb-2 transition-colors">
                     {entityActions ? (
                       <EntityActions
-                        config={entityActions}
-                        item={item}
+                        config={entityActions as any}
+                        context={{ entity: item }}
                       />
                     ) : (
                       <EntityListActions

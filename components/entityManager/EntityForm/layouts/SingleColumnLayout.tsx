@@ -82,7 +82,7 @@ export const SingleColumnLayout: React.FC<SingleColumnLayoutProps> = ({
                 <FormFieldRenderer
                   key={field.name}
                   field={field}
-                  value={formState.data[field.name]}
+                  value={(formState.data as Record<string, unknown>)[field.name]}
                   onChange={(value: unknown) => onFieldChange(field.name, value)}
                   onBlur={() => onFieldBlur(field.name)}
                   error={formState.errors[field.name]}

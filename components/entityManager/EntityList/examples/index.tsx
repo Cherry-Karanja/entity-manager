@@ -189,61 +189,66 @@ const userListConfig: EntityListConfig = {
   globalSearch: true,
   filters: [
     {
-      id: 'name',
-      label: 'Name',
-      type: 'text',
-      field: 'name',
-      placeholder: 'Search by name...',
       icon: Users,
-      helpText: 'Filter users by their display name',
-      tooltip: 'Enter partial or full name to filter results'
+      field: {
+        name: 'name',
+        label: 'Name',
+        type: 'text',
+        placeholder: 'Search by name...',
+        icon: Users,
+        helpText: 'Filter users by their display name'
+      }
     },
     {
-      id: 'email',
-      label: 'Email',
-      type: 'text',
-      field: 'email',
-      placeholder: 'Search by email...',
       icon: Mail,
-      helpText: 'Filter users by email address',
-      tooltip: 'Search supports partial email matches'
+      field: {
+        name: 'email',
+        label: 'Email',
+        type: 'text',
+        placeholder: 'Search by email...',
+        icon: Mail,
+        helpText: 'Filter users by email address'
+      }
     },
     {
-      id: 'role',
-      label: 'Role',
-      type: 'select',
-      field: 'role',
       icon: Shield,
-      placeholder: 'Select a role',
-      helpText: 'Filter by user role in the system',
-      tooltip: 'Choose from Admin, Moderator, or User roles',
-      options: [
-        { value: 'Admin', label: 'Admin' },
-        { value: 'Moderator', label: 'Moderator' },
-        { value: 'User', label: 'User' }
-      ]
+      field: {
+        name: 'role',
+        label: 'Role',
+        type: 'select',
+        icon: Shield,
+        placeholder: 'Select a role',
+        helpText: 'Filter by user role in the system',
+        options: [
+          { value: 'Admin', label: 'Admin' },
+          { value: 'Moderator', label: 'Moderator' },
+          { value: 'User', label: 'User' }
+        ]
+      }
     },
     {
-      id: 'status',
-      label: 'Account Status',
-      type: 'multiselect',
-      field: 'status',
       icon: Activity,
-      helpText: 'Select one or more account statuses',
-      tooltip: 'Filter by current account state (active, inactive, or pending)',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-        { value: 'pending', label: 'Pending Approval' }
-      ]
+      field: {
+        name: 'status',
+        label: 'Account Status',
+        type: 'multiselect',
+        icon: Activity,
+        helpText: 'Select one or more account statuses',
+        options: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+          { value: 'pending', label: 'Pending Approval' }
+        ]
+      }
     },
     {
-      id: 'createdAt',
-      label: 'Created Date',
-      type: 'daterange',
-      field: 'createdAt',
-      helpText: 'Filter by account creation date range',
-      tooltip: 'Select start and end dates to filter user accounts'
+      icon: Calendar,
+      field: {
+        name: 'createdAt',
+        label: 'Created Date',
+        type: 'date',
+        helpText: 'Filter by account creation date range'
+      }
     }
   ],
   filterLayout: 'inline',

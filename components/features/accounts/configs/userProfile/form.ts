@@ -1,89 +1,71 @@
 // ===== USER PROFILE FORM CONFIGURATION =====
 
-export const userProfileFormConfig: {
-  title?: string
-  createTitle?: string
-  editTitle?: string
-  description?: string
-  submitLabel?: string
-  cancelLabel?: string
-  layout?: 'grid' | 'flex' | 'stack'
-  fieldGroups?: {
-    id: string
-    title: string
-    description?: string
-    fields: string[]
-    layout?: 'grid' | 'vertical' | 'horizontal'
-    columns?: number
-    collapsible?: boolean
-    collapsed?: boolean
-  }[]
-} = {
-  title: 'User Profile',
-  createTitle: 'Create User Profile',
-  editTitle: 'Edit User Profile',
-  description: 'Manage user profile information and preferences',
-  submitLabel: 'Save Profile',
-  cancelLabel: 'Cancel',
-  layout: 'grid',
-  fieldGroups: [
+import { EntityFormConfig } from '@/components/entityManager/EntityForm/types';
+
+export const userProfileFormConfig: EntityFormConfig = {
+  fields: [
     {
-      id: 'basic-info',
-      title: 'Basic Information',
-      description: 'User identification and contact details',
-      fields: ['user', 'job_title', 'department', 'phone_number'],
-      layout: 'grid',
-      columns: 2,
-      collapsible: false
+      name: 'user',
+      label: 'User',
+      type: 'text',
+      required: true
     },
     {
-      id: 'bio-section',
-      title: 'Biography',
-      description: 'User biography and description',
-      fields: ['bio'],
-      layout: 'vertical',
-      collapsible: true,
-      collapsed: false
+      name: 'job_title',
+      label: 'Job Title',
+      type: 'text'
     },
     {
-      id: 'preferences',
-      title: 'Preferences',
-      description: 'User interface and communication preferences',
-      fields: ['preferred_language', 'interface_theme', 'allow_notifications'],
-      layout: 'grid',
-      columns: 1,
-      collapsible: true,
-      collapsed: false
+      name: 'department',
+      label: 'Department',
+      type: 'text'
     },
     {
-      id: 'privacy',
-      title: 'Privacy Settings',
-      description: 'Control what information is visible to others',
-      fields: ['show_email', 'show_phone'],
-      layout: 'grid',
-      columns: 2,
-      collapsible: true,
-      collapsed: false
+      name: 'bio',
+      label: 'Bio',
+      type: 'textarea'
     },
     {
-      id: 'approval-status',
-      title: 'Approval Status',
-      description: 'Profile approval and review information',
-      fields: ['status', 'approved_by', 'approved_at'],
-      layout: 'grid',
-      columns: 1,
-      collapsible: true,
-      collapsed: true
+      name: 'phone',
+      label: 'Phone',
+      type: 'tel'
     },
     {
-      id: 'timestamps',
-      title: 'Timestamps',
-      description: 'Profile creation and modification timestamps',
-      fields: ['created_at', 'updated_at'],
-      layout: 'grid',
-      columns: 2,
-      collapsible: true,
-      collapsed: true
+      name: 'website',
+      label: 'Website',
+      type: 'url'
+    },
+    {
+      name: 'location',
+      label: 'Location',
+      type: 'text'
+    },
+    {
+      name: 'timezone',
+      label: 'Timezone',
+      type: 'text'
+    },
+    {
+      name: 'avatar',
+      label: 'Avatar',
+      type: 'image'
+    },
+    {
+      name: 'is_public',
+      label: 'Public Profile',
+      type: 'checkbox'
+    },
+    {
+      name: 'created_at',
+      label: 'Created At',
+      type: 'datetime',
+      disabled: true
+    },
+    {
+      name: 'updated_at',
+      label: 'Updated At',
+      type: 'datetime',
+      disabled: true
     }
   ]
-}
+};

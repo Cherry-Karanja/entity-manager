@@ -8,9 +8,6 @@
 export { EntityManager } from './orchestrator'
 export type { EntityManagerProps, BreadcrumbItem } from './orchestrator'
 
-export { UnifiedEntityManager } from './UnifiedEntityManager'
-export type { UnifiedEntityManagerProps } from './UnifiedEntityManager'
-
 // Types
 export type {
   EntityConfig,

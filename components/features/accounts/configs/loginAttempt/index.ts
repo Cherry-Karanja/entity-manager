@@ -5,35 +5,35 @@ import { LoginAttempt, LoginAttemptFormData } from '../../types'
 import { loginAttemptFields } from './fields'
 import { loginAttemptListColumns } from './list'
 import { loginAttemptViewConfig } from './view'
+import { loginAttemptFormConfig } from './form'
 import { loginAttemptItemActions, loginAttemptBulkActions } from './actions'
 
 export const loginAttemptConfig: EntityConfig<LoginAttempt, LoginAttemptFormData> = {
   // ===== ENTITY METADATA =====
-  name: 'LoginAttempt',
-  namePlural: 'LoginAttempts',
-  displayName: 'Login Attempt',
-  fields: loginAttemptFields,
+  entityName: 'LoginAttempt',
+  entityNamePlural: 'LoginAttempts',
 
   // ===== API CONFIGURATION =====
   endpoints: {
     list: '/api/v1/accounts/login-attempts/',
+    read: '/api/v1/accounts/login-attempts/{id}/',
     create: '/api/v1/accounts/login-attempts/',
     update: '/api/v1/accounts/login-attempts/{id}/',
     delete: '/api/v1/accounts/login-attempts/{id}/'
   },
 
   // ===== LIST CONFIGURATION =====
-  listConfig: {
+  list: {
     columns: loginAttemptListColumns,
-    searchableFields: ['email', 'ip_address', 'device_type', 'browser'],
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    pageSize: 20,
-    allowBatchActions: true,
-    allowExport: true
+    searchFields: ['email', 'ip_address', 'device_type', 'browser'],
+    defaultSort: [{ field: 'created_at', direction: 'desc' }]
   },
 
+  // ===== FORM CONFIGURATION =====
+  form: loginAttemptFormConfig as any,
+
   // ===== VIEW CONFIGURATION =====
-  viewConfig: loginAttemptViewConfig,
+  view: loginAttemptViewConfig as any,
 
   // ===== PERMISSIONS =====
   permissions: {
@@ -42,12 +42,6 @@ export const loginAttemptConfig: EntityConfig<LoginAttempt, LoginAttemptFormData
     update: false, // Read-only entity
     delete: false, // Read-only entity - security audit trail
     export: true
-  },
-
-  // ===== CUSTOM ACTIONS =====
-  customActions: {
-    item: loginAttemptItemActions,
-    bulk: loginAttemptBulkActions
   }
 }
 

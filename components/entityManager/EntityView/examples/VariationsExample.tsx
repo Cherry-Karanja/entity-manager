@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // Sample data for each variation
 const userData = {
+  id: 1,
   name: 'John Doe',
   email: 'john.doe@example.com',
   phone: '+1 (555) 123-4567',
@@ -27,6 +28,7 @@ const userData = {
 }
 
 const productData = {
+  id: 2,
   name: 'Premium Wireless Headphones',
   sku: 'WH-1000XM5',
   category: 'Electronics',
@@ -42,6 +44,7 @@ const productData = {
 }
 
 const orderData = {
+  id: 3,
   orderNumber: 'ORD-2025-10-30-001',
   orderDate: new Date('2025-10-30'),
   status: 'Processing',
@@ -61,6 +64,7 @@ const orderData = {
 }
 
 const invoiceData = {
+  id: 4,
   invoiceNumber: 'INV-2025-001234',
   invoiceDate: new Date('2025-10-30'),
   dueDate: new Date('2025-11-29'),
@@ -79,6 +83,7 @@ const invoiceData = {
 }
 
 const dashboardData = {
+  id: 5,
   revenue: 125750.50,
   users: 1543,
   growth: 23.5,

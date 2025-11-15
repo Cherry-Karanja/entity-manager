@@ -10,13 +10,13 @@ import { userProfileActionsConfig } from './actions'
 
 export const userProfileConfig: EntityConfig<UserProfile, UserProfileFormData> = {
   // ===== ENTITY METADATA =====
-  name: 'UserProfile',
-  namePlural: 'UserProfiles',
-  displayName: 'User Profile',
+  entityName: 'UserProfile',
+  entityNamePlural: 'UserProfiles',
 
   // ===== API CONFIGURATION =====
   endpoints: {
     list: '/api/v1/accounts/user-profiles/',
+    read: '/api/v1/accounts/user-profiles/{id}/',
     create: '/api/v1/accounts/user-profiles/',
     update: '/api/v1/accounts/user-profiles/{id}/',
     delete: '/api/v1/accounts/user-profiles/{id}/'
@@ -31,24 +31,18 @@ export const userProfileConfig: EntityConfig<UserProfile, UserProfileFormData> =
     export: true
   },
 
-  // ===== FIELD CONFIGURATIONS =====
-  fields: userProfileFields,
-
   // ===== LIST CONFIGURATION =====
-  listConfig: {
+  list: {
     columns: userProfileListColumns,
-    searchableFields: ['user', 'job_title', 'department', 'bio'],
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    pageSize: 20,
-    allowBatchActions: true,
-    allowExport: true
+    searchFields: ['user', 'job_title', 'department', 'bio'],
+    defaultSort: [{ field: 'created_at', direction: 'desc' }]
   },
 
   // ===== FORM CONFIGURATION =====
-  // form: userProfileFormConfig,
+  form: userProfileFormConfig as any,
 
   // ===== VIEW CONFIGURATION =====
-  // view: userProfileViewConfig,
+  view: userProfileViewConfig as any,
 
   // ===== ACTIONS CONFIGURATION =====
   // actions: userProfileActionsConfig,

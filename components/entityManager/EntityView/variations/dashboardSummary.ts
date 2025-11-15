@@ -1,7 +1,8 @@
 import { TrendingUp, DollarSign, Users, Activity, Target, Calendar } from 'lucide-react'
 import { EntityViewConfig } from '../types'
+import { BaseEntity } from '../../manager/types'
 
-export const dashboardSummaryVariation: EntityViewConfig = {
+export const dashboardSummaryVariation: EntityViewConfig<BaseEntity> = {
   mode: 'summary',
   layout: 'single',
   theme: 'card',

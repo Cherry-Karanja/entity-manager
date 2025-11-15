@@ -1,5 +1,5 @@
 import React from "react"
-import { FormField as UnifiedFormField } from '../types'
+import { FormField } from "../EntityForm/types"
 import { EntityActionsConfig } from "../EntityActions/types"
 import { BaseEntity } from "../manager"
 
@@ -34,7 +34,10 @@ export interface EntityListColumn {
 
 export interface EntityListFilter {
   // Use unified FormField for filter configuration
-  field: UnifiedFormField
+  icon: React.ComponentType<{ className?: string }>
+  label?: string | React.ReactNode
+  placeholder?: string
+  field: FormField
   operator?: DjangoLookupOperator
   operators?: DjangoLookupOperator[] // Available operators for this filter
   djangoField?: string // Override for backend field name

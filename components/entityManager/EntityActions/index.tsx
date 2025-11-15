@@ -5,9 +5,10 @@
 
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { Entity, EntityActionsConfig } from '../types'
+import {  EntityActionsConfig } from './types'
+import { BaseEntity } from '../manager'
 
-export interface EntityActionsProps<TEntity extends Entity = Entity> {
+export interface EntityActionsProps<TEntity extends BaseEntity = BaseEntity> {
   config: EntityActionsConfig<TEntity>
   context: {
     entity?: TEntity
@@ -22,7 +23,7 @@ export interface EntityActionsProps<TEntity extends Entity = Entity> {
   }
 }
 
-export const EntityActions = <TEntity extends Entity = Entity>({
+export const EntityActions = <TEntity extends BaseEntity = BaseEntity>({
   config,
   context,
 }: EntityActionsProps<TEntity>) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { EntityExporter } from '../index';
 import { EntityExporterConfig, DEFAULT_EXPORT_FORMATS } from '../types';
-import { Entity } from '../../types';
+import { BaseEntity as Entity } from '../../manager/types';
 
 // Mock data for examples
 const mockUsers = [

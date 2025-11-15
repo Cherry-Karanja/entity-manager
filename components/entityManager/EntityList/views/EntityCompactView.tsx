@@ -3,12 +3,14 @@
 import React, { memo } from 'react'
 import { cn } from '@/lib/utils'
 import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
 import { EntityListActions } from '../components/EntityListActions'
+import { BaseEntity } from '../../manager'
 
 interface EntityCompactViewProps extends EntityListViewProps {
   actions?: EntityListAction[]
-  entityActions?: import('../../EntityActions/types').EntityActionsConfig
+  entityActions?: EntityActionsConfig
   onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
@@ -70,8 +72,8 @@ const EntityCompactViewComponent: React.FC<EntityCompactViewProps> = ({
             <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
               {entityActions ? (
                 <EntityActions
-                  config={entityActions}
-                  item={item}
+                  config={entityActions as any}
+                  context={{ entity: item }}
                 />
               ) : (
                 <EntityListActions

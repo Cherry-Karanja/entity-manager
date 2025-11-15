@@ -374,9 +374,9 @@ export interface EntityConfig<TEntity extends BaseEntity = BaseEntity, TFormData
    endpoints: EntityEndpoints
    
    // Component configurations
-   list?: EntityListConfig<TEntity>
-   form?: EntityFormConfig<TEntity>
-   view?: EntityViewConfig<TEntity>
+   list: EntityListConfig<TEntity>
+   form: EntityFormConfig<TEntity>
+   view: EntityViewConfig<TEntity>
    actions?: EntityActionsConfig<TEntity>
    exporter?: EntityExporterConfig<TEntity>
    

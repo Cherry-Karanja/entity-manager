@@ -93,12 +93,9 @@ export function VariationsExample() {
                 </Alert>
               )}
               <EntityForm
-                config={{
-                  ...userFormVariation,
-                  onSubmit: handleUserSubmit,
-                  onCancel: handleCancel,
-                  onBulkImport: handleBulkImport,
-                }}
+                config={userFormVariation}
+                onSubmit={handleUserSubmit}
+                onCancel={handleCancel}
               />
             </CardContent>
           </Card>
@@ -150,12 +147,9 @@ function CreateUserPage() {
                 </Alert>
               )}
               <EntityForm
-                config={{
-                  ...productFormVariation,
-                  onSubmit: handleProductSubmit,
-                  onCancel: handleCancel,
-                  onBulkImport: handleBulkImport,
-                }}
+                config={productFormVariation}
+                onSubmit={handleProductSubmit}
+                onCancel={handleCancel}
               />
             </CardContent>
           </Card>
@@ -213,8 +207,6 @@ function CreateProductPage() {
               <EntityForm
                 config={{
                   ...orderFormVariation,
-                  onSubmit: handleOrderSubmit,
-                  onCancel: handleCancel,
                   initialData: {
                     orderDate: new Date().toISOString(),
                     status: 'pending',
@@ -224,6 +216,8 @@ function CreateProductPage() {
                     includeGiftMessage: false,
                   },
                 }}
+                onSubmit={handleOrderSubmit}
+                onCancel={handleCancel}
               />
             </CardContent>
           </Card>
@@ -281,8 +275,6 @@ function CreateOrderPage() {
               <EntityForm
                 config={{
                   ...settingsFormVariation,
-                  onSubmit: handleSettingsSubmit,
-                  onCancel: handleCancel,
                   initialData: {
                     siteName: 'My Application',
                     language: 'en',
@@ -306,6 +298,8 @@ function CreateOrderPage() {
                     maintenanceMode: false,
                   },
                 }}
+                onSubmit={handleSettingsSubmit}
+                onCancel={handleCancel}
               />
             </CardContent>
           </Card>

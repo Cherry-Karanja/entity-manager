@@ -182,59 +182,6 @@ export const EntityFieldSchema: z.ZodType<any> = z.object({
   icon: z.any().optional(),
 }).catchall(z.unknown())
 
-// Entity config schema
-export const EntityConfigSchema = z.object({
-  name: z.string(),
-  namePlural: z.string(),
-  displayName: z.string(),
-  fields: z.array(EntityFieldSchema),
-  endpoints: z.object({
-    list: z.string(),
-    create: z.string(),
-    update: z.string(),
-    delete: z.string(),
-    bulkImport: z.string().optional(),
-  }),
-  listConfig: z.object({
-    columns: z.array(z.object({
-      id: z.string(),
-      header: z.union([z.string(), z.any()]), // React.ReactNode
-      accessorKey: z.string().optional(),
-      accessorFn: z.function().optional(),
-      cell: z.function().optional(),
-      sortable: z.boolean().optional(),
-      filterable: z.boolean().optional(),
-      width: z.union([z.string(), z.number()]).optional(),
-      align: z.enum(['left', 'center', 'right']).optional(),
-      className: z.string().optional(),
-    })),
-    searchableFields: z.array(z.string()).optional(),
-    defaultSort: z.object({
-      field: z.string(),
-      direction: z.enum(['asc', 'desc']),
-    }).optional(),
-    pageSize: z.number().optional(),
-    allowBatchActions: z.boolean().optional(),
-    allowExport: z.boolean().optional(),
-  }),
-  formConfig: z.object({
-    title: z.string().optional(),
-    createTitle: z.string().optional(),
-    editTitle: z.string().optional(),
-    description: z.string().optional(),
-    submitLabel: z.string().optional(),
-    cancelLabel: z.string().optional(),
-    maxWidth: z.string().optional(),
-  }).optional(),
-  permissions: z.object({
-    create: z.boolean().optional(),
-    read: z.boolean().optional(),
-    update: z.boolean().optional(),
-    delete: z.boolean().optional(),
-    export: z.boolean().optional(),
-  }).optional(),
-}).catchall(z.unknown())
-
 // API Response schemas
 export const PaginatedResponseSchema = z.object({
   results: z.array(z.record(z.string(), z.unknown())),
@@ -244,6 +191,44 @@ export const PaginatedResponseSchema = z.object({
 })
 
 export const SingleEntityResponseSchema = z.record(z.string(), z.unknown())
+
+// EntityConfig schema for runtime validation
+export const EntityConfigSchema = z.object({
+  entityName: z.string(),
+  entityNamePlural: z.string().optional(),
+  endpoints: z.object({
+    list: z.string(),
+    create: z.string(),
+    read: z.string(),
+    update: z.string(),
+    delete: z.string(),
+    export: z.string().optional(),
+    import: z.string().optional(),
+    bulk: z.string().optional(),
+  }),
+  list: z.object({
+    columns: z.array(z.any()), // Simplified for runtime validation
+    searchFields: z.array(z.string()).optional(),
+    defaultSort: z.array(z.object({
+      field: z.string(),
+      direction: z.enum(['asc', 'desc']),
+    })).optional(),
+  }),
+  form: z.object({
+    fields: z.array(z.any()), // Simplified for runtime validation
+  }),
+  view: z.object({
+    mode: z.string().optional(),
+    layout: z.string().optional(),
+  }).catchall(z.any()),
+  actions: z.any().optional(),
+  exporter: z.any().optional(),
+  permissions: z.any().optional(),
+  features: z.any().optional(),
+  hooks: z.any().optional(),
+  className: z.string().optional(),
+  theme: z.enum(['light', 'dark', 'system']).optional(),
+}).catchall(z.any())
 
 // ===== VALIDATION FUNCTIONS =====
 
@@ -397,15 +382,18 @@ export function validateEntityConfigWithFieldValidation(config: unknown): Valida
     }
   }
 
-  const configData = configResult.data as { fields: unknown[] }
-  const fieldValidation = validateEntityFields(configData.fields)
+  const configData = configResult.data
+  const fieldValidation = validateEntityFields(configData.form.fields)
 
   return {
     success: fieldValidation.success,
     errors: fieldValidation.errors,
     data: {
       ...configData,
-      fields: fieldValidation.data
+      form: {
+        ...configData.form,
+        fields: fieldValidation.data
+      }
     }
   }
 }
