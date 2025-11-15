@@ -1,160 +1,20 @@
 // ===== IMPORTS =====
 import React from 'react'
 import { UseFormReturn } from 'react-hook-form'
-import { EntityListColumn, EntityListFilter } from '../EntityList/types'
-import { EntityAction, EntityActionsConfig } from '../EntityActions/types'
-import { EntityViewConfig } from '../EntityView/types'
-import { EntityFormConfig, FormField } from '../EntityForm/types'
+import type { EntityListConfig } from '../EntityList/types'
+import type { EntityFormConfig } from '../EntityForm/types'
+import type { EntityViewConfig } from '../EntityView/types'
+import type { EntityActionsConfig } from '../EntityActions/types'
+import type { EntityExporterConfig, ExportFormat, ExportFormatType } from '../EntityExporter/types'
+
 
 // ===== BASIC TYPE DEFINITIONS =====
 
-/**
- * Basic column configuration for data tables - alias for EntityListColumn
- */
-export type Column = EntityListColumn
 
-/**
- * Filter configuration for data tables - alias for EntityListFilter
- */
-export type FilterConfig = EntityListFilter
-
-/**
- * List item data structure - alias for EntityListItem
- */
-export type ListItemData = import('../EntityList/types').EntityListItem
-
-/**
- * Custom action configuration - alias for EntityAction
- */
-export type CustomActionConfig = EntityAction
-
-/**
- * Custom action context configuration - alias for EntityActionsConfig
- */
-export type CustomActionContextConfig = EntityActionsConfig
-
-/**
- * Form field configuration - alias for FormField
- */
-export type FormFieldConfig = FormField
-
-/**
- * Form configuration - alias for EntityFormConfig
- */
-export type FormConfig = EntityFormConfig
 
 // ===== ENHANCED TYPES =====
 
 // ===== TYPE DEFINITIONS =====
-
-/**
- * Supported field data types
- */
-export type FieldDataType =
-  | 'string'
-  | 'number'
-  | 'date'
-  | 'time'
-  | 'boolean'
-  | 'select'
-  | 'array'
-  | 'file'
-  | 'image'
-  | 'video'
-  | 'geography'
-  | 'custom'
-  | 'textarea'
-  | 'email'
-  | 'password'
-  | 'url'
-  | 'uuid'
-  | 'richtext'
-  | 'object'
-  | 'polymorphic'
-  | 'integer32'
-  | 'integer64'
-  | 'float'
-  | 'double'
-  | 'decimal'
-  | 'hostname'
-
-/**
- * Supported field render types for forms
- */
-export type FieldRenderType =
-  | 'input'
-  | 'textarea'
-  | 'select'
-  | 'multiselect'
-  | 'date'
-  | 'time'
-  | 'radio'
-  | 'checkbox'
-  | 'switch'
-  | 'file'
-  | 'image'
-  | 'video'
-  | 'geography'
-  | 'custom'
-  | 'richtext'
-  | 'object'
-  | 'polymorphic'
-
-/**
- * Relationship types
- */
-export type RelationshipType = 'one-to-one' | 'many-to-one' | 'one-to-many' | 'many-to-many'
-
-/**
- * Cascade operation types
- */
-export type CascadeOperation = 'cascade' | 'set-null' | 'restrict' | 'no-action'
-
-/**
- * Loading strategies for related data
- */
-export type LoadingStrategy = 'lazy' | 'eager' | 'explicit'
-
-/**
- * Polymorphic types
- */
-export type PolymorphicType = 'oneOf' | 'anyOf' | 'allOf'
-
-/**
- * Map providers
- */
-export type MapProvider = 'google' | 'openstreetmap' | 'mapbox'
-
-/**
- * View display types
- */
-export type ViewDisplayType = 'text' | 'email' | 'phone' | 'url' | 'badge' | 'avatar' | 'list' | 'boolean' | 'number'
-
-/**
- * Form field option structure
- */
-export interface FormFieldOption {
-  readonly value: string | number
-  readonly label: string
-  readonly disabled?: boolean
-  readonly description?: string
-}
-
-/**
- * Map coordinates
- */
-export interface MapCoordinates {
-  readonly lat: number
-  readonly lng: number
-}
-
-/**
- * Cascade configuration
- */
-export interface CascadeConfig {
-  readonly delete?: CascadeOperation
-  readonly update?: CascadeOperation
-}
 
 /**
  * Related query configuration
@@ -321,7 +181,7 @@ export interface EntityField<TEntity = BaseEntity, TFormData extends Record<stri
 
   // Options for select/radio fields
   /** Available options for select fields */
-  options?: FormFieldOption[]
+  options?: Array<{ value: string | number; label: string; disabled?: boolean }>
   /** Whether the select is searchable */
   searchable?: boolean
   /** Whether multiple selections are allowed */
@@ -505,237 +365,91 @@ export interface EntityField<TEntity = BaseEntity, TFormData extends Record<stri
  * @template TEntity - The specific entity type being managed (must extend BaseEntity)
  * @template TFormData - The form data structure for create/edit operations
  */
-export interface EntityConfig<TEntity = BaseEntity, TFormData extends Record<string, unknown> = Record<string, unknown>> {
-  /** Singular name of the entity (e.g., 'User', 'Exam') */
-  name: string
-  /** Plural name of the entity (e.g., 'Users', 'Exams') */
-  namePlural: string
-  /** Human-readable display name for UI */
-  displayName: string
-  /** Field definitions for the entity */
-  fields: EntityField<TEntity, TFormData>[]
-  /** Relationship definitions for the entity */
-  relationships?: EntityRelationship[]
-  /** API endpoint configuration */
-  endpoints: {
-    /** Endpoint for listing entities (GET) */
-    list: string
-    /** Endpoint for creating entities (POST) */
-    create: string
-    /** Endpoint for updating entities (PUT/PATCH) */
-    update: string
-    /** Endpoint for deleting entities (DELETE) */
-    delete: string
-    /** Optional endpoint for bulk import operations */
-    bulkImport?: string
-    /** Endpoints for relationship operations */
-    relationships?: {
-      /** Endpoint for loading related entities */
-      loadRelated?: string
-      /** Endpoint for creating relationships */
-      createRelationship?: string
-      /** Endpoint for deleting relationships */
-      deleteRelationship?: string
-      /** Endpoint for updating relationships */
-      updateRelationship?: string
-    }
-    /** Nested resource endpoints for hierarchical data */
-    nested?: Record<string, NestedResourceConfig>
-  }
-  /** Configuration for the list/table view */
-  listConfig: {
-    /** Column definitions for the data table */
-    columns: EntityListColumn[]
-    /** Fields that should be searchable */
-    searchableFields?: string[]
-    /** Default sort configuration */
-    defaultSort?: { field: string; direction: 'asc' | 'desc' }
-    /** Default page size for pagination */
-    pageSize?: number
-    /** Whether batch actions are allowed */
-    allowBatchActions?: boolean
-    /** Whether export functionality is enabled */
-    allowExport?: boolean
-    /** Filter configuration for the list */
-    filters?: EntityListFilter[]
-    /** Field selection configuration for sparse fieldsets */
-    fields?: string | string[]
-    fieldSelection?: {
-      /** Whether field selection is enabled */
-      enabled?: boolean
-      /** Default fields to select when none specified */
-      defaultFields?: string[]
-      /** Available fields for selection */
-      availableFields?: string[]
-      /** Whether to show field selector in UI */
-      showSelector?: boolean
-    }
-    /** Related object expansion configuration */
-    expand?: string | string[]
-    expandable?: boolean
-    /** Data transformation configuration for list display */
-    dataTransform?: {
-      /** Field or function to get the title for each item */
-      titleField: string | ((item: Record<string, unknown>) => string)
-      /** Field or function to get the subtitle for each item */
-      subtitleField?: string | ((item: Record<string, unknown>) => string | undefined)
-      /** Field or function to get the status for each item */
-      descriptionField?: string | ((item: Record<string, unknown>) => string | undefined)
-      /** Field or function to get the status display for each item */
-      statusField?: string | ((item: Record<string, unknown>) => string | undefined)
-      /** Function to get custom actions for each item */
-      getActions?: (item: Record<string, unknown>) => {
-        view?: boolean
-        edit?: boolean
-        delete?: boolean
-        custom?: Array<{
-          label: string
-          icon?: React.ReactNode
-          onClick: (item: Record<string, unknown>) => void | { props: Record<string, unknown> }
-          variant?: 'default' | 'destructive'
-        }>
-      }
-      /** Fields or function to get metadata for each item */
-      metadataFields?: string[] | ((item: Record<string, unknown>) => Record<string, unknown>)
-    }
-    /** Callback when an item is clicked */
-    onItemClick?: (item: TEntity) => void | string
-  }
-  /** Configuration for create/edit forms */
-  formConfig?: {
-    /** Custom title for the form */
-    title?: string
-    /** Title specifically for create forms */
-    createTitle?: string
-    /** Title specifically for edit forms */
-    editTitle?: string
-    /** Description text for the form */
-    description?: string
-    /** Text for the submit button */
-    submitLabel?: string
-    /** Text for the cancel button */
-    cancelLabel?: string
-    /** Maximum width of the form container */
-    maxWidth?: string
-    /** Layout style for the form */
-    layout?: 'stack' | 'grid' | 'flex'
-    /** Number of columns for grid layout */
-    columns?: number
-    
-  }
-  /** Configuration for reusable form component */
-  reusableFormConfig?: FormConfig
-  /** Configuration for the entity view component */
-  viewConfig?: EntityViewConfig
-  /** Configuration for bulk import functionality */
-  bulkImport?: {
-    /** Whether bulk import is enabled */
-    enabled: boolean
-    /** Name of the import template */
-    templateName?: string
-    /** Sample data for the import template */
-    sampleData?: Record<string, unknown>[]
-    /** Whether to allow import of invalid records */
-    allowInvalidImport?: boolean
-    /** Whether to skip validation during import */
-    skipValidationOnImport?: boolean
-  }
-  /** Permission configuration for different operations */
-  permissions?: {
-    /** Permission to create new entities */
-    create?: boolean
-    /** Permission to read/view entities */
-    view?: boolean
-    /** Permission to update existing entities */
-    update?: boolean
-    /** Permission to delete entities */
-    delete?: boolean
-    /** Permission to export data */
-    export?: boolean
-  }
-  /** Custom actions configuration */
-  customActions?: {
-    /** Actions available for individual items */
-    item?: CustomActionConfig[]
-    /** Actions available for bulk operations */
-    bulk?: CustomActionConfig[]
-    /** Context configuration for action handling */
-    context?: CustomActionContextConfig
-  }
-  /** Related entities configuration for hierarchical relationships */
-  relatedEntities?: RelatedEntityConfig[]
-  /** Breadcrumb configuration */
-  breadcrumbs?: {
-    /** Whether to show breadcrumbs */
-    show: boolean
-    /** Breadcrumb items */
-    items: Array<{
-      label: string
-      href?: string
-    }>
-  }
-  /** Common actions configuration */
-  commonActions?: {
-    /** Custom view action handler */
-    view?: boolean | ((item: TEntity) => void)
-    /** Custom edit action handler */
-    edit?: boolean | ((item: TEntity) => void)
-    /** Custom delete action handler */
-    delete?: boolean | ((item: TEntity) => void)
-    /** Custom duplicate action handler */
-    duplicate?: boolean | ((item: TEntity) => Promise<void>)
-    /** Custom archive action handler */
-    archive?: boolean | ((item: TEntity) => Promise<void>)
-    /** Custom export action handler */
-    export?: boolean | ((item: TEntity) => void)
-  }
-  /** Chat configuration for real-time messaging */
-  chat?: {
-    /** Whether chat is enabled for this entity */
-    enabled: boolean
-    /** WebSocket URL for chat connections */
-    websocketUrl: string
-    /** Prefix for chat room names (e.g., 'entity_' for 'entity_user_123') */
-    roomPrefix?: string
-    /** Maximum number of messages to keep in memory */
-    maxMessages?: number
-    /** Whether to enable mock mode for development */
-    mockEnabled?: boolean
-    /** Mock messages for development */
-    mockMessages?: any[]
-    /** Delay between mock messages in milliseconds */
-    mockDelay?: number
-  }
+export interface EntityConfig<TEntity extends BaseEntity = BaseEntity, TFormData extends Record<string, unknown> = Record<string, unknown>> {
+  // Entity identification
+   entityName: string
+   entityNamePlural?: string
+   
+   // API endpoints (CENTRALIZED - Single source of truth)
+   endpoints: EntityEndpoints
+   
+   // Component configurations
+   list?: EntityListConfig<TEntity>
+   form?: EntityFormConfig<TEntity>
+   view?: EntityViewConfig<TEntity>
+   actions?: EntityActionsConfig<TEntity>
+   exporter?: EntityExporterConfig<TEntity>
+   
+   // Global settings
+   permissions?: EntityPermissions
+   features?: EntityFeatures
+   hooks?: EntityHooks<TEntity>
+   
+   // Advanced
+   className?: string
+   theme?: 'light' | 'dark' | 'system'
+  
 }
 
-/**
- * Props interface for the UnifiedEntityManager component.
- * Defines all configurable options for the entity management interface.
- *
- * @template TEntity - The specific entity type being managed
- * @template TFormData - The form data structure for create/edit operations
- */
-export interface UnifiedEntityManagerProps<TEntity = BaseEntity, TFormData extends Record<string, unknown> = Record<string, unknown>> {
-  /** Configuration object defining all aspects of entity management */
-  config: EntityConfig<TEntity, TFormData>
-  /** Display variant for the list view */
-  variant?: 'table' | 'card' | 'list' | 'grid' | 'compact'
-  /** Initial mode when component mounts */
-  initialMode?: 'list' | 'create' | 'edit' | 'view'
-  /** Callback fired when the mode changes */
-  onModeChange?: (mode: 'list' | 'create' | 'edit' | 'view', data?: TEntity) => void
-  /** Additional CSS classes for the component */
-  className?: string
-  /** Filter configuration for the list view */
-  filters?: EntityListFilter[]
-  /** View-specific props */
-  viewMode?: 'modal' | 'page' | 'inline'
-  /** Whether the view functionality is enabled */
-  enableView?: boolean
-  /** Context data passed to custom actions */
-  contextData?: Record<string, unknown>
+export interface EntityEndpoints {
+  list: string
+  create: string
+  read: string
+  update: string
+  delete: string
+  export?: string
+  import?: string
+  bulk?: string
+  [key: string]: string | undefined
 }
 
+export interface EntityPermissions {
+  create?: boolean
+  read?: boolean
+  update?: boolean
+  delete?: boolean
+  export?: boolean
+  import?: boolean
+  bulk?: boolean
+  [key: string]: boolean | undefined
+}
+
+export interface EntityFeatures {
+  search?: boolean
+  filter?: boolean
+  sort?: boolean
+  pagination?: boolean
+  export?: boolean
+  import?: boolean
+  bulk?: boolean
+  audit?: boolean
+  versioning?: boolean
+  [key: string]: boolean | undefined
+}
+
+export interface EntityHooks<TEntity extends BaseEntity = BaseEntity> {
+  // Lifecycle hooks
+  beforeCreate?: (data: Partial<TEntity>) => Partial<TEntity> | Promise<Partial<TEntity>>
+  afterCreate?: (data: TEntity) => void | Promise<void>
+  beforeUpdate?: (data: Partial<TEntity>) => Partial<TEntity> | Promise<Partial<TEntity>>
+  afterUpdate?: (data: TEntity) => void | Promise<void>
+  beforeDelete?: (id: string | number) => boolean | Promise<boolean>
+  afterDelete?: (id: string | number) => void | Promise<void>
+  
+  // Data hooks
+  beforeFetch?: () => void | Promise<void>
+  afterFetch?: (data: TEntity[]) => TEntity[] | Promise<TEntity[]>
+  
+  // Validation hooks
+  validateCreate?: (data: Partial<TEntity>) => string | null | Promise<string | null>
+  validateUpdate?: (data: Partial<TEntity>) => string | null | Promise<string | null>
+
+  // Form hooks
+  onFormChange?: (data: Partial<TEntity>, field: string, value: unknown) => void
+  onValidationError?: (errors: Record<string, string[]>) => void
+  onSubmitStart?: (data: Partial<TEntity>) => void
+  onSubmitSuccess?: (data: TEntity) => void
+}
 // ===== RELATIONSHIP MANAGEMENT TYPES =====
 
 /**

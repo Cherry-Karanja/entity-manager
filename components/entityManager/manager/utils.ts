@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { EntityField } from './types'
-import { FormField, ValidationRule } from '../EntityForm/types'
-
+import { FormField } from '../EntityForm/types'
+import { ValidationRule } from '../core'
 // ===== TYPE DEFINITIONS =====
 
 /**
@@ -170,7 +170,6 @@ export const transformEntityFieldToFormField = <TEntity, TFormData extends Recor
       required: field.required,
       disabled: field.disabled || (field.readOnly && options.mode === 'edit'),
       placeholder: field.placeholder,
-      description: field.description || field.helperText,
       validation: options.includeValidation && field.validation ? (() => {
         const rules: ValidationRule[] = []
         if (field.validation.min !== undefined) {

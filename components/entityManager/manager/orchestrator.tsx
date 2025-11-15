@@ -114,7 +114,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   // Breadcrumb navigation state
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
     {
-      label: `${config.displayName || config.namePlural}`,
+      label: `${config.entityName || config.entityNamePlural}`,
       mode: 'list'
     }
   ])
@@ -124,7 +124,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     setBreadcrumbs(prev => {
       const newBreadcrumbs: BreadcrumbItem[] = [
         {
-          label: `${config.displayName || config.namePlural}`,
+          label: `${config.entityName || config.entityNamePlural}`,
           mode: 'list',
           onClick: () => {
             setMode('list')
@@ -136,7 +136,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
       if (newMode === 'view' && entity) {
         newBreadcrumbs.push({
-          label: `View ${config.name}`,
+          label: `View ${config.entityName}`,
           mode: 'view',
           entity,
           onClick: () => {
@@ -146,7 +146,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         })
       } else if (newMode === 'edit' && entity) {
         newBreadcrumbs.push({
-          label: `Edit ${config.name}`,
+          label: `Edit ${config.entityName}`,
           mode: 'edit',
           entity,
           onClick: () => {
@@ -157,7 +157,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         })
       } else if (newMode === 'create') {
         newBreadcrumbs.push({
-          label: `Create ${config.name}`,
+          label: `Create ${config.entityName}`,
           mode: 'create',
           onClick: () => {
             setMode('create')
@@ -354,132 +354,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     })()
     // NOTE: intentionally not including entityApi.fetchEntities in deps to avoid
     // an effect loop when fetchEntities is re-created on internal state changes.
-  }, [mode, entityState.state.currentPage, entityState.state.pageSize, entityState.state.debouncedSearchTerm, entityState.state.sortConfig, entityState.state.filterValues])
-
-  // Entity View configuration
-  const viewConfig = useMemo(() => {
-    // Inject onExecute handlers for entity actions in view mode
-    const viewEntityActionsWithHandlers = (config.customActions?.item || []).map(action => ({
-      ...action,
-      onExecute: (item?: unknown) => {
-        const targetItem = (item || selectedEntity) as TEntity
-        if (!targetItem) return
-
-        switch (action.id) {
-          case 'edit':
-            setMode('edit')
-            setSelectedEntity(targetItem)
-            setFormData(null) // Clear form data to load from selected entity
-            break
-          case 'delete':
-            entityActions.handleOpenDeleteDialog(targetItem.id)
-            break
-          case 'back':
-            setMode('list')
-            setSelectedEntity(null)
-            break
-          default:
-            // Call the original onExecute if it exists
-            if (action.onExecute) {
-              action.onExecute(item)
-            }
-        }
-      }
-    }))
-
-    // Create field groups from fields if fieldGroups is not provided
-    let fieldGroups: ViewFieldGroup[] = []
-
-    if (config.viewConfig?.fieldGroups) {
-      fieldGroups = config.viewConfig.fieldGroups
-    } else if (config.viewConfig?.fields) {
-      // Convert fields to fieldGroups
-      fieldGroups = [{
-        id: 'default',
-        title: 'Details',
-        fields: config.viewConfig.fields.map(viewField => ({
-          ...viewField,
-          value: selectedEntity?.[viewField.key as keyof TEntity]
-        })),
-        layout: 'vertical' as const,
-        collapsible: false
-      }]
-    } else {
-      // Fallback to form fields
-      fieldGroups = [{
-        id: 'default',
-        title: 'Details',
-        fields: config.fields.map(field => {
-          // Map form field types to view field types
-          let viewType: FieldDisplayType = 'text'
-          switch (field.type) {
-            case 'string':
-              viewType = 'text'
-              break
-            case 'number':
-            case 'integer32':
-            case 'integer64':
-            case 'float':
-            case 'double':
-            case 'decimal':
-              viewType = 'number'
-              break
-            case 'boolean':
-              viewType = 'boolean'
-              break
-            case 'date':
-              viewType = 'date'
-              break
-            case 'email':
-              viewType = 'email'
-              break
-            case 'url':
-              viewType = 'url'
-              break
-            default:
-              viewType = 'text'
-          }
-
-          return {
-            key: field.key,
-            label: field.label,
-            type: viewType,
-            value: selectedEntity?.[field.key as keyof TEntity],
-            copyable: config.viewConfig?.fields?.find(vf => vf.key === field.key)?.copyable || false
-          }
-        }),
-        layout: 'vertical' as const,
-        collapsible: false
-      }]
-    }
-
-    return {
-    mode: config.viewConfig?.mode || 'detail' as const,
-    layout: config.viewConfig?.layout || 'single' as const,
-    theme: config.viewConfig?.theme,
-    fields: config.viewConfig?.fields,
-    fieldGroups,
-    data: config.viewConfig?.data,
-    dataFetcher: config.viewConfig?.dataFetcher,
-    showHeader: config.viewConfig?.showHeader ?? true,
-    showActions: config.viewConfig?.showActions ?? true,
-    showMetadata: config.viewConfig?.showMetadata ?? true,
-    showNavigation: config.viewConfig?.showNavigation,
-    compact: config.viewConfig?.compact,
-    customComponents: config.viewConfig?.customComponents,
-    dataTransformer: config.viewConfig?.dataTransformer,
-    fieldMapper: config.viewConfig?.fieldMapper,
-    actions: config.viewConfig?.actions || [], // Actions handled through entityActions
-    entityActions: { actions: viewEntityActionsWithHandlers },
-    navigation: config.viewConfig?.navigation,
-    permissions: config.viewConfig?.permissions || config.permissions,
-    hooks: config.viewConfig?.hooks,
-    className: config.viewConfig?.className,
-    style: config.viewConfig?.style,
-    fieldSpacing: config.viewConfig?.fieldSpacing,
-    borderRadius: config.viewConfig?.borderRadius,
-    shadow: config.viewConfig?.shadow
-  }}, [config, selectedEntity, entityActions])
+  }, [mode, entityState.state.currentPage, entityState.state.pageSize, entityState.state.debouncedSearchTerm, entityState.state.sortConfig, entityState.state.filterValues, entityApi])
 
   // Entity Form configuration
   const formConfig = useMemo(() => {
@@ -664,7 +539,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       case 'view':
         return selectedEntity ? (
           <EntityView
-            config={viewConfig}
+            config={config.viewConfig}
             data={selectedEntity}
             onActionClick={handleViewAction}
           />

@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
-import { Entity, EntityViewConfig } from '../types'
+import { EntityViewConfig } from './types'
+import { BaseEntity } from '../manager'
 
-export interface EntityViewProps<TEntity extends Entity = Entity> {
+export interface EntityViewProps<TEntity extends BaseEntity = BaseEntity> {
   config: EntityViewConfig<TEntity>
   data: TEntity
   onEdit?: () => void
@@ -18,7 +19,7 @@ export interface EntityViewProps<TEntity extends Entity = Entity> {
   onBack?: () => void
 }
 
-export const EntityView = <TEntity extends Entity = Entity>({
+export const EntityView = <TEntity extends BaseEntity = BaseEntity>({
   config,
   data,
   onEdit,
@@ -127,6 +128,10 @@ export const EntityView = <TEntity extends Entity = Entity>({
               ))}
             </div>
           </CardContent>
+
+          <CardFooter>
+            {/* You can add footer content here if needed */}
+          </CardFooter>
         </Card>
       )}
     </div>
