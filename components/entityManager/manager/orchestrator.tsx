@@ -5,15 +5,19 @@ import { EntityList } from '../EntityList'
 import { EntityView } from '../EntityView'
 import { EntityForm } from '../EntityForm'
 import { EntityActions } from '../EntityActions'
-import { useEntityState, useEntityApi, useEntityActions, useEntityForm } from './hooks'
+import { useEntityState, useEntityApi, useEntityActions } from './hooks'
 import { EntityConfig, BaseEntity } from './types'
 import { EntityListItem } from '../EntityList/types'
-import { FieldDisplayType, ViewFieldGroup } from '../EntityView/types'
+
 import EntityTableView from '../EntityList/views/EntityTableView'
 import EntityCardView from '../EntityList/views/EntityCardView'
 import EntityListView from '../EntityList/views/EntityListView'
 import EntityGridView from '../EntityList/views/EntityGridView'
 import EntityCompactView from '../EntityList/views/EntityCompactView'
+import EntityTimelineView from '../EntityList/views/EntityTimelineView'
+import EntityDetailedListView from '../EntityList/views/EntityDetailedListView'
+import EntityGalleryView from '../EntityList/views/EntityGalleryView'
+
 // import { usePermissions } from '@/hooks/use-permissions'
 import { RealTimeIndicator } from '../utils/RealTimeIndicator'
 import OptimisticUI from '../utils/OptimisticUI'
@@ -192,13 +196,6 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     apiActions: entityApi,
     cachedData: entityState.cachedData
   })
-
-  // Form management
-  const entityForm = useEntityForm({
-    config,
-    mode: mode === 'create' ? 'create' : 'edit'
-  })
-
   // ===== INITIALIZATION =====
 
   // Load initial data when component mounts and mode is list
@@ -215,7 +212,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         entityState.actions.setHasLoadedOnce(true)
       })
     }
-  }, [mode, entityApi.fetchEntities, entityState.actions])
+  }, [mode,entityApi, entityState.actions])
 
   // ===== COMPUTED VALUES =====
 
@@ -224,7 +221,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     entityApi.fetchEntities(true).catch((error) => {
       console.error('Failed to refresh data:', error)
     })
-  }, [entityApi.fetchEntities])
+  }, [entityApi])
 
   // Chat toggle handler
   const handleChatToggle = useCallback(() => {
@@ -300,8 +297,11 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
       { id: 'table', name: 'Table', component: EntityTableView },
       { id: 'card', name: 'Cards', component: EntityCardView },
       { id: 'list', name: 'List', component: EntityListView },
+      { id: 'compact', name: 'Compact', component: EntityCompactView },
       { id: 'grid', name: 'Grid', component: EntityGridView },
-      { id: 'compact', name: 'Compact', component: EntityCompactView }
+      { id: 'timeline', name: 'Timeline', component: EntityTimelineView },
+      { id: 'detailed', name: 'Detailed', component: EntityDetailedListView },
+      { id: 'gallery', name: 'Gallery', component: EntityGalleryView }
     ],
     defaultView: 'table',
     searchable: (config.list?.searchFields?.length ?? 0) > 0,
@@ -340,7 +340,8 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     })()
     // NOTE: intentionally not including entityApi.fetchEntities in deps to avoid
     // an effect loop when fetchEntities is re-created on internal state changes.
-  }, [mode, entityState.state.currentPage, entityState.state.pageSize, entityState.state.debouncedSearchTerm, entityState.state.sortConfig, entityState.state.filterValues, entityApi])
+    // eslint-disable-next-line 
+  }, [mode, entityState.state.currentPage, entityState.state.pageSize, entityState.state.debouncedSearchTerm, entityState.state.sortConfig, entityState.state.filterValues])
 
   // Entity Form configuration
   const formConfig = useMemo(() => {
@@ -438,7 +439,6 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         return (
           <EntityList
             config={listConfig}
-            data={listConfig.data}
             onSelectionChange={(keys, items) => {
               // Handle selection changes if needed
               console.log('Selection changed:', keys, items)

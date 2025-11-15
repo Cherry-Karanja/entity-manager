@@ -41,8 +41,6 @@ const UserDetailsModal: React.FC<{ item: unknown; onClose: () => void }> = ({ it
   )
 }
 
-
-
 // Edit User Modal Component
 const EditUserModal: React.FC<{ item: unknown; onClose: () => void }> = ({ item, onClose }) => {
   const userItem = item as EntityListItem
@@ -101,7 +99,6 @@ const EditUserModal: React.FC<{ item: unknown; onClose: () => void }> = ({ item,
   )
 }
 
-
 // Sample data
 const sampleUsers: EntityListItem[] = [
   { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'active', createdAt: '2024-01-15' },
@@ -130,7 +127,7 @@ const userListConfig: EntityListConfig = {
       id: 'email',
       header: 'Email',
       accessorKey: 'email',
-      sortable: false,
+      sortable: true,
       searchable: true,
       helpText: 'Primary email address',
       tooltip: 'User\'s registered email'
@@ -169,7 +166,7 @@ const userListConfig: EntityListConfig = {
       id: 'createdAt',
       header: 'Created',
       accessorKey: 'createdAt',
-      sortable: false,
+      sortable: true,
       helpText: 'Account creation date',
       tooltip: 'When the user was registered'
     }
@@ -190,6 +187,7 @@ const userListConfig: EntityListConfig = {
   filters: [
     {
       icon: Users,
+      placeholder:' Search by name...',
       field: {
         name: 'name',
         label: 'Name',
@@ -197,7 +195,9 @@ const userListConfig: EntityListConfig = {
         placeholder: 'Search by name...',
         icon: Users,
         helpText: 'Filter users by their display name'
-      }
+      },
+      operator: 'icontains',
+      tooltip: 'users name'
     },
     {
       icon: Mail,
@@ -266,6 +266,7 @@ const userListConfig: EntityListConfig = {
     selectedKeys: [],
     onChange: (keys, items) => console.log('Selection changed:', keys, items)
   },
+  showActions: true,
   entityActions: {
     actions: [
       {
@@ -530,6 +531,9 @@ export const BasicEntityListExample: React.FC = () => {
     console.log('Sort config changed:', sortConfig)
   }, [sortConfig])
 
+  useEffect(() => {
+    console.log('Selected keys',selectedKeys)
+  },[selectedKeys])
   return (
     <div className="p-6 space-y-6 bg-transparent">
       <div>
@@ -540,11 +544,19 @@ export const BasicEntityListExample: React.FC = () => {
       </div>
 
       <EntityList
-        config={userListConfig}
-        selectedKeys={selectedKeys}
+        config={{ ...userListConfig, 
+          selection:{ 
+            selectedKeys: selectedKeys, 
+            mode: 'multiple' 
+          },
+          savedFiltersKey:activeFilters,
+          defaultSort: sortConfig
+         }}
         searchTerm={searchTerm}
-        activeFilters={activeFilters}
-        sortConfig={sortConfig}
+        onSelectionChange={(selectedKeys,selectedItems)=>{
+          console.log('Selected Items',selectedItems)
+          setSelectedKeys(selectedKeys)
+        }}
         onSearch={(term) => {
           console.log('Search term validated and set:', term)
           setSearchTerm(term)

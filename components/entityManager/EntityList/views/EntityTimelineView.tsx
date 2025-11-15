@@ -5,16 +5,13 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityListViewProps, EntityListItem } from '../types'
 import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
-import { EntityListActions } from '../components/EntityListActions'
 import { BaseEntity } from '../../manager'
 
 interface EntityTimelineViewProps extends EntityListViewProps {
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
   dateField?: string // Field to use for timeline dates (defaults to 'createdAt')
 }
 
@@ -24,7 +21,6 @@ export const EntityTimelineView: React.FC<EntityTimelineViewProps> = ({
   loading = false,
   error = null,
   emptyText = 'No data available',
-  actions = [],
   entityActions,
   onAction,
   dateField = 'createdAt',
@@ -100,7 +96,7 @@ export const EntityTimelineView: React.FC<EntityTimelineViewProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-base group-hover:text-primary transition-colors">
-                        {String(item.title || item.name || `Item ${index + 1}`)}
+                        {String(item.title || item.name || item.full_name || `Item ${index + 1}`)}
                       </h3>
                       {(() => {
                         const dateValue = item[dateField]
@@ -138,21 +134,13 @@ export const EntityTimelineView: React.FC<EntityTimelineViewProps> = ({
                     })()}
                   </div>
 
-                  {(actions.length > 0 || entityActions) && (
+                  {entityActions && (
                     <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {entityActions ? (
-                        <EntityActions
-                          config={entityActions as any}
-                          context={{ entity: item }}
-                        />
-                      ) : (
-                        <EntityListActions
-                          actions={actions}
-                          item={item}
-                          onAction={onAction}
-                          maxVisible={0}
-                        />
-                      )}
+                      <EntityActions
+                        config={entityActions as any}
+                        context={{ entity: item }}
+                        maxVisibleActions={2}
+                      />
                     </div>
                   )}
                 </div>

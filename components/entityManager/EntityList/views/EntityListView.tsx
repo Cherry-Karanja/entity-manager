@@ -2,16 +2,13 @@
 
 import React, { memo } from 'react'
 import { cn } from '@/lib/utils'
-import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityListViewProps, EntityListItem } from '../types'
 import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
-import { EntityListActions } from '../components/EntityListActions'
 import { BaseEntity } from '../../manager'
 
 interface EntityListViewPropsExtended extends EntityListViewProps {
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
 const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
@@ -20,7 +17,6 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
   loading = false,
   error = null,
   emptyText = 'No data available',
-  actions = [],
   entityActions,
   onAction,
   className
@@ -60,7 +56,7 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
           <div className="flex-shrink-0">
             <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-primary/10 group-hover:border-primary/30 transition-colors">
               <span className="text-lg font-bold text-primary">
-                {String(item.title || item.name || `Item ${index + 1}`).substring(0, 2).toUpperCase()}
+                {String(item.title || item.name || item.full_name || `Item ${index + 1}`).substring(0, 2).toUpperCase()}
               </span>
             </div>
           </div>
@@ -70,7 +66,7 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors truncate">
-                  {String(item.title || item.name || `Item ${index + 1}`)}
+                  {String(item.title || item.name || item.full_name || `Item ${index + 1}`)}
                 </h3>
                 {(() => {
                   const desc = item.description
@@ -112,21 +108,13 @@ const EntityListViewComponent: React.FC<EntityListViewPropsExtended> = ({
           </div>
 
           {/* Actions Section */}
-          {(actions.length > 0 || entityActions) && (
+          {entityActions && (
             <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
-              {entityActions ? (
-                <EntityActions
-                  config={entityActions as any}
-                  context={{ entity: item }}
-                />
-              ) : (
-                <EntityListActions
-                  actions={actions}
-                  item={item}
-                  onAction={onAction}
-                  maxVisible={0}
-                />
-              )}
+              <EntityActions
+                config={entityActions as any}
+                context={{ entity: item }}
+                maxVisibleActions={2}
+              />
             </div>
           )}
         </div>

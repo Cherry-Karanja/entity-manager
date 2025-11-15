@@ -6,16 +6,14 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { User } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
-import { EntityActionsConfig } from '../../EntityActions/types'
+import { EntityListViewProps, EntityListItem } from '../types'
+import { EntityActionsConfig, EntityAction } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
-import { EntityListActions } from '../components/EntityListActions'
 import { BaseEntity } from '../../manager'
 
 interface EntityGalleryViewProps extends EntityListViewProps {
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
+  onAction?: (action: EntityAction, item: EntityListItem) => void
   avatarField?: string // Field to use for avatar initials (defaults to 'name')
 }
 
@@ -25,7 +23,6 @@ export const EntityGalleryView: React.FC<EntityGalleryViewProps> = ({
   loading = false,
   error = null,
   emptyText = 'No data available',
-  actions = [],
   entityActions,
   onAction,
   avatarField = 'name',
@@ -88,7 +85,7 @@ export const EntityGalleryView: React.FC<EntityGalleryViewProps> = ({
   return (
     <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6", className)}>
       {data.map((item, index) => {
-        const avatarName = String(item[avatarField] || item.name || item.title || `Item ${index + 1}`)
+        const avatarName = String(item[avatarField] || item.name || item.title || item.full_name || `Item ${index + 1}`)
         const bgColor = getColorFromString(avatarName)
         
         return (
@@ -110,7 +107,7 @@ export const EntityGalleryView: React.FC<EntityGalleryViewProps> = ({
               <div className="p-6">
                 {/* Title with better spacing */}
                 <h3 className="font-bold text-xl text-center mb-2 group-hover:text-primary transition-colors line-clamp-1">
-                  {String(item.title || item.name || `Item ${index + 1}`)}
+                  {String(item.title || item.name || item.full_name || `Item ${index + 1}`)}
                 </h3>
 
                 {/* Subtitle/Email with icon */}
@@ -172,21 +169,13 @@ export const EntityGalleryView: React.FC<EntityGalleryViewProps> = ({
                 </div>
 
                 {/* Actions with better visibility */}
-                {(actions.length > 0 || entityActions) && (
+                {entityActions && (
                   <div className="pt-4 border-t flex justify-center group-hover:bg-accent/20 -mx-6 px-6 pb-2 transition-colors">
-                    {entityActions ? (
-                      <EntityActions
-                        config={entityActions as any}
-                        context={{ entity: item }}
-                      />
-                    ) : (
-                      <EntityListActions
-                        actions={actions}
-                        item={item}
-                        onAction={onAction}
-                        maxVisible={2}
-                      />
-                    )}
+                    <EntityActions
+                      config={entityActions as any}
+                      context={{ entity: item }}
+                      maxVisibleActions={1}
+                    />
                   </div>
                 )}
               </div>

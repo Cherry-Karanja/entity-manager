@@ -1,11 +1,11 @@
 // ===== USER ACTIONS CONFIGURATION =====
 
-import { EntityListAction } from '@/components/entityManager/EntityList/types'
+import { EntityAction } from '@/components/entityManager/EntityActions/types'
 import { EntityBulkAction } from '@/components/entityManager/EntityActions/types'
 import { User } from '../../types'
 
 export const userCustomActions: {
-  item: EntityListAction[]
+  item: EntityAction[]
   bulk: EntityBulkAction[]
 } = {
   item: [
@@ -13,12 +13,21 @@ export const userCustomActions: {
       id: 'view',
       label: 'View Details',
       type: 'default',
-      
+      actionType: 'navigation',
+      onExecute: (item: unknown) => {
+        const user = item as User
+        console.log('Viewing user details:', user.id)
+      }
     },
     {
       id: 'edit',
       label: 'Edit User',
       type: 'default',
+      actionType: 'navigation',
+      onExecute: (item: unknown) => {
+        const user = item as User
+        console.log('Editing user:', user.id)
+      }
     },
     // {
     //   id: 'approve',

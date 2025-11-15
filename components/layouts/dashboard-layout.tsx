@@ -119,7 +119,7 @@ export function DashboardLayout({
   }, []);
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full overflow-hidden">
         <Sidebar>
           <SidebarHeader className="border-b border-sidebar-border">
             <div className="flex items-center gap-2 px-4 py-2">
@@ -272,7 +272,7 @@ export function DashboardLayout({
           )}
 
           {/* Main Content */}
-          <main className={cn("flex-1 overflow-y-auto p-6", className)}>
+          <main className={cn("flex-1 overflow-y-auto p-1", className)}>
             {children}
           </main>
         </SidebarInset>

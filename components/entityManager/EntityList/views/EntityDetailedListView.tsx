@@ -5,16 +5,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
-import { EntityActionsConfig } from '../../EntityActions/types'
+import { EntityListViewProps, EntityListItem } from '../types'
+import { EntityActionsConfig, EntityAction } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
-import { EntityListActions } from '../components/EntityListActions'
 import { BaseEntity } from '../../manager'
 
 interface EntityDetailedListViewProps extends EntityListViewProps {
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
+  onAction?: (action: EntityAction, item: EntityListItem) => void
 }
 
 export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
@@ -23,7 +21,6 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
   loading = false,
   error = null,
   emptyText = 'No data available',
-  actions = [],
   entityActions,
   onAction,
   className
@@ -68,7 +65,7 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
                   <div className="flex-shrink-0">
                     <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg border-2 border-background">
                       <span className="text-2xl font-bold text-primary-foreground">
-                        {String(item.title || item.name || `Item ${index + 1}`).substring(0, 2).toUpperCase()}
+                        {String(item.title || item.name || item.full_name || `Item ${index + 1}`).substring(0, 2).toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -76,7 +73,7 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
                   {/* Title and Description */}
                   <div className="flex-1 min-w-0 space-y-2">
                     <h3 className="text-xl font-bold tracking-tight truncate group-hover:text-primary transition-colors">
-                      {String(item.title || item.name || `Item ${index + 1}`)}
+                      {String(item.title || item.name || item.full_name || `Item ${index + 1}`)}
                     </h3>
                     {item.description && typeof item.description === 'string' ? (
                       <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
@@ -87,21 +84,13 @@ export const EntityDetailedListView: React.FC<EntityDetailedListViewProps> = ({
                 </div>
 
                 {/* Actions Section */}
-                {(actions.length > 0 || entityActions) && (
+                {entityActions && (
                   <div className="flex-shrink-0">
-                    {entityActions ? (
-                      <EntityActions
-                        config={entityActions as any}
-                        context={{ entity: item }}
-                      />
-                    ) : (
-                      <EntityListActions
-                        actions={actions}
-                        item={item}
-                        onAction={onAction}
-                        maxVisible={2}
-                      />
-                    )}
+                    <EntityActions
+                      config={entityActions as any}
+                      context={{ entity: item }}
+                      maxVisibleActions={2}
+                    />
                   </div>
                 )}
               </div>

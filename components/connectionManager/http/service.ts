@@ -3,7 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApi } from './hooks';
 import { httpClient } from './client';
-import { EntityConfig } from "@/components/entityManager/manager/types/manager";
+import { EntityConfig } from "@/components/entityManager/manager";
+import { handleApiError } from "./client";
 
 /**
  * Get endpoint URL for an entity operation

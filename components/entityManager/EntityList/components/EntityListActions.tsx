@@ -7,13 +7,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { EntityListAction, EntityListItem } from '../types'
+import { EntityAction } from '../../EntityActions/types'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { PermissionedAction } from '../../utils/PermissionedActions'
 
 interface EntityListActionsProps {
-  actions: EntityListAction[]
+  actions: (EntityAction | EntityListAction)[]
   item: EntityListItem
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
+  onAction?: (action: EntityAction | EntityListAction, item: EntityListItem) => void
   maxVisible?: number
   className?: string
   entityType?: string
@@ -36,6 +37,7 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
   const visibleActions = actions.filter(action => {
     if (action.hidden) return false
     if (action.condition && !action.condition(item)) return false
+    if ('visible' in action && action.visible && !action.visible(item)) return false
     return true
   })
 
@@ -44,7 +46,7 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
   const dropdownActions = visibleActions.slice(effectiveMaxVisible)
 
   // Handle action click
-  const handleActionClick = (action: EntityListAction) => async () => {
+  const handleActionClick = (action: EntityAction | EntityListAction) => async () => {
     if (action.disabled) return
 
     try {
@@ -66,8 +68,11 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
         } else {
           window.location.href = url
         }
-      } else if (action.onClick) {
-        // Handle custom action
+      } else if ('onExecute' in action && action.onExecute) {
+        // Handle EntityAction execution
+        await action.onExecute(item)
+      } else if ('onClick' in action && action.onClick) {
+        // Handle EntityListAction execution
         await action.onClick(item)
       }
 
@@ -79,7 +84,7 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
   }
 
   // Get action icon
-  const getActionIcon = (action: EntityListAction) => {
+  const getActionIcon = (action: EntityAction | EntityListAction) => {
     if (action.icon) return action.icon
 
     // Default icons based on action id
@@ -99,11 +104,12 @@ export const EntityListActions: React.FC<EntityListActionsProps> = ({
   }
 
   // Get button variant
-  const getButtonVariant = (action: EntityListAction) => {
+  const getButtonVariant = (action: EntityAction | EntityListAction) => {
     if (action.danger) return 'destructive'
     if (action.type === 'link') return 'link'
     if (action.type === 'text') return 'ghost'
-    return action.variant || 'default'
+    if ('variant' in action) return action.variant || 'default'
+    return 'default'
   }
 
   if (visibleActions.length === 0) {

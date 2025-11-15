@@ -4,16 +4,13 @@ import React, { memo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
-import { EntityActionsConfig } from '../../EntityActions/types'
+import { EntityListViewProps, EntityListItem } from '../types'
+import { EntityAction } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
-import { EntityListActions } from '../components/EntityListActions'
 import { BaseEntity } from '../../manager'
 
 interface EntityCardViewProps extends EntityListViewProps {
-  actions?: EntityListAction[]
-  entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
+  onAction?: (action: EntityAction, item: EntityListItem) => void
 }
 
 const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
@@ -22,7 +19,6 @@ const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
   loading = false,
   error = null,
   emptyText = 'No data available',
-  actions = [],
   entityActions,
   onAction,
   className
@@ -54,7 +50,7 @@ const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6", className)}>
       {data.map((item, index) => {
-        const itemName = String(item.title || item.name || `Item ${index + 1}`)
+        const itemName = String(item.title || item.name || item.full_name  || `Item ${index + 1}`)
         
         return (
           <Card 
@@ -108,21 +104,13 @@ const EntityCardViewComponent: React.FC<EntityCardViewProps> = ({
                 })}
               </div>
               
-              {(actions.length > 0 || entityActions) && (
+              {entityActions && (
                 <div className="mt-6 pt-4 border-t flex justify-center bg-accent/30 -mx-6 px-6 -mb-6 pb-4 group-hover:bg-accent/50 transition-colors">
-                  {entityActions ? (
-                    <EntityActions
-                      config={entityActions as any}
-                      context={{ entity: item }}
-                    />
-                  ) : (
-                    <EntityListActions
-                      actions={actions}
-                      item={item}
-                      onAction={onAction}
-                      maxVisible={2}
-                    />
-                  )}
+                  <EntityActions
+                    config={entityActions as any}
+                    context={{ entity: item }}
+                    maxVisibleActions={1}
+                  />
                 </div>
               )}
             </CardContent>

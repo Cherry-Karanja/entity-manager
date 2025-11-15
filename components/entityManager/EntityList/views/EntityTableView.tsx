@@ -6,17 +6,15 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { EntityListViewProps, EntityListColumn, EntityListItem, EntityListSelection, EntityListAction } from '../types'
-import { EntityListActions } from '../components/EntityListActions'
-import { EntityActionsConfig } from '../../EntityActions/types'
+import { EntityListViewProps, EntityListColumn, EntityListItem, EntityListSelection } from '../types'
+import { EntityActionsConfig, EntityAction } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
 import { BaseEntity } from '../../manager'
 
 interface EntityTableViewProps extends EntityListViewProps {
   selection?: EntityListSelection & { selectedKeys: (string | number)[]; onChange: (keys: (string | number)[], items: EntityListItem[]) => void }
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
+  onAction?: (action: EntityAction, item: EntityListItem) => void
   entityType?: string
   rowKey?: string | ((item: EntityListItem) => string | number)
   onRow?: (record: EntityListItem, index?: number) => {
@@ -38,7 +36,6 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
   error = null,
   emptyText = 'No data available',
   selection,
-  actions = [],
   entityActions,
   onAction,
   entityType = 'entity',
@@ -216,7 +213,7 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
               ))}
 
               {/* Actions column */}
-              {(actions.length > 0 || entityActions) && (
+              {entityActions && (
                 <TableHead className="w-12">Actions</TableHead>
               )}
             </TableRow>
@@ -270,24 +267,15 @@ const EntityTableViewComponent: React.FC<EntityTableViewProps> = ({
                   ))}
 
                   {/* Actions cell */}
-                  {(actions.length > 0 || entityActions) && (
+                  {entityActions && (
                     <TableCell>
-                      {entityActions ? (
-                        <EntityActions
-                          config={entityActions as any}
-                          context={{
-                            entity: item,
-                            entities: selection?.selectedKeys.map(key => data.find(d => getRowKey(d, 0) === key)).filter(Boolean) as BaseEntity[]
-                          }}
-                        />
-                      ) : (
-                        <EntityListActions
-                          actions={actions}
-                          item={item}
-                          onAction={onAction}
-                          entityType={entityType}
-                        />
-                      )}
+                      <EntityActions
+                        config={entityActions as any}
+                        context={{
+                          entity: item,
+                          entities: selection?.selectedKeys.map(key => data.find(d => getRowKey(d, 0) === key)).filter(Boolean) as BaseEntity[]
+                        }}
+                      />
                     </TableCell>
                   )}
                 </TableRow>

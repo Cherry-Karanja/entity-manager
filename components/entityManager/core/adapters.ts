@@ -364,7 +364,7 @@ export function filterToListFilter(filter: UnifiedFilterConfig): EntityListFilte
     helpText: filter.helpText as any,
     className: filter.className,
     required: filter.required
-  }
+  } as EntityListFilter
 }
 
 /**

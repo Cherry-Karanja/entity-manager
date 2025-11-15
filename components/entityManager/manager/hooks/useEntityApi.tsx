@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { createApiService } from '@/components/connectionManager/http'
 import {  BaseEntity } from '../types'
-import { EntityConfig } from '../types/manager'
+import { EntityConfig } from '../types'
 import { EntityState, EntityStateActions } from './useEntityState'
 import { authApi as api } from '@/components/connectionManager/http'
 import { DjangoPaginatedResponse } from '@/components/connectionManager/http'

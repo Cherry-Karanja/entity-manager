@@ -3,16 +3,13 @@
 import React, { memo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { EntityListViewProps, EntityListAction, EntityListItem } from '../types'
+import { EntityListViewProps, EntityListItem } from '../types'
 import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityActions } from '../../EntityActions'
-import { EntityListActions } from '../components/EntityListActions'
 import { BaseEntity } from '../../manager'
 
 interface EntityGridViewProps extends EntityListViewProps {
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
 }
 
 const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
@@ -21,7 +18,6 @@ const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
   loading = false,
   error = null,
   emptyText = 'No data available',
-  actions = [],
   entityActions,
   onAction,
   className
@@ -70,7 +66,7 @@ const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
   return (
     <div className={cn("grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4", className)}>
       {data.map((item, index) => {
-        const itemName = String(item.title || item.name || `Item ${index + 1}`)
+        const itemName = String(item.title || item.name || item.full_name  || `Item ${index + 1}`)
         const gradient = getColorFromString(itemName)
         
         return (
@@ -122,21 +118,13 @@ const EntityGridViewComponent: React.FC<EntityGridViewProps> = ({
                 ) : null}
               </div>
               
-              {(actions.length > 0 || entityActions) && (
+              {entityActions && (
                 <div className="mt-4 pt-3 border-t opacity-0 group-hover:opacity-100 transition-opacity">
-                  {entityActions ? (
-                    <EntityActions
-                      config={entityActions as any}
-                      context={{ entity: item }}
-                    />
-                  ) : (
-                    <EntityListActions
-                      actions={actions}
-                      item={item}
-                      onAction={onAction}
-                      maxVisible={0}
-                    />
-                  )}
+                  <EntityActions
+                    config={entityActions as any}
+                    context={{ entity: item }}
+                    maxVisibleActions={0}
+                  />
                 </div>
               )}
             </CardContent>

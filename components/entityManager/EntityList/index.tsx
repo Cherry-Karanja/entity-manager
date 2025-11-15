@@ -9,26 +9,21 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { BaseEntity } from '../manager'
-import type { EntityListColumn, EntityListAction, EntityListBulkAction, EntityListConfig } from '../EntityList/types'
+import { EntityListColumn, EntityListBulkAction, EntityListConfig, EntityListItem } from '../EntityList/types'
+import { EntityActionsConfig, EntityAction } from '../EntityActions/types'
 import { EntityListProps } from '../EntityList/types'
+import { EntityActions } from '../EntityActions'
 import { EntityListToolbar } from './components/EntityListToolbar'
 import { EntityListFilters } from './components/EntityListFilters'
 import { EntityListPagination } from './components/EntityListPagination'
-import { EntityListActions } from './components/EntityListActions'
 
 export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: EntityListProps<TEntity> & {
   onRowClick?: (item: TEntity) => void
 }) => {
   const {
     config,
-    data = [],
-    loading = false,
-    error,
-    selectedKeys = [],
     searchTerm = '',
-    activeFilters = {},
-    sortConfig,
-    pagination,
+ 
     onDataChange,
     onSelectionChange,
     onSearch,
@@ -46,28 +41,47 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
 
   // State
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm)
-  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set(selectedKeys || []))
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set(config.selection?.selectedKeys || []))
   const [sortField, setSortField] = useState<string | undefined>(
-    sortConfig && sortConfig.length > 0 ? sortConfig[0].field :
+    config.defaultSort &&  config.defaultSort.length > 0 ? config.defaultSort[0].field :
     config.defaultSort && config.defaultSort.length > 0 ? config.defaultSort[0].field : undefined
   )
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(
-    sortConfig && sortConfig.length > 0 ? sortConfig[0].direction :
     config.defaultSort && config.defaultSort.length > 0 ? config.defaultSort[0].direction : 'asc'
   )
-  const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
-  const [activeFiltersState, setActiveFiltersState] = useState<Record<string, unknown>>(activeFilters)
+  const [currentPage, setCurrentPage] = useState(config.pagination?.page || 1)
+  const [activeFiltersState, setActiveFiltersState] = useState<Record<string, unknown>>(config.savedFiltersKey ? {} : {})
   const [confirmAction, setConfirmAction] = useState<{
-    action: EntityListAction | EntityListBulkAction
+    action: EntityAction | EntityListBulkAction
     item?: TEntity
     items?: TEntity[]
   } | null>(null)
+  const [currentView, setCurrentView] = useState(config.defaultView || 'table')
+
+  // Render cell value
+  const renderCellValue = useCallback((column: EntityListColumn, item: TEntity) => {
+    let value: unknown
+
+    if (column.accessorFn) {
+      value = column.accessorFn(item as EntityListItem)
+    } else if (column.accessorKey) {
+      value = (item as Record<string, unknown>)[column.accessorKey]
+    } else {
+      value = item
+    }
+
+    if (column.cell) {
+      return column.cell(value, item as EntityListItem, 0) // index not used in simple rendering
+    }
+
+    return value?.toString() || ''
+  }, [])
 
   // Filtering
   const filteredData = useMemo(() => {
-    let filtered = data || config.data || []
+    let filtered = config.data || []
 
-    console.log('EntityList data:', { data, configData: config.data, filteredLength: filtered.length })
+    console.log('EntityList data:', {configData: config.data, filteredLength: filtered.length })
 
     // Apply search filter
     if (localSearchTerm && config.searchable) {
@@ -81,6 +95,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
         })
       )
     }
+    console.log('afterfilter',filtered)
 
     // Apply active filters
     if (Object.keys(activeFiltersState).length > 0 && config.filters) {
@@ -97,7 +112,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
     }
 
     return filtered
-  }, [data, localSearchTerm, config.searchable, config.searchFields, config.columns, activeFiltersState, config.filters, config.data])
+  }, [localSearchTerm, config.searchable, config.searchFields, config.columns, activeFiltersState, config.filters, config.data])
 
   // Sorting
   const sortedData = useMemo(() => {
@@ -149,9 +164,9 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
       newSelected.delete(id)
     }
     setSelectedIds(newSelected)
-    const selectedItems = data.filter(item => newSelected.has(item.id))
+    const selectedItems = config.data?.filter(item => newSelected.has(item.id)) || []
     onSelectionChange?.(Array.from(newSelected), selectedItems)
-  }, [selectedIds, data, onSelectionChange, setSelectedIds])
+  }, [selectedIds, config.data, onSelectionChange, setSelectedIds])
 
   // Sorting handler
   const handleSort = useCallback((field: string) => {
@@ -168,28 +183,20 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
   }, [sortField, sortDirection, onSort, setSortDirection, setSortField, setCurrentPage])
 
   // Action handlers
-  const handleActionClick = useCallback((action: EntityListAction, item: TEntity) => {
-    if (action.confirm) {
-      setConfirmAction({ action, item })
-    } else {
-      onAction?.(action, item)
-    }
-  }, [onAction])
-
   const handleBulkActionClick = useCallback((action: EntityListBulkAction) => {
-    const selectedItems = data.filter(item => selectedIds.has(item.id))
+    const selectedItems = config.data?.filter(item => selectedIds.has(item.id)) || []
     if (action.confirm) {
       setConfirmAction({ action, items: selectedItems as TEntity[] })
     } else {
       onBulkAction?.(action, selectedItems)
     }
-  }, [data, selectedIds, onBulkAction])
+  }, [config.data, selectedIds, onBulkAction])
 
   const handleConfirmAction = useCallback(() => {
     if (!confirmAction) return
 
     if (confirmAction.item) {
-      onAction?.(confirmAction.action as EntityListAction, confirmAction.item)
+      onAction?.(confirmAction.action as EntityAction, confirmAction.item)
     } else if (confirmAction.items) {
       onBulkAction?.(confirmAction.action as EntityListBulkAction, confirmAction.items)
     }
@@ -200,27 +207,141 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
     onExport?.(format)
   }, [onExport])
 
-  // Render cell value
-  const renderCellValue = (column: EntityListColumn, row: TEntity) => {
-    if (column.cell) {
-      const value = column.accessorKey ? (row as Record<string, unknown>)[column.accessorKey] : undefined
-      const accessorFn = column.accessorFn
-      const cellValue = accessorFn ? accessorFn(row) : value
-      return column.cell(cellValue, row, 0)
+  // Render current view
+  const renderCurrentView = () => {
+    const currentViewConfig = config.views?.find(view => view.id === currentView)
+    if (!currentViewConfig) {
+      // Default to table view
+      return renderTableView()
     }
 
-    if (column.accessorFn) {
-      return String(column.accessorFn(row) ?? '')
-    }
-
-    if (column.accessorKey) {
-      return String((row as Record<string, unknown>)[column.accessorKey] ?? '')
-    }
-
-    return ''
+    const ViewComponent = currentViewConfig.component
+    return (
+      <ViewComponent
+        data={paginatedData as EntityListItem[]}
+        columns={config.columns}
+        loading={config.loading}
+        error={config.error}
+        emptyText={config.emptyText}
+        selection={config.selection ? {
+          ...config.selection,
+          selectedKeys: Array.from(selectedIds),
+          onChange: (keys: (string | number)[], items: EntityListItem[]) => {
+            const newSelected = new Set(keys)
+            setSelectedIds(newSelected)
+            onSelectionChange?.(keys, items)
+          }
+        } : undefined}
+        entityActions={config.entityActions as EntityActionsConfig<unknown>}
+        onAction={onAction}
+        rowKey="id"
+        onRow={config.onRow ? (record: EntityListItem, index?: number) => config.onRow!(record as TEntity, index) : undefined}
+        scroll={config.scroll}
+        size={config.size}
+        bordered={config.bordered}
+      />
+    )
   }
 
-  if (loading) {
+  // Render table view (default)
+  const renderTableView = () => (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {config.selection && config.selection.mode !== 'none' && (
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
+            )}
+            {config.columns
+              .filter(col => !col.hidden)
+              .map((column) => (
+                <TableHead
+                  key={column.id}
+                  style={{ textAlign: column.align || 'left' }}
+                  className={column.sortable ? 'cursor-pointer select-none' : ''}
+                  onClick={column.sortable ? () => handleSort(column.accessorKey || column.id) : undefined}
+                >
+                  <div className="flex items-center gap-2">
+                    {column.header}
+                    {column.sortable && sortField === (column.accessorKey || column.id) && (
+                      <span className="text-xs">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </TableHead>
+              ))}
+            {config.showActions && config.entityActions?.actions && config.entityActions.actions.length > 0 && (
+              <TableHead className="w-12">Actions</TableHead>
+            )}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.map((row) => (
+            <TableRow
+              key={row.id}
+              onClick={() => {
+                onRowClick?.(row as TEntity)
+                config.onRow?.(row as TEntity)?.onClick?.({} as React.MouseEvent)
+              }}
+              className={(onRowClick || config.onRow) ? 'cursor-pointer' : ''}
+            >
+              {config.selection && config.selection.mode !== 'none' && (
+                <TableCell>
+                  <Checkbox
+                    checked={selectedIds.has(row.id)}
+                    onCheckedChange={(checked) => handleSelectRow(row.id, checked as boolean)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </TableCell>
+              )}
+              {config.columns
+                .filter(col => !col.hidden)
+                .map((column) => (
+                  <TableCell key={column.id} style={{ textAlign: column.align || 'left' }}>
+                    {renderCellValue(column, row as TEntity)}
+                  </TableCell>
+                ))}
+              {config.showActions && config.entityActions?.actions && config.entityActions.actions.length > 0 && (
+                <TableCell>
+                  <EntityActions
+                    config={{ actions: config.entityActions.actions }}
+                    context={{ entity: row }}
+                    maxVisibleActions={2}
+                  />
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {config.pagination && totalPages > 1 && (
+        <EntityListPagination
+          pagination={{
+            page: currentPage,
+            pageSize,
+            total: sortedData.length,
+            totalPages
+          }}
+          onChange={(page) => {
+            setCurrentPage(page)
+            onPageChange?.(page, pageSize)
+          }}
+          showSizeChanger={false} // Keep simple for now
+          showQuickJumper={false}
+          showTotal={(total, range) => `Showing ${range[0]} to ${range[1]} of ${total} entries`}
+        />
+      )}
+    </>
+  )
+
+  if (config.loading) {
     return (
       <Card>
         <CardHeader>
@@ -235,7 +356,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
     )
   }
 
-  if (error) {
+  if (config.error) {
     return (
       <Card>
         <CardHeader>
@@ -246,7 +367,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
             <div className="text-center">
               <p className="text-destructive mb-2">Failed to load data</p>
               <p className="text-sm text-muted-foreground">
-                {typeof error === 'string' ? error : 'An unexpected error occurred'}
+                {typeof config.error === 'string' ? config.error : 'An unexpected error occurred'}
               </p>
             </div>
           </div>
@@ -258,12 +379,12 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between w-full">
+        <div className="flex flex-col w-full gap-2">
           <CardTitle>{config.title}</CardTitle>
           <EntityListToolbar
             config={config as unknown as EntityListConfig<BaseEntity>}
-            currentView="table"
-            onViewChange={() => {}} // Not implemented yet
+            currentView={currentView}
+            onViewChange={setCurrentView}
             searchTerm={localSearchTerm}
             onSearch={(term) => {
               setLocalSearchTerm(term)
@@ -291,6 +412,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
             filters={config.filters}
             bulkActions={config.bulkActions}
             exportConfig={config.export}
+            views={config.views}
           />
         </div>
 
@@ -308,7 +430,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
             showReset={config.showFilterReset}
             showCount={true}
             collapsible={true}
-            defaultCollapsed={false}
+            defaultCollapsed={config.defaultFiltersCollapsed}
           />
         )}
       </CardHeader>
@@ -321,98 +443,7 @@ export const EntityList = <TEntity extends BaseEntity = BaseEntity>(props: Entit
           </div>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {config.selection && config.selection.mode !== 'none' && (
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                  )}
-                  {config.columns
-                    .filter(col => !col.hidden)
-                    .map((column) => (
-                      <TableHead
-                        key={column.id}
-                        style={{ textAlign: column.align || 'left' }}
-                        className={column.sortable ? 'cursor-pointer select-none' : ''}
-                        onClick={column.sortable ? () => handleSort(column.accessorKey || column.id) : undefined}
-                      >
-                        <div className="flex items-center gap-2">
-                          {column.header}
-                          {column.sortable && sortField === (column.accessorKey || column.id) && (
-                            <span className="text-xs">
-                              {sortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </TableHead>
-                    ))}
-                  {config.showActions && config.actions && config.actions.length > 0 && (
-                    <TableHead className="w-12">Actions</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    onClick={() => {
-                      onRowClick?.(row as TEntity)
-                      config.onRow?.(row as TEntity)?.onClick?.({} as React.MouseEvent)
-                    }}
-                    className={(onRowClick || config.onRow) ? 'cursor-pointer' : ''}
-                  >
-                    {config.selection && config.selection.mode !== 'none' && (
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.has(row.id)}
-                          onCheckedChange={(checked) => handleSelectRow(row.id, checked as boolean)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableCell>
-                    )}
-                    {config.columns
-                      .filter(col => !col.hidden)
-                      .map((column) => (
-                        <TableCell key={column.id} style={{ textAlign: column.align || 'left' }}>
-                          {renderCellValue(column, row as TEntity)}
-                        </TableCell>
-                      ))}
-                    {config.showActions && config.actions && config.actions.length > 0 && (
-                      <TableCell>
-                        <EntityListActions
-                          actions={config.actions}
-                          item={row}
-                          onAction={(action) => handleActionClick(action, row as TEntity)}
-                        />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {config.pagination && totalPages > 1 && (
-              <EntityListPagination
-                pagination={{
-                  page: currentPage,
-                  pageSize,
-                  total: sortedData.length,
-                  totalPages
-                }}
-                onChange={(page) => {
-                  setCurrentPage(page)
-                  onPageChange?.(page, pageSize)
-                }}
-                showSizeChanger={false} // Keep simple for now
-                showQuickJumper={false}
-                showTotal={(total, range) => `Showing ${range[0]} to ${range[1]} of ${total} entries`}
-              />
-            )}
+            {renderCurrentView()}
           </>
         )}
       </CardContent>

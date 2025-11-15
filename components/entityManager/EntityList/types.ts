@@ -1,6 +1,6 @@
 import React from "react"
 import { FormField } from "../EntityForm/types"
-import { EntityActionsConfig } from "../EntityActions/types"
+import { EntityActionsConfig, EntityAction } from "../EntityActions/types"
 import { BaseEntity } from "../manager"
 
 // ===== TYPE DEFINITIONS =====
@@ -35,7 +35,6 @@ export interface EntityListColumn {
 export interface EntityListFilter {
   // Use unified FormField for filter configuration
   icon: React.ComponentType<{ className?: string }>
-  label?: string | React.ReactNode
   placeholder?: string
   field: FormField
   operator?: DjangoLookupOperator
@@ -148,9 +147,8 @@ export interface EntityListViewProps {
   error?: string | null
   emptyText?: string | React.ReactNode
   selection?: EntityListSelection & { selectedKeys: (string | number)[]; onChange: (keys: (string | number)[], items: EntityListItem[]) => void }
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
+  onAction?: (action: EntityAction, item: EntityListItem) => void
   rowKey?: string | ((item: EntityListItem) => string | number)
   onRow?: (record: EntityListItem, index?: number) => {
     onClick?: (event: React.MouseEvent) => void
@@ -199,6 +197,7 @@ export interface EntityListConfig<TEntity extends BaseEntity = BaseEntity> {
   globalSearch?: boolean
   searchFields?: string[]
   searchTransform?: (query: string) => unknown
+ 
 
   // Filter configuration
   filters?: EntityListFilter[]
@@ -206,7 +205,7 @@ export interface EntityListConfig<TEntity extends BaseEntity = BaseEntity> {
   showFilterReset?: boolean
   collapsibleFilters?: boolean
   defaultFiltersCollapsed?: boolean
-  savedFiltersKey?: string
+  savedFiltersKey?: Record<string, unknown>
 
   // Sort configuration
   sortable?: boolean
@@ -223,7 +222,6 @@ export interface EntityListConfig<TEntity extends BaseEntity = BaseEntity> {
   selection?: EntityListSelection
 
   // Actions configuration
-  actions?: EntityListAction[]
   entityActions?: EntityActionsConfig<TEntity>
   bulkActions?: EntityListBulkAction[]
   actionColumnWidth?: string | number
@@ -293,15 +291,8 @@ export interface EntityListConfig<TEntity extends BaseEntity = BaseEntity> {
 
 export interface EntityListProps  <TEntity extends BaseEntity = BaseEntity> {
   config: EntityListConfig<TEntity>
-  // Override props
-  data?: EntityListItem[]
-  loading?: boolean
-  error?: string | null
-  selectedKeys?: (string | number)[]
   searchTerm?: string
-  activeFilters?: Record<string, unknown>
-  sortConfig?: EntityListSort[]
-  pagination?: Partial<EntityListPagination>
+
   // Event handlers
   onDataChange?: (data: EntityListItem[]) => void
   onSelectionChange?: (selectedKeys: (string | number)[], selectedItems: EntityListItem[]) => void
@@ -309,7 +300,7 @@ export interface EntityListProps  <TEntity extends BaseEntity = BaseEntity> {
   onFilter?: (filters: Record<string, unknown>) => void
   onSort?: (sort: EntityListSort[]) => void
   onPageChange?: (page: number, pageSize: number) => void
-  onAction?: (action: EntityListAction, item: EntityListItem) => void
+  onAction?: (action: EntityAction, item: EntityListItem) => void
   onBulkAction?: (action: EntityListBulkAction, items: EntityListItem[]) => void
   onExport?: (format: 'csv' | 'xlsx' | 'pdf' | 'json') => void
 }
