@@ -12,9 +12,9 @@ import { BaseEntity } from '../../primitives/types';
 import {
   EntityFormProps,
   FormState,
+  FormMode,
   FormField,
   FieldRenderProps,
-  FieldOption,
 } from './types';
 import {
   getInitialValues,
@@ -90,24 +90,6 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
   }));
 
   /**
-   * Validate single field
-   */
-  const validateFieldAsync = useCallback(async (fieldName: string) => {
-    const field = fields.find(f => String(f.name) === fieldName);
-    if (!field) return;
-
-    const value = state.values[field.name as keyof T];
-    const error = await validateField(value, field as unknown as FormField<BaseEntity>, state.values as Record<string, unknown>);
-
-    setState(prev => ({
-      ...prev,
-      errors: error 
-        ? { ...prev.errors, [fieldName]: error }
-        : Object.fromEntries(Object.entries(prev.errors).filter(([k]) => k !== fieldName)),
-    }));
-  }, [fields, state.values]);
-
-  /**
    * Set field value
    */
   const setFieldValue = useCallback((fieldName: string, value: unknown) => {
@@ -129,7 +111,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     if (validateOnChange) {
       validateFieldAsync(fieldName);
     }
-  }, [onChange, validateOnChange, validateFieldAsync]);
+  }, [onChange, validateOnChange]);
 
   /**
    * Set field touched
@@ -145,7 +127,25 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     if (validateOnBlur) {
       validateFieldAsync(fieldName);
     }
-  }, [validateOnBlur, validateFieldAsync]);
+  }, [validateOnBlur]);
+
+  /**
+   * Validate single field
+   */
+  const validateFieldAsync = useCallback(async (fieldName: string) => {
+    const field = fields.find(f => String(f.name) === fieldName);
+    if (!field) return;
+
+    const value = state.values[field.name as keyof T];
+    const error = await validateField(value, field, state.values as Record<string, unknown>);
+
+    setState(prev => ({
+      ...prev,
+      errors: error 
+        ? { ...prev.errors, [fieldName]: error }
+        : Object.fromEntries(Object.entries(prev.errors).filter(([k]) => k !== fieldName)),
+    }));
+  }, [fields, state.values]);
 
   /**
    * Validate entire form
@@ -461,7 +461,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       return (
         <div className="form-field view-mode">
           <label>{field.label}</label>
-          <div className="field-value">{formatFieldValue(value, field as unknown as FormField<BaseEntity>)}</div>
+          <div className="field-value">{formatFieldValue(value, field)}</div>
         </div>
       );
     }
@@ -508,7 +508,7 @@ function DefaultFieldRenderer<T extends BaseEntity>({
   onBlur,
   disabled,
 }: FieldRenderProps<T>) {
-  const [options, setOptions] = useState<FieldOption[]>([]);
+  const [options, setOptions] = useState<any[]>([]);
 
   useEffect(() => {
     if (field.type === 'select' || field.type === 'multiselect' || field.type === 'radio') {

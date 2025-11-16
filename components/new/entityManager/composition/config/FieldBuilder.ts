@@ -92,7 +92,7 @@ export class FieldBuilder {
    * Set email validation
    */
   email(message?: string): this {
-    this.addValidation({ type: 'email', message: message || 'Invalid email address' });
+    this.addValidation({ type: 'email', message });
     return this;
   }
 
@@ -100,7 +100,7 @@ export class FieldBuilder {
    * Set URL validation
    */
   url(message?: string): this {
-    this.addValidation({ type: 'url', message: message || 'Invalid URL' });
+    this.addValidation({ type: 'url', message });
     return this;
   }
 
@@ -108,7 +108,7 @@ export class FieldBuilder {
    * Set min length validation
    */
   minLength(value: number, message?: string): this {
-    this.addValidation({ type: 'minLength', value, message: message || `Minimum length is ${value}` });
+    this.addValidation({ type: 'minLength', value, message });
     return this;
   }
 
@@ -116,7 +116,7 @@ export class FieldBuilder {
    * Set max length validation
    */
   maxLength(value: number, message?: string): this {
-    this.addValidation({ type: 'maxLength', value, message: message || `Maximum length is ${value}` });
+    this.addValidation({ type: 'maxLength', value, message });
     return this;
   }
 
@@ -124,7 +124,7 @@ export class FieldBuilder {
    * Set min value validation
    */
   min(value: number, message?: string): this {
-    this.addValidation({ type: 'min', value, message: message || `Minimum value is ${value}` });
+    this.addValidation({ type: 'min', value, message });
     return this;
   }
 
@@ -132,7 +132,7 @@ export class FieldBuilder {
    * Set max value validation
    */
   max(value: number, message?: string): this {
-    this.addValidation({ type: 'max', value, message: message || `Maximum value is ${value}` });
+    this.addValidation({ type: 'max', value, message });
     return this;
   }
 
@@ -140,7 +140,7 @@ export class FieldBuilder {
    * Set pattern validation
    */
   pattern(value: string | RegExp, message?: string): this {
-    this.addValidation({ type: 'pattern', value, message: message || 'Invalid format' });
+    this.addValidation({ type: 'pattern', value, message });
     return this;
   }
 
@@ -148,7 +148,7 @@ export class FieldBuilder {
    * Set custom validation
    */
   custom(validate: (value: unknown, values: Record<string, unknown>) => string | null, message?: string): this {
-    this.addValidation({ type: 'custom', validate, message: message || 'Validation failed' });
+    this.addValidation({ type: 'custom', validate, message });
     return this;
   }
 

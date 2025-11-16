@@ -8,14 +8,14 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import Image from 'next/image';
 import { BaseEntity } from '../../primitives/types';
 import { 
   EntityListProps, 
   ListView, 
-  ListState,
+  ListState, 
+  Column,
   CellRenderProps,
-  PaginationConfig,
+  RowRenderProps 
 } from './types';
 import {
   getVisibleColumns,
@@ -30,6 +30,8 @@ import {
   getEntitySubtitle,
   getEntityImageUrl,
   getEntityDate,
+  isImageView,
+  isGridView,
   getDefaultPageSizes
 } from './utils';
 
@@ -56,13 +58,17 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     sortable = false,
     sortConfig: sortConfigProp,
     onSortChange,
+    filterable = false,
     filterConfigs: filterConfigsProp,
+    onFilterChange,
+    searchable = false,
     searchValue: searchValueProp,
     onSearchChange,
     searchPlaceholder = 'Search...',
     emptyMessage = 'No data available',
     loading = false,
     error,
+    rowHeight = 'auto',
     rowActions: RowActions,
     bulkActions,
     className = '',
@@ -193,12 +199,12 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Pagination handlers
   const handlePageChange = useCallback((page: number) => {
     setState(prev => ({ ...prev, page }));
-    onPaginationChange?.({ ...paginationConfig, page } as PaginationConfig);
+    onPaginationChange?.({ ...paginationConfig, page });
   }, [paginationConfig, onPaginationChange]);
 
   const handlePageSizeChange = useCallback((pageSize: number) => {
     setState(prev => ({ ...prev, pageSize, page: 1 }));
-    onPaginationChange?.({ ...paginationConfig, pageSize, page: 1 } as PaginationConfig);
+    onPaginationChange?.({ ...paginationConfig, pageSize, page: 1 });
   }, [paginationConfig, onPaginationChange]);
 
   // View switcher
@@ -224,7 +230,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             value={state.search}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="search-input"
-            aria-label="Search entities"
           />
         )}
         
@@ -287,7 +292,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
         <select
           value={state.pageSize}
           onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-          aria-label="Page size"
         >
           {getDefaultPageSizes().map(size => (
             <option key={size} value={size}>{size} per page</option>
@@ -319,7 +323,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                     type="checkbox"
                     checked={state.selectedIds.size === processedData.length && processedData.length > 0}
                     onChange={() => state.selectedIds.size === processedData.length ? handleDeselectAll() : handleSelectAll()}
-                    aria-label="Select all"
                   />
                 )}
               </th>
@@ -361,7 +364,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                       checked={isSelected}
                       onChange={() => handleSelectRow(entity.id)}
                       onClick={(e) => e.stopPropagation()}
-                      aria-label="Select row"
                     />
                   </td>
                 )}
@@ -412,12 +414,11 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   onChange={() => handleSelectRow(entity.id)}
                   onClick={(e) => e.stopPropagation()}
                   className="card-checkbox"
-                  aria-label="Select item"
                 />
               )}
               
               {imageUrl && (
-                <Image src={imageUrl} alt={title} className="card-image" width={200} height={150} />
+                <img src={imageUrl} alt={title} className="card-image" />
               )}
               
               <div className="card-content">
@@ -472,7 +473,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
                   onClick={(e) => e.stopPropagation()}
-                  aria-label="Select item"
                 />
               )}
               
@@ -497,7 +497,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   const renderTimelineView = () => {
     return (
       <div className="entity-list-timeline">
-        {paginatedData.map((entity) => {
+        {paginatedData.map((entity, index) => {
           const title = getEntityTitle(entity, titleField);
           const subtitle = getEntitySubtitle(entity, subtitleField);
           const date = getEntityDate(entity, dateField);
@@ -541,7 +541,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
                   onClick={(e) => e.stopPropagation()}
-                  aria-label="Select item"
                 />
               )}
               <div className="grid-title">{title}</div>
@@ -575,7 +574,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
-                  aria-label="Select item"
                 />
               )}
               
@@ -621,7 +619,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               onClick={() => onRowClick?.(entity, index)}
             >
               {imageUrl && (
-                <Image src={imageUrl} alt={title} className="gallery-image" width={200} height={150} />
+                <img src={imageUrl} alt={title} className="gallery-image" />
               )}
               <div className="gallery-caption">{title}</div>
             </div>

@@ -89,7 +89,7 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
       setState(prev => ({ ...prev, loading: true, executing: action.id }));
       onActionStart?.(action.id);
 
-      let result: ActionResult = { success: true };
+      const result: ActionResult = { success: true };
 
       switch (action.actionType) {
         case 'immediate':

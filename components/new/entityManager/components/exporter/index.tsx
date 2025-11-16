@@ -19,6 +19,7 @@ import {
 import {
   entitiesToCSV,
   entitiesToJSON,
+  entitiesToXLSX,
   generateFilename,
   getMimeType,
   downloadFile,

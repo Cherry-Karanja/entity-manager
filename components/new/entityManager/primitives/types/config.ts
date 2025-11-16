@@ -148,8 +148,6 @@ export interface ViewConfig {
 export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   /** Entity name */
   name: string;
-  /** Phantom type field to utilize generic T */
-  _entityType?: T;
   /** Display configuration */
   display: DisplayConfig;
   /** API endpoints */

@@ -6,7 +6,7 @@
  * @module primitives/utils/transformation
  */
 
-import type { BaseEntity, FilterConfig } from '../types/entity';
+import type { BaseEntity, FilterConfig, SortConfig } from '../types/entity';
 
 /**
  * Deep clone an object
@@ -282,8 +282,8 @@ export function fromQueryString(queryString: string): Record<string, string> {
  * Transform entity for API (remove metadata, format dates, etc.)
  */
 export function toApiFormat<T extends BaseEntity>(entity: T): unknown {
-  const data = { ...entity };
-  return Object.fromEntries(Object.entries(data).filter(([key]) => key !== 'id'));
+  const { id, ...data } = entity;
+  return data;
 }
 
 /**

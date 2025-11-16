@@ -4,9 +4,8 @@
  * Pure functions for view operations.
  */
 
-import React from 'react';
 import { BaseEntity } from '../../primitives/types';
-import { formatDate, formatBoolean } from '../../primitives/utils';
+import { formatDate, formatCurrency, formatBoolean } from '../../primitives/utils';
 import { ViewField, FieldGroup } from './types';
 
 /**
@@ -51,9 +50,9 @@ export function getFieldValue<T extends BaseEntity>(
 export function formatFieldValue(
   value: unknown,
   type?: string
-): string | React.ReactNode {
+): React.ReactNode {
   if (value === null || value === undefined) {
-    return React.createElement('span', { className: 'null-value' }, '—');
+    return <span className="null-value">—</span>;
   }
 
   switch (type) {
@@ -71,24 +70,16 @@ export function formatFieldValue(
       return formatBoolean(Boolean(value));
 
     case 'email':
-      return React.createElement('a', { href: `mailto:${value}` }, String(value));
+      return <a href={`mailto:${value}`}>{String(value)}</a>;
 
     case 'url':
-      return React.createElement('a', { 
-        href: String(value), 
-        target: '_blank', 
-        rel: 'noopener noreferrer' 
-      }, String(value));
+      return <a href={String(value)} target="_blank" rel="noopener noreferrer">{String(value)}</a>;
 
     case 'image':
-      return React.createElement('img', { 
-        src: String(value), 
-        alt: 'Image', 
-        className: 'field-image' 
-      });
+      return <img src={String(value)} alt="Image" className="field-image" />;
 
     case 'json':
-      return React.createElement('pre', { className: 'json-value' }, JSON.stringify(value, null, 2));
+      return <pre className="json-value">{JSON.stringify(value, null, 2)}</pre>;
 
     case 'number':
       return typeof value === 'number' ? value.toLocaleString() : String(value);

@@ -168,7 +168,7 @@ export interface ValidationRule {
   type: 'required' | 'email' | 'url' | 'minLength' | 'maxLength' | 'min' | 'max' | 'pattern' | 'custom' | 'async';
   message: string;
   value?: unknown;
-  validate?: (value: unknown, values: Record<string, unknown>) => string | null | Promise<string | null>;
+  validator?: (value: unknown, values: Record<string, unknown>) => boolean | Promise<boolean>;
 }
 
 /**

@@ -6,7 +6,7 @@
  * @module primitives/types/api
  */
 
-import { BaseEntity, FilterConfig, SortConfig } from './entity';
+import { BaseEntity, PaginatedResponse, FilterConfig, SortConfig } from './entity';
 
 /**
  * HTTP methods

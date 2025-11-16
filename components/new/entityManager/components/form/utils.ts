@@ -6,6 +6,7 @@
 
 import { BaseEntity } from '../../primitives/types';
 import { 
+  validateRule as primitiveValidateRule,
   isValidEmail,
   isValidUrl,
 } from '../../primitives/utils';
@@ -269,7 +270,7 @@ export async function validateForm<T extends BaseEntity>(
 
     const fieldName = String(field.name);
     const value = values[field.name as keyof T];
-    const error = await validateField(value, field as unknown as FormField<BaseEntity>, values as Record<string, unknown>);
+    const error = await validateField(value, field, values as Record<string, unknown>);
     
     if (error) {
       errors[fieldName] = error;

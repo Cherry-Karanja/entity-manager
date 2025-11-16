@@ -129,7 +129,7 @@ export function validateSchema(
   schema: ValidationSchema
 ): ValidationResult {
   const errors: ValidationError[] = [];
-  // const warnings: ValidationError[] = []; // Reserved for future use
+  const warnings: ValidationError[] = [];
 
   // Validate individual fields
   for (const [field, rules] of Object.entries(schema.fields)) {

@@ -12,53 +12,9 @@ import { BaseEntity } from '../../primitives/types';
 import {
   EntityViewProps,
   ViewState,
+  ViewMode,
   FieldRenderProps,
-  ViewTab,
-  ViewField,
-  FieldGroup,
 } from './types';
-
-/**
- * Internal props for view functions
- */
-interface DetailViewProps<T extends BaseEntity> {
-  entity: T;
-  fields: ViewField<T>[];
-  groups?: FieldGroup[];
-  state: ViewState;
-  tabs?: ViewTab<T>[];
-  showMetadata?: boolean;
-  titleField?: keyof T | string;
-  actions?: React.ReactNode;
-  className?: string;
-  onToggleGroup?: (groupId: string) => void;
-  onCopy?: (field: keyof T | string, value: unknown) => void;
-  onTabChange?: (tabId: string) => void;
-  copiedField?: string;
-}
-
-interface CardViewProps<T extends BaseEntity> {
-  entity: T;
-  fields: ViewField<T>[];
-  titleField?: keyof T | string;
-  subtitleField?: keyof T | string;
-  imageField?: keyof T | string;
-  actions?: React.ReactNode;
-  className?: string;
-}
-
-interface SummaryViewProps<T extends BaseEntity> {
-  entity: T;
-  fields: ViewField<T>[];
-  className?: string;
-}
-
-interface TimelineViewProps<T extends BaseEntity> {
-  entity: T;
-  fields: ViewField<T>[];
-  showMetadata?: boolean;
-  className?: string;
-}
 import {
   getVisibleFields,
   renderField,
@@ -190,7 +146,7 @@ export function EntityView<T extends BaseEntity = BaseEntity>({
           className={className}
           onToggleGroup={toggleGroup}
           onCopy={handleCopy}
-          onTabChange={(tabId: string) => setState(prev => ({ ...prev, activeTab: tabId }))}
+          onTabChange={(tabId) => setState(prev => ({ ...prev, activeTab: tabId }))}
           copiedField={state.copiedField}
         />
       );
@@ -200,22 +156,21 @@ export function EntityView<T extends BaseEntity = BaseEntity>({
 /**
  * Detail View (default mode)
  */
-function DetailView<T extends BaseEntity>(props: DetailViewProps<T>) {
-  const {
-    entity,
-    fields,
-    groups,
-    state,
-    tabs,
-    showMetadata,
-    titleField,
-    actions,
-    className,
-    onToggleGroup,
-    onCopy,
-    onTabChange,
-    copiedField,
-  } = props;
+function DetailView<T extends BaseEntity>({
+  entity,
+  fields,
+  groups,
+  state,
+  tabs,
+  showMetadata,
+  titleField,
+  actions,
+  className,
+  onToggleGroup,
+  onCopy,
+  onTabChange,
+  copiedField,
+}: any) {
   const title = getEntityTitle(entity, titleField);
   const groupedFields = groupFields(fields, groups);
   const sortedGroups = groups ? sortGroups(groups) : [];
@@ -234,7 +189,7 @@ function DetailView<T extends BaseEntity>(props: DetailViewProps<T>) {
         {groupedFields.get(null) && (
           <div className="field-list">
             {groupedFields.get(null)!.map(field => (
-              <FieldRow key={String(field.key)} field={field} entity={entity} value={getFieldValue(entity, field.key)} onCopy={onCopy} copiedField={copiedField} />
+              <FieldRow key={String(field.key)} field={field} entity={entity} onCopy={onCopy} copiedField={copiedField} />
             ))}
           </div>
         )}
@@ -250,7 +205,7 @@ function DetailView<T extends BaseEntity>(props: DetailViewProps<T>) {
             <div key={group.id} className="field-group">
               <div 
                 className="group-header" 
-                onClick={() => group.collapsible && onToggleGroup?.(group.id)}
+                onClick={() => group.collapsible && onToggleGroup(group.id)}
               >
                 <h3>{group.label}</h3>
                 {group.description && <p className="group-description">{group.description}</p>}
@@ -259,7 +214,7 @@ function DetailView<T extends BaseEntity>(props: DetailViewProps<T>) {
               {!isCollapsed && (
                 <div className="field-list">
                   {groupFields.map(field => (
-                    <FieldRow key={String(field.key)} field={field} entity={entity} value={getFieldValue(entity, field.key)} onCopy={onCopy} copiedField={copiedField} />
+                    <FieldRow key={String(field.key)} field={field} entity={entity} onCopy={onCopy} copiedField={copiedField} />
                   ))}
                 </div>
               )}
@@ -289,11 +244,11 @@ function DetailView<T extends BaseEntity>(props: DetailViewProps<T>) {
       {tabs && tabs.length > 0 && (
         <div className="view-tabs">
           <div className="tab-headers">
-            {tabs.map((tab: ViewTab<T>) => (
+            {tabs.map(tab => (
               <button
                 key={tab.id}
                 className={`tab-header ${state.activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => onTabChange?.(tab.id)}
+                onClick={() => onTabChange(tab.id)}
               >
                 {tab.icon && <span className="tab-icon">{tab.icon}</span>}
                 <span>{tab.label}</span>
@@ -302,10 +257,10 @@ function DetailView<T extends BaseEntity>(props: DetailViewProps<T>) {
             ))}
           </div>
           <div className="tab-content">
-            {tabs.map((tab: ViewTab<T>) => {
+            {tabs.map(tab => {
               if (tab.id !== state.activeTab) return null;
               
-              const TabContent = tab.content;
+              const TabContent = tab.content as any;
               return (
                 <div key={tab.id}>
                   {typeof TabContent === 'function' ? <TabContent entity={entity} /> : TabContent}
@@ -337,7 +292,7 @@ function FieldRow<T extends BaseEntity>({ field, entity, onCopy, copiedField }: 
         {field.copyable && (
           <button
             className="copy-button"
-            onClick={() => onCopy?.(field.key, value)}
+            onClick={() => onCopy(field.key, value)}
             title="Copy to clipboard"
           >
             {copiedField === String(field.key) ? '✓ Copied' : '📋'}
@@ -351,23 +306,19 @@ function FieldRow<T extends BaseEntity>({ field, entity, onCopy, copiedField }: 
 /**
  * Card View
  */
-function CardView<T extends BaseEntity>(props: CardViewProps<T>) {
-  const { entity, fields, titleField, subtitleField, imageField, actions, className } = props;
+function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleField, imageField, actions, className }: any) {
   const title = getEntityTitle(entity, titleField);
   const subtitle = getEntitySubtitle(entity, subtitleField);
   const image = getEntityImage(entity, imageField);
 
   return (
     <div className={`entity-view card ${className}`}>
-      {image && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt={title} className="card-image" />
-      )}
+      {image && <img src={image} alt={title} className="card-image" />}
       <div className="card-content">
         <h2 className="card-title">{title}</h2>
         {subtitle && <p className="card-subtitle">{subtitle}</p>}
         <div className="card-fields">
-          {fields.slice(0, 5).map((field: ViewField<T>) => (
+          {fields.slice(0, 5).map((field: any) => (
             <div key={String(field.key)} className="card-field">
               <span className="field-label">{field.label}:</span>
               <span className="field-value">{renderField(field, entity)}</span>
@@ -383,11 +334,10 @@ function CardView<T extends BaseEntity>(props: CardViewProps<T>) {
 /**
  * Summary View
  */
-function SummaryView<T extends BaseEntity>(props: SummaryViewProps<T>) {
-  const { entity, fields, className } = props;
+function SummaryView<T extends BaseEntity>({ entity, fields, className }: any) {
   return (
     <div className={`entity-view summary ${className}`}>
-      {fields.map((field: ViewField<T>) => (
+      {fields.map((field: any) => (
         <div key={String(field.key)} className="summary-field">
           <span className="field-label">{field.label}:</span>
           <span className="field-value">{renderField(field, entity)}</span>
@@ -398,17 +348,10 @@ function SummaryView<T extends BaseEntity>(props: SummaryViewProps<T>) {
 }
 
 /**
- * Timeline event type
+ * Timeline View
  */
-type TimelineEvent<T extends BaseEntity> = ViewField<T> | {
-  key: string;
-  label: string;
-  type: string;
-  value: unknown;
-};
-function TimelineView<T extends BaseEntity>(props: TimelineViewProps<T>) {
-  const { entity, fields, showMetadata, className } = props;
-  const events: TimelineEvent<T>[] = [...fields];
+function TimelineView<T extends BaseEntity>({ entity, fields, showMetadata, className }: any) {
+  const events = [...fields];
   if (showMetadata) {
     getMetadataFields(entity).forEach(({ label, value }) => {
       events.push({ key: label, label, type: 'date', value });
@@ -418,18 +361,15 @@ function TimelineView<T extends BaseEntity>(props: TimelineViewProps<T>) {
   return (
     <div className={`entity-view timeline ${className}`}>
       <div className="timeline-line"></div>
-      {events.map((event: TimelineEvent<T>) => {
-        const isMetadata = 'value' in event;
-        return (
-        <div key={String(event.key)} className="timeline-event">
+      {events.map((field: any, index: number) => (
+        <div key={String(field.key)} className="timeline-event">
           <div className="event-marker"></div>
           <div className="event-content">
-            <div className="event-label">{event.label}</div>
-            <div className="event-value">{isMetadata ? String(event.value) : renderField(event, entity)}</div>
+            <div className="event-label">{field.label}</div>
+            <div className="event-value">{renderField(field, entity)}</div>
           </div>
         </div>
-        );
-      })}
+      ))}
     </div>
   );
 }
