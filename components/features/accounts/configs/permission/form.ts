@@ -1,63 +1,45 @@
 // ===== PERMISSION FORM CONFIGURATION =====
 
-export const permissionFormConfig: {
-  title?: string
-  createTitle?: string
-  editTitle?: string
-  description?: string
-  submitLabel?: string
-  cancelLabel?: string
-  layout?: 'vertical' | 'horizontal' | 'grid'
-  columns?: number
-  fieldGroups?: {
-    id: string
-    title: string
-    description?: string
-    fields: string[]
-    layout?: 'vertical' | 'horizontal' | 'grid'
-    columns?: number
-    collapsible?: boolean
-    collapsed?: boolean
-  }[]
-} = {
-  title: 'Permission Information',
-  createTitle: 'Create New Permission',
-  editTitle: 'Edit Permission',
-  description: 'Define a new permission for the system',
-  submitLabel: 'Save Permission',
-  cancelLabel: 'Cancel',
-  layout: 'grid',
-  columns: 1,
-  fieldGroups: [
+import { EntityFormConfig } from '@/components/entityManager/EntityForm/types';
+import { Permission } from '../../types';
+
+export const permissionFormConfig: EntityFormConfig<Permission> = {
+  fields: [
     {
-      id: 'basic-info',
-      title: 'Basic Information',
-      description: 'Permission identification and description',
-      fields: ['name', 'codename'],
-      layout: 'grid',
-      columns: 2,
-      collapsible: false,
-      collapsed: false
+      name: 'name',
+      label: 'Permission Name',
+      type: 'text',
+      required: true,
+      minLength: 3,
+      maxLength: 255,
+      placeholder: 'Enter permission name (e.g., Can view users)'
     },
     {
-      id: 'content-type',
-      title: 'Content Type',
-      description: 'Specify the app and model this permission applies to',
-      fields: ['app_label', 'model'],
-      layout: 'grid',
-      columns: 2,
-      collapsible: false,
-      collapsed: false
+      name: 'codename',
+      label: 'Codename',
+      type: 'text',
+      required: true,
+      minLength: 3,
+      maxLength: 100,
+      placeholder: 'Enter codename (e.g., view_user)'
     },
     {
-      id: 'metadata',
-      title: 'Metadata',
-      description: 'Additional information about this permission',
-      fields: ['content_type_name'],
-      layout: 'grid',
-      columns: 1,
-      collapsible: true,
-      collapsed: true
+      name: 'app_label',
+      label: 'App Label',
+      type: 'text',
+      required: true,
+      minLength: 1,
+      maxLength: 100,
+      placeholder: 'Enter app label (e.g., accounts)'
+    },
+    {
+      name: 'model',
+      label: 'Model',
+      type: 'text',
+      required: true,
+      minLength: 1,
+      maxLength: 100,
+      placeholder: 'Enter model name (e.g., user)'
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 import { EntityListConfig } from '@/components/entityManager/EntityList/types'
 import { Permission } from '../../types'
+import { permissionActionsConfig } from './actions'
 
 export const permissionListConfig: EntityListConfig<Permission> = {
   title: 'Permissions',
@@ -50,5 +51,9 @@ export const permissionListConfig: EntityListConfig<Permission> = {
       sortable: false,
       width: '20%'
     }
-  ]
+  ],
+  showActions: true,
+  entityActions: {
+    actions: permissionActionsConfig.actions
+  }
 }

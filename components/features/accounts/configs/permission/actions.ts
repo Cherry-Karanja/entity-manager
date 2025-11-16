@@ -5,19 +5,35 @@ import { Permission } from '../../types/permission.types'
 
 export const permissionActionsConfig: EntityActionsConfig<Permission> = {
   actions: [
-    {
+  {
       id: 'view',
       label: 'View Details',
-      description: 'View permission details',
       type: 'default',
-      actionType: 'immediate'
+      actionType: 'navigation',
+      router: 'next',
+      href(item) {
+        const permission = item as Permission
+        return `/dashboard/accounts/permissions/${permission.id}`
+      },
+      onExecute: (item: unknown) => {
+        const permission = item as Permission
+        console.log('Viewing permission details:', permission.id)
+      }
     },
     {
       id: 'edit',
       label: 'Edit Permission',
-      description: 'Edit permission details',
-      type: 'primary',
-      actionType: 'modal'
+      type: 'default',
+      actionType: 'navigation',
+      router: 'next',
+      href(item) {
+        const permission = item as Permission
+        return `/dashboard/accounts/permissions/${permission.id}`
+      },
+      onExecute: (item: unknown) => {
+        const permission = item as Permission
+        console.log('Editing permission:', permission.id)
+      }
     },
     {
       id: 'delete',
