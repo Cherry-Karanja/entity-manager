@@ -1,146 +1,164 @@
-// ===== ENTITY VIEW V3 - STANDALONE COMPONENT =====
-// Pure presentation component that works with EntityViewConfig<TEntity>
+// ===== ENTITY VIEW V3 - COMPREHENSIVE COMPONENT =====
+// Full-featured component that supports all EntityViewConfig<TEntity> features
 
 'use client'
 
-import React from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+import React, { useEffect, useMemo } from 'react'
+import { CardFooter } from '@/components/ui/card'
+import { Calendar, Clock, User } from 'lucide-react'
 import { EntityViewConfig } from './types'
 import { BaseEntity } from '../manager'
+import { DetailView, CardView, SummaryView, TimelineView } from './views'
+import { cn } from '@/lib/utils'
 
 export interface EntityViewProps<TEntity extends BaseEntity = BaseEntity> {
   config: EntityViewConfig<TEntity>
   data: TEntity
-  onEdit?: () => void
-  onDelete?: () => void
-  onBack?: () => void
+  className?: string
 }
 
 export const EntityView = <TEntity extends BaseEntity = BaseEntity>({
   config,
   data,
-  onEdit,
-  onDelete,
-  onBack,
+  className,
 }: EntityViewProps<TEntity>) => {
-  // Render field value
-  const renderValue = (field: string, value: unknown) => {
-    // Check if there's a custom format function in field groups
-    for (const group of config.fieldGroups || []) {
-      const fieldDef = group.fields.find(f => f.key === field)
-      if (fieldDef?.component) {
-        const Component = fieldDef.component
-        return <Component field={fieldDef} value={value} data={data} />
-      }
-      if (fieldDef?.render) {
-        return fieldDef.render(value, data)
-      }
-      if (fieldDef?.format) {
-        return fieldDef.format(value, data)
-      }
-    }
+  // ===== HOOKS & EFFECTS =====
 
-    // Default rendering
-    if (value === null || value === undefined) {
-      return <span className="text-muted-foreground italic">Not set</span>
+  // Call onViewLoad hook when component mounts
+  useEffect(() => {
+    if (config.hooks?.onViewLoad) {
+      config.hooks.onViewLoad(data)
     }
+  }, [config.hooks, data])
 
-    if (typeof value === 'boolean') {
-      return value ? <Badge>Yes</Badge> : <Badge variant="outline">No</Badge>
+  // ===== COMPUTED VALUES =====
+
+  // Process field groups with data transformation
+  const processedFieldGroups = useMemo(() => {
+    if (!config.fieldGroups) return []
+
+    return config.fieldGroups.map(group => ({
+      ...group,
+      fields: group.fields.map(field => ({
+        ...field,
+        value: data && typeof data === 'object' ? (data as Record<string, unknown>)[field.key] : undefined,
+      }))
+    }))
+  }, [config.fieldGroups, data])
+
+  // Transform data if transformer is provided
+  const transformedData = useMemo(() => {
+    if (config.dataTransformer) {
+      return config.dataTransformer(data)
     }
+    return data
+  }, [config, data])
 
-    if (value instanceof Date) {
-      return value.toLocaleString()
+  // ===== STYLING =====
+
+  const spacingClasses = useMemo(() => {
+    const spacings = {
+      sm: 'space-y-2',
+      md: 'space-y-4',
+      lg: 'space-y-6',
     }
+    return spacings[config.fieldSpacing || 'md']
+  }, [config.fieldSpacing])
 
-    if (typeof value === 'object') {
-      return <pre className="text-xs">{JSON.stringify(value, null, 2)}</pre>
+  // ===== RENDER HELPERS =====
+
+  // Render metadata section
+  const renderMetadata = () => {
+    if (!config.showMetadata) return null
+
+    const data = transformedData as Record<string, unknown>
+
+    return (
+      <CardFooter className="pt-6 border-t">
+        <div className="flex items-center justify-between w-full text-sm text-muted-foreground">
+          <div className="flex items-center gap-4">
+            {data.createdAt ? (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>Created: {new Date(String(data.createdAt)).toLocaleDateString()}</span>
+              </div>
+            ) : null}
+            {data.updatedAt ? (
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>Updated: {new Date(String(data.updatedAt)).toLocaleDateString()}</span>
+              </div>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-4">
+            {data.createdBy ? (
+              <div className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                <span>Created by: {String(data.createdBy)}</span>
+              </div>
+            ) : null}
+            {data.updatedBy ? (
+              <div className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                <span>Updated by: {String(data.updatedBy)}</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </CardFooter>
+    )
+  }
+
+  // ===== MAIN RENDER =====
+
+  // Render based on mode
+  const renderContent = () => {
+    const mode = config.mode || 'detail'
+
+    switch (mode) {
+      case 'card':
+        return (
+          <CardView
+            data={transformedData}
+            config={config as unknown as EntityViewConfig}
+            fields={processedFieldGroups.flatMap(g => g.fields)}
+          />
+        )
+
+      case 'summary':
+        return (
+          <SummaryView
+            data={transformedData}
+            config={config as unknown as EntityViewConfig}
+            fields={processedFieldGroups.flatMap(g => g.fields)}
+          />
+        )
+
+      case 'timeline':
+        return (
+          <TimelineView
+            data={transformedData}
+            config={config as unknown as EntityViewConfig}
+            fieldGroups={processedFieldGroups}
+          />
+        )
+
+      case 'detail':
+      default:
+        return (
+          <DetailView
+            data={transformedData}
+            config={config as unknown as EntityViewConfig}
+            fieldGroups={processedFieldGroups}
+          />
+        )
     }
-
-    return String(value)
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        {onBack && (
-          <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        )}
-
-        <div className="flex gap-2">
-          {onEdit && (
-            <Button variant="outline" onClick={onEdit}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-          )}
-          {onDelete && (
-            <Button variant="destructive" onClick={onDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Field Groups */}
-      {config.fieldGroups && config.fieldGroups.length > 0 ? (
-        <div className="space-y-4">
-          {config.fieldGroups.map(group => (
-            <Card key={group.title}>
-              <CardHeader>
-                <CardTitle className="text-lg">{group.title}</CardTitle>
-                {group.description && (
-                  <p className="text-sm text-muted-foreground">{group.description}</p>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className={group.layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'space-y-4'}>
-                  {group.fields.map(field => (
-                    <div key={field.key} className="space-y-1">
-                      <div className="text-sm font-medium text-muted-foreground">
-                        {field.label}
-                      </div>
-                      <div className="text-base">
-                        {renderValue(field.key, (data as Record<string, unknown>)[field.key])}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        // Simple key-value display if no field groups defined
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              {Object.entries(data).map(([key, value]) => (
-                <div key={key} className="grid grid-cols-3 gap-4">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </div>
-                  <div className="col-span-2">
-                    {renderValue(key, value)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-
-          <CardFooter>
-            {/* You can add footer content here if needed */}
-          </CardFooter>
-        </Card>
-      )}
+    <div className={cn('w-full', spacingClasses, className)}>
+      {renderContent()}
+      {renderMetadata()}
     </div>
   )
 }

@@ -2,10 +2,11 @@
 
 import { EntityActionsConfig } from '@/components/entityManager/EntityActions/types'
 import { Permission } from '../../types/permission.types'
+import { useRouter } from 'next/navigation'
 
 export const permissionActionsConfig: EntityActionsConfig<Permission> = {
   actions: [
-  {
+    {
       id: 'view',
       label: 'View Details',
       type: 'default',
@@ -18,6 +19,10 @@ export const permissionActionsConfig: EntityActionsConfig<Permission> = {
       onExecute: (item: unknown) => {
         const permission = item as Permission
         console.log('Viewing permission details:', permission.id)
+      },
+      condition: (item, context) => {
+        const ctx = context as { pathname?: string };
+        return ctx?.pathname !== `/dashboard/accounts/permissions/${(item as Permission).id}`;
       }
     },
     {

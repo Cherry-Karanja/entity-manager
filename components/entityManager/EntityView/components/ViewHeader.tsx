@@ -7,7 +7,9 @@ import { Separator } from '@/components/ui/separator'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { BaseEntity } from '../../manager/types'
 import { cn } from '@/lib/utils'
+import { EntityActionsConfig } from '../../EntityActions/types'
 import { EntityViewConfig } from '../types'
 import { ViewActions } from './ViewActions'
 
@@ -96,8 +98,8 @@ export const ViewHeader: React.FC<ViewHeaderProps> = ({
             <ViewActions
               data={data}
               actions={config.actions}
-              entityActions={config.entityActions}
-              onActionClick={(action) => config.hooks?.onActionClick?.(action, data)}
+              entityActions={config.entityActions as EntityActionsConfig<unknown>}
+              onActionClick={(action) => config.hooks?.onActionClick?.(action, data as BaseEntity)}
               compact
             />
           )}

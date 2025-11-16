@@ -272,7 +272,7 @@ export function DashboardLayout({
           )}
 
           {/* Main Content */}
-          <main className={cn("flex-1 overflow-y-auto p-1", className)}>
+          <main className={cn("flex-1 overflow-y-auto p-3", className)}>
             {children}
           </main>
         </SidebarInset>

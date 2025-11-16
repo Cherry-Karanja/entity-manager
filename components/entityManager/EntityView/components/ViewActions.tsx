@@ -7,6 +7,7 @@ import { EntityActionsConfig } from '../../EntityActions/types'
 import { BaseEntity } from '../../manager'
 import { ViewAction } from '../types'
 import { cn } from '@/lib/utils'
+import { usePathname } from 'next/navigation'
 
 export interface ViewActionsProps {
   data: unknown
@@ -25,13 +26,15 @@ export const ViewActions: React.FC<ViewActionsProps> = ({
   className,
   compact = false,
 }) => {
+  const pathname = usePathname()
+
   // If EntityActions config is provided, use it
   if (entityActions) {
     return (
       <div className={cn('flex items-center gap-2', className)}>
         <EntityActions
           config={entityActions as any}
-          context={{ entity: data as BaseEntity }}
+          context={{ entity: data as BaseEntity, pathname }}
         />
       </div>
     )

@@ -27,6 +27,7 @@ export interface EntityActionsProps<TEntity extends BaseEntity = BaseEntity> {
     onCreate?: (data: Partial<TEntity>) => void | Promise<void>
     onUpdate?: (data: Partial<TEntity>) => void | Promise<void>
     onDelete?: (entity: TEntity) => void | Promise<void>
+    pathname?: string
   }
   maxVisibleActions?: number
 }
@@ -132,7 +133,7 @@ export const EntityActions = <TEntity extends BaseEntity = BaseEntity>({
   const dropdownActions = visibleActions.slice(visibleCount)
 
   return (
-    <div className="flex items-center gap-2 justify-start">
+    <div className={`flex items-center gap-2 justify-start ${isMobile ? 'flex-col w-full' : ''}`}>
       {visibleButtons.map(action => {
         // Map EntityAction type to Button variant
         const getVariant = (type?: string) => {
@@ -147,6 +148,7 @@ export const EntityActions = <TEntity extends BaseEntity = BaseEntity>({
 
         // Map EntityAction size to Button size
         const getSize = (size?: string) => {
+          if (isMobile) return 'sm' // Force small size on mobile
           switch (size) {
             case 'small': return 'sm'
             case 'large': return 'lg'
@@ -160,8 +162,9 @@ export const EntityActions = <TEntity extends BaseEntity = BaseEntity>({
             variant={getVariant(action.type)}
             size={getSize(action.size)}
             onClick={() => handleActionClick(action)}
+            className={isMobile ? 'w-full justify-start' : ''}
           >
-            {action.icon && <action.icon className="mr-2 h-4 w-4" />}
+            {action.icon && <action.icon className={`mr-2 h-4 w-4 ${isMobile ? 'mr-3' : ''}`} />}
             {action.label}
           </Button>
         )
@@ -170,15 +173,17 @@ export const EntityActions = <TEntity extends BaseEntity = BaseEntity>({
       {dropdownActions.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size={isMobile ? "sm" : "sm"} className={isMobile ? 'w-full justify-start' : ''}>
               <MoreHorizontal className="h-4 w-4" />
+              {isMobile && <span className="ml-2">More Actions</span>}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align={isMobile ? "start" : "end"} className={isMobile ? 'w-full' : ''}>
             {dropdownActions.map(action => (
               <DropdownMenuItem
                 key={action.id}
                 onClick={() => handleActionClick(action)}
+                className={isMobile ? 'w-full justify-start' : ''}
               >
                 {action.icon && <action.icon className="mr-2 h-4 w-4" />}
                 {action.label}
