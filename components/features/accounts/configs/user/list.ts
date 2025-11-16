@@ -110,6 +110,7 @@ export const userListConfig: EntityListConfig =  {
   pagination: {
     pageSize: 10,
   },
+  showActions:true,  
   entityActions: {
     actions: [
       ...userCustomActions.item

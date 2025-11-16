@@ -250,12 +250,12 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
   // Entity List configuration
   const listConfig = useMemo(() => ({
+    ...config.list,
     name: config.entityName,
     data: entityState.cachedData?.results || [],
     columns: config.list?.columns || [],
-    filters: [], // Filters can be added to config.filters if needed
-    actions: listActionsWithHandlers,
-    entityActions: undefined, // Use actions instead of entityActions
+    // actions: listActionsWithHandlers,
+    // entityActions: config.actions, // Use actions instead of entityActions
     bulkActions: bulkActionsWithHandlers,
     pagination: { pageSize: config.list?.pagination?.pageSize || 10 },
     paginated: true, // Enable pagination

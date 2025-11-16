@@ -4,6 +4,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -36,6 +37,7 @@ export const EntityActions = <TEntity extends BaseEntity = BaseEntity>({
   maxVisibleActions = 2,
 }: EntityActionsProps<TEntity>) => {
   const isMobile = useIsMobile()
+  const router = useRouter()
 
   // Modal state management
   const [confirmAction, setConfirmAction] = useState<EntityAction | null>(null)
@@ -89,11 +91,9 @@ export const EntityActions = <TEntity extends BaseEntity = BaseEntity>({
               ? action.href(context.entity)
               : action.href
 
-            if (action.router === 'next' && context.showView) {
-              // For Next.js navigation, use the context methods
-              if (href.startsWith('/')) {
-                window.location.href = href
-              }
+            if (action.router === 'next') {
+              // Use Next.js router for client-side navigation
+              router.push(href)
             } else if (action.router === 'window' || !action.router) {
               // Default to window navigation
               window.open(href, action.target || '_self')
