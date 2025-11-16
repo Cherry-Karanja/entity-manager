@@ -4,7 +4,7 @@ import React, { useState, useCallback, useMemo } from 'react'
 import { EntityList } from '../EntityList'
 import { EntityView } from '../EntityView'
 import { EntityForm } from '../EntityForm'
-import { EntityActions } from '../EntityActions'
+// import { EntityActions } from '../EntityActions'
 import { useEntityState, useEntityApi, useEntityActions } from './hooks'
 import { EntityConfig, BaseEntity } from './types'
 import { EntityListItem } from '../EntityList/types'
@@ -23,7 +23,7 @@ import { RealTimeIndicator } from '../utils/RealTimeIndicator'
 import OptimisticUI from '../utils/OptimisticUI'
 import { CollaborativeIndicator } from '../utils/CollaborativeIndicator'
 import { ConflictNotification } from '../utils/ConflictResolution'
-import { ConnectionState } from '@/components/connectionManager/websockets'
+// import { ConnectionState } from '@/components/connectionManager/websockets'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,8 +45,9 @@ export type { BreadcrumbItem }
 export interface EntityManagerProps<TEntity extends BaseEntity, TFormData extends Record<string, unknown>> {
   config: EntityConfig<TEntity, TFormData>
   initialMode?: 'list' | 'view' | 'create' | 'edit'
-  initialData?: TEntity
+  initialData?: Partial<TEntity>
   className?: string
+  onNavigate?: (mode: 'list' | 'view' | 'create' | 'edit', entity?: Partial<TEntity>) => void
 }
 
 // ===== MAIN COMPONENT =====
@@ -55,20 +56,23 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   config,
   initialMode = 'list',
   initialData,
-  className
+  className,
+  onNavigate
 }: EntityManagerProps<TEntity, TFormData>) {
   // ===== STATE MANAGEMENT =====
 
   // Current mode and selected entity
   const [mode, setMode] = useState<'list' | 'view' | 'create' | 'edit'>(initialMode)
-  const [selectedEntity, setSelectedEntity] = useState<TEntity | null>(initialData || null)
+  const [selectedEntity, setSelectedEntity] = useState<Partial<TEntity> | null>(
+    initialData || null
+  )
   const [formData, setFormData] = useState<Partial<TFormData> | null>(null)
 
-  // Real-time/WebSocket state
-  const [isConnected, setIsConnected] = useState(false)
-  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED)
-  const [queuedMessagesCount, setQueuedMessagesCount] = useState(0)
-  const [lastUpdate, setLastUpdate] = useState<number | undefined>(undefined)
+  // Real-time/WebSocket state - commented out as not currently used
+  // const [isConnected, setIsConnected] = useState(false)
+  // const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED)
+  // const [queuedMessagesCount, setQueuedMessagesCount] = useState(0)
+  // const [lastUpdate, setLastUpdate] = useState<number | undefined>(undefined)
 
   // Breadcrumb navigation state
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
@@ -79,16 +83,20 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
   ])
 
   // Update breadcrumbs when mode changes
-  const updateBreadcrumbs = useCallback((newMode: 'list' | 'view' | 'create' | 'edit', entity?: TEntity) => {
-    setBreadcrumbs(prev => {
+  const updateBreadcrumbs = useCallback((newMode: 'list' | 'view' | 'create' | 'edit', entity?: Partial<TEntity>) => {
+    setBreadcrumbs(() => {
       const newBreadcrumbs: BreadcrumbItem[] = [
         {
           label: `${config.entityName || config.entityNamePlural}`,
           mode: 'list',
           onClick: () => {
-            setMode('list')
-            setSelectedEntity(null)
-            setFormData(null)
+            if (onNavigate) {
+              onNavigate('list')
+            } else {
+              setMode('list')
+              setSelectedEntity(null)
+              setFormData(null)
+            }
           }
         }
       ]
@@ -99,8 +107,12 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           mode: 'view',
           entity,
           onClick: () => {
-            setMode('view')
-            setSelectedEntity(entity)
+            if (onNavigate) {
+              onNavigate('view', entity)
+            } else {
+              setMode('view')
+              setSelectedEntity(entity)
+            }
           }
         })
       } else if (newMode === 'edit' && entity) {
@@ -109,9 +121,13 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           mode: 'edit',
           entity,
           onClick: () => {
-            setMode('edit')
-            setSelectedEntity(entity)
-            setFormData(null)
+            if (onNavigate) {
+              onNavigate('edit', entity)
+            } else {
+              setMode('edit')
+              setSelectedEntity(entity)
+              setFormData(null)
+            }
           }
         })
       } else if (newMode === 'create') {
@@ -119,15 +135,19 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           label: `Create ${config.entityName}`,
           mode: 'create',
           onClick: () => {
-            setMode('create')
-            setSelectedEntity(null)
-            setFormData(null)
+            if (onNavigate) {
+              onNavigate('create')
+            } else {
+              setMode('create')
+              setSelectedEntity(null)
+              setFormData(null)
+            }
           }
         })
       }
       return newBreadcrumbs
     })
-  }, [config.entityName, config.entityNamePlural])
+  }, [config.entityName, config.entityNamePlural, onNavigate])
 
   // Initialize breadcrumbs based on initial mode
   React.useEffect(() => {
@@ -180,6 +200,29 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     }
   }, [mode,entityApi, entityState.actions])
 
+  // Load entity data when component mounts and mode is view with initialData containing only ID
+  const hasViewInitializedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (mode === 'view' && initialData && !hasViewInitializedRef.current) {
+      hasViewInitializedRef.current = true
+
+      // Check if initialData contains only an ID (not full entity data)
+      const hasOnlyId = initialData.id && Object.keys(initialData).length === 1
+
+      if (hasOnlyId) {
+        // Fetch the full entity data using the ID
+        entityApi.fetchEntityById(initialData.id).then((entity) => {
+          if (entity) {
+            setSelectedEntity(entity)
+          }
+        }).catch((error) => {
+          console.error('Failed to load entity data:', error)
+          entityState.actions.setError('Failed to load entity data')
+        })
+      }
+    }
+  }, [mode, initialData, entityApi, entityState.actions])
+
   // ===== COMPUTED VALUES =====
 
   // Stable refresh handler
@@ -189,49 +232,51 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     })
   }, [entityApi])
 
-  // Chat toggle handler
-  const handleChatToggle = useCallback(() => {
-    // Removed - chat not in interface
-  }, [])
+  // Chat toggle handler - removed as not in interface
+  // const handleChatToggle = useCallback(() => {
+  //   // Removed - chat not in interface
+  // }, [])
 
-  // List actions with handlers
-  const listActionsWithHandlers = useMemo(() => {
-    // Inject onClick handlers for entity actions
-    const actionsWithHandlers = (config.actions?.actions || []).map(action => {
-      // Create the base action without confirm (since EntityListAction.confirm has different signature)
-      const { confirm, ...actionWithoutConfirm } = action
+  // List actions with handlers - commented out as not currently used
+  // const listActionsWithHandlers = useMemo(() => {
+  //   // Inject onClick handlers for entity actions
+  //   const actionsWithHandlers = (config.actions?.actions || []).map(action => {
+  //     // Create the base action without confirm (since EntityListAction.confirm has different signature)
+  //     const actionWithoutConfirm = { ...action }
+  //     delete actionWithoutConfirm.confirm
 
-      return {
-        ...actionWithoutConfirm,
-        onClick: (item: EntityListItem) => {
-          const typedItem = item as TEntity
-          switch (action.id) {
-            case 'view':
-              setMode('view')
-              setSelectedEntity(typedItem)
-              updateBreadcrumbs('view', typedItem)
-              break
-            case 'edit':
-              setMode('edit')
-              setSelectedEntity(typedItem)
-              setFormData(null) // Clear form data to load from selected entity
-              updateBreadcrumbs('edit', typedItem)
-              break
-            case 'delete':
-              entityActions.handleOpenDeleteDialog(typedItem.id)
-              break
-            default:
-              // Call the original onExecute if it exists
-              if (action.onExecute) {
-                action.onExecute(item)
-              }
-          }
-        }
-      }
-    })
+  //     return {
+  //       ...actionWithoutConfirm,
+  //       onClick: (item: EntityListItem) => {
+  //         const typedItem = item as TEntity
+  //         switch (action.id) {
+  //           case 'view':
+  //             setMode('view')
+  //             setSelectedEntity(typedItem)
+  //             updateBreadcrumbs('view', typedItem)
+  //             break
+  //           case 'edit':
+  //             setMode('edit')
+  //             setSelectedEntity(typedItem)
+  //             setFormData(null) // Clear form data to load from selected entity
+  //             updateBreadcrumbs('edit', typedItem)
+  //             break
+  //           case 'delete':
+  //             entityActions.handleOpenDeleteDialog(typedItem.id)
+  //             break
+  //           default:
+  //             // Call the original onExecute if it exists
+  //             if (action.onExecute) {
+  //               action.onExecute(item)
+  //             }
+  //           }
+  //         }
+  //       }
+  //     })
+  //   })
 
-    return actionsWithHandlers
-  }, [config.actions?.actions, entityActions, setMode, setSelectedEntity, setFormData, updateBreadcrumbs])
+  //   return actionsWithHandlers
+  // }, [config.actions?.actions, entityActions, setMode, setSelectedEntity, setFormData, updateBreadcrumbs])
 
   // Bulk actions with handlers
   const bulkActionsWithHandlers = useMemo(() => {
@@ -287,7 +332,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
     permissions: config.permissions,
     loading: entityApi.isLoading,
     error: entityState.state.error
-  }), [config, entityState.cachedData, entityApi.isLoading, entityState.state.error, listActionsWithHandlers, bulkActionsWithHandlers, handleRefresh, updateBreadcrumbs])
+  }), [config, entityState.cachedData, entityApi.isLoading, entityState.state.error, bulkActionsWithHandlers, handleRefresh, updateBreadcrumbs])
 
   // Re-fetch list when relevant list parameters change (page, pageSize, search, sort, filters)
   React.useEffect(() => {
@@ -326,7 +371,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
               if (!isNaN(date.getTime())) {
                 transformed[field.name] = date.toISOString().split('T')[0] // yyyy-MM-dd format
               }
-            } catch (error) {
+            } catch {
               console.warn(`Failed to parse date for field ${field.name}:`, value)
             }
           }
@@ -368,7 +413,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
           // Throw error so EntityForm shows error toast
           throw new Error(result.validationErrors.nonFieldErrors.join(', ') || 'Form submission failed')
         }
-      } else if (mode === 'edit' && selectedEntity) {
+      } else if (mode === 'edit' && selectedEntity && selectedEntity.id) {
         const result = await entityApi.updateEntity(selectedEntity.id, data as Partial<TFormData>)
         if (result.success) {
           setSelectedEntity(result.data)
@@ -438,9 +483,9 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
 
       case 'view':
         return selectedEntity && config.view ? (
-          <EntityView
+          <EntityView<TEntity>
             config={config.view}
-            data={selectedEntity}
+            data={selectedEntity as TEntity}
           />
         ) : null
 
@@ -449,7 +494,7 @@ export function EntityManager<TEntity extends BaseEntity, TFormData extends Reco
         return (
           <EntityForm
             config={formConfig}
-            data={selectedEntity || undefined}
+            data={selectedEntity ? (selectedEntity as TEntity) : undefined}
             onSubmit={handleFormSubmit}
             onCancel={handleFormCancel}
           />

@@ -48,6 +48,17 @@ export const ACCOUNTS_ENDPOINTS = {
     terminateAll: (userId: string) => `${Endpoints.BaseUrl}/accounts/users/${userId}/sessions/terminate-all`
   },
 
+  // Permission endpoints
+  permissions: {
+    list: `${Endpoints.BaseUrl}/accounts/permissions`,
+    create: `${Endpoints.BaseUrl}/accounts/permissions`,
+    detail: (id: string) => `${Endpoints.BaseUrl}/accounts/permissions/${id}`,
+    update: (id: string) => `${Endpoints.BaseUrl}/accounts/permissions/${id}`,
+    delete: (id: string) => `${Endpoints.BaseUrl}/accounts/permissions/${id}`,
+    byApp: `${Endpoints.BaseUrl}/accounts/permissions/by_app`,
+    byModel: `${Endpoints.BaseUrl}/accounts/permissions/by_model`
+  },
+
   // LoginAttempt endpoints
   loginAttempts: {
     list: `${Endpoints.BaseUrl}/accounts/login-attempts`,
@@ -119,7 +130,7 @@ export const buildAccountsUrl = (path: string, params?: Record<string, any>): st
 }
 
 export const getEntityEndpoint = (
-  entity: 'users' | 'userRoles' | 'userProfiles' | 'userSessions' | 'loginAttempts' | 'userRoleHistory',
+  entity: 'users' | 'userRoles' | 'userProfiles' | 'userSessions' | 'loginAttempts' | 'userRoleHistory' | 'permissions',
   operation: 'list' | 'create' | 'detail' | 'update' | 'delete',
   id?: string
 ): string => {

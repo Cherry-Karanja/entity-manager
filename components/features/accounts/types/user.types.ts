@@ -3,12 +3,13 @@
 import { BaseEntity } from '@/components/entityManager/manager'
 import { UserRole } from './userRole.types'
 import { UserProfile } from './userProfile.types'
+import { Permission } from './permission.types'
 
 // ===== USER ENTITY =====
 
 export interface User extends BaseEntity {
   id: string // UUID
-  email: string 
+  email: string
   first_name: string
   last_name: string
   username?: string
@@ -34,12 +35,10 @@ export interface User extends BaseEntity {
   department?: string
   phone_number?: string
   profile?: UserProfile
-  permissions?: string[]
-  role_permissions?: string[]
+  permissions?: Permission[]
+  role_permissions?: Record<string, string[]>
   is_staff_member?: boolean
-}
-
-// ===== USER FORM DATA =====
+}// ===== USER FORM DATA =====
 
 export interface UserFormData {
   email: string

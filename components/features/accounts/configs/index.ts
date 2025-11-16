@@ -6,6 +6,7 @@ export { userProfileConfig as userProfileEntityConfig } from './userProfile'
 export { userRoleConfig as userRoleEntityConfig } from './userRole'
 export { userRoleHistoryConfig as userRoleHistoryEntityConfig } from './userRoleHistory'
 export { userSessionConfig as userSessionEntityConfig } from './userSession'
+export { permissionConfig as permissionEntityConfig } from './permission'
 
 // Re-export types
 export type { User as UserEntity } from '../types/user.types'
@@ -14,3 +15,4 @@ export type { UserProfile as UserProfileEntity } from '../types/userProfile.type
 export type { UserRole as UserRoleEntity } from '../types/userRole.types'
 export type { UserRoleHistory as UserRoleHistoryEntity } from '../types/userRoleHistory.types'
 export type { UserSession as UserSessionEntity } from '../types/userSession.types'
+export type { Permission as PermissionEntity } from '../types/permission.types'

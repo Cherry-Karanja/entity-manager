@@ -16,9 +16,9 @@ export const userConfig: EntityConfig<User, UserFormData> = {
     update: '/api/v1/accounts/users/{id}/',
     delete: '/api/v1/accounts/users/{id}/'
   },
-  list: userListConfig as any,
-  form: userFormConfig as any,
-  view: userViewConfig as any,
+  list: userListConfig,
+  form: userFormConfig,
+  view: userViewConfig,
   permissions: {
     create: true,
     view: true,

@@ -11,14 +11,6 @@ export type BrowserType = 'chrome' | 'firefox' | 'safari' | 'edge' | 'opera' | '
 
 // ===== SHARED INTERFACES =====
 
-export interface Permission {
-  id: number
-  name: string
-  codename: string
-  app_label: string
-  model: string
-}
-
 export interface LocationInfo {
   country?: string
   region?: string

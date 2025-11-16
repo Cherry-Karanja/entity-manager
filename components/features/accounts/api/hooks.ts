@@ -35,6 +35,7 @@ import {
   ApiResponse,
   ListResponse
 } from './types'
+import { Permission, PermissionCreateRequest, PermissionUpdateRequest } from '../types/permission.types'
 
 // ===== BASE API HOOKS =====
 
@@ -351,6 +352,57 @@ export const useBulkUserRolesOperation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ACCOUNTS_ENDPOINTS.userRoles.list] })
+    }
+  })
+}
+
+// ===== PERMISSION HOOKS =====
+
+export const usePermissions = (params?: Record<string, any>, enabled: boolean = true) => {
+  return useApi<Permission, ListResponse<Permission>>(ACCOUNTS_ENDPOINTS.permissions.list).useFetchData(params?.page || 1, params as any, enabled)
+}
+
+export const usePermission = (id: string, enabled: boolean = true) => {
+  return useApi<Permission, ApiResponse<Permission>>(ACCOUNTS_ENDPOINTS.permissions.detail(id)).useFetch({}, enabled)
+}
+
+export const useCreatePermission = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<Permission, AxiosError, PermissionCreateRequest>({
+    mutationFn: async (data: PermissionCreateRequest) => {
+      const response = await api.post<Permission>(ACCOUNTS_ENDPOINTS.permissions.create, data)
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ACCOUNTS_ENDPOINTS.permissions.list] })
+    }
+  })
+}
+
+export const useUpdatePermission = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<Permission, AxiosError, { id: string; data: PermissionUpdateRequest }>({
+    mutationFn: async ({ id, data }) => {
+      const response = await api.patch<Permission>(ACCOUNTS_ENDPOINTS.permissions.update(id), data)
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ACCOUNTS_ENDPOINTS.permissions.list] })
+    }
+  })
+}
+
+export const useDeletePermission = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, AxiosError, string>({
+    mutationFn: async (id: string) => {
+      await api.delete(ACCOUNTS_ENDPOINTS.permissions.delete(id))
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ACCOUNTS_ENDPOINTS.permissions.list] })
     }
   })
 }

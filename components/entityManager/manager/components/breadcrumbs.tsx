@@ -6,7 +6,7 @@ import { BaseEntity } from "../types"
 export interface BreadcrumbItem {
   label: string
   mode: 'list' | 'view' | 'create' | 'edit'
-  entity?: BaseEntity
+  entity?: Partial<BaseEntity>
   onClick?: () => void
 }
 

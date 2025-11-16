@@ -1,8 +1,9 @@
 ﻿import { EntityFormConfig } from '@/components/entityManager/EntityForm/types';
+import { User } from '../../types';
 
 // ===== USER FORM CONFIGURATION =====
 
-export const userFormConfig: EntityFormConfig = {
+export const userFormConfig: EntityFormConfig<User> = {
   fields: [
     {
       name: 'email',

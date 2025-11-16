@@ -1,7 +1,7 @@
 // ===== USER ROLE ENTITY TYPES =====
 
 import { BaseEntity } from '../../../entityManager/manager/types'
-import { Permission } from './common.types'
+import { Permission } from './permission.types'
 
 // ===== USER ROLE ENTITY =====
 

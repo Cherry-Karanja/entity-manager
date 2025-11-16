@@ -31,6 +31,13 @@ export const EntityView = <TEntity extends BaseEntity = BaseEntity>({
     // Check if there's a custom format function in field groups
     for (const group of config.fieldGroups || []) {
       const fieldDef = group.fields.find(f => f.key === field)
+      if (fieldDef?.component) {
+        const Component = fieldDef.component
+        return <Component field={fieldDef} value={value} data={data} />
+      }
+      if (fieldDef?.render) {
+        return fieldDef.render(value, data)
+      }
       if (fieldDef?.format) {
         return fieldDef.format(value, data)
       }

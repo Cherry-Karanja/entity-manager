@@ -1,11 +1,12 @@
 // ===== USER LIST CONFIGURATION =====
 
 import { EntityListConfig } from "@/components/entityManager/EntityList/types"
+import { User } from "../../types"
 import { userCustomActions } from "./actions"
 
 // ===== USER LIST CONFIGURATION =====
 
-export const userListConfig: EntityListConfig =  {
+export const userListConfig: EntityListConfig<User> =  {
   columns: [
     {
       id: 'id',

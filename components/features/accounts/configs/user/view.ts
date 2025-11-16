@@ -1,8 +1,11 @@
 // ===== USER VIEW CONFIGURATION =====
 
 import { EntityViewConfig } from '@/components/entityManager/EntityView/types'
+import { User } from '../../types'
+import { RolePermissionsDisplay } from './RolePermissionsDisplay'
+import { PermissionsDisplay } from './PermissionsDisplay'
 
-export const userViewConfig: EntityViewConfig = {
+export const userViewConfig: EntityViewConfig<User> = {
   mode: 'detail',
   layout: 'single',
   fieldGroups: [
@@ -29,8 +32,8 @@ export const userViewConfig: EntityViewConfig = {
       description: 'User role and permission information',
       fields: [
         { key: 'role_display', label: 'Role', type: 'badge', badge: true },
-        { key: 'permissions', label: 'Permissions', type: 'tags' },
-        { key: 'role_permissions', label: 'Role Permissions', type: 'tags' }
+        { key: 'permissions', label: 'Permissions', type: 'custom', component: PermissionsDisplay },
+        { key: 'role_permissions', label: 'Role Permissions', type: 'custom', component: RolePermissionsDisplay }
       ],
       layout: 'vertical',
       collapsible: true,

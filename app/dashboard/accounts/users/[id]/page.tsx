@@ -3,6 +3,9 @@
 import { EntityManager } from '@/components/entityManager/manager/orchestrator'
 import userEntityConfig from '@/components/features/accounts/configs/user'
 import { notFound } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { User, UserFormData } from '@/components/features/accounts/types/user.types'
 
 interface UserDetailPageProps {
   params: Promise<{
@@ -10,12 +13,35 @@ interface UserDetailPageProps {
   }>
 }
 
-export default async function UserDetailPage({ params }: UserDetailPageProps) {
-  const { id } = await params
+export default function UserDetailPage({ params }: UserDetailPageProps) {
+  const router = useRouter()
+  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null)
+
+  useEffect(() => {
+    params.then(setResolvedParams)
+  }, [params])
+
+  if (!resolvedParams) {
+    return <div>Loading...</div>
+  }
+
+  const { id } = resolvedParams
 
   // Validate ID
   if (!id || id === 'create') {
     notFound()
+  }
+
+  const handleNavigate = (mode: 'list' | 'view' | 'create' | 'edit', entity?: Partial<User>) => {
+    if (mode === 'list') {
+      router.push('/dashboard/accounts/users')
+    } else if (mode === 'view' && entity) {
+      router.push(`/dashboard/accounts/users/${entity.id}`)
+    } else if (mode === 'edit' && entity) {
+      router.push(`/dashboard/accounts/users/${entity.id}/edit`)
+    } else if (mode === 'create') {
+      router.push('/dashboard/accounts/users/create')
+    }
   }
 
   return (
@@ -29,10 +55,11 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         </div>
       </div>
 
-      <EntityManager
+      <EntityManager<User, UserFormData>
         config={userEntityConfig}
         initialMode="view"
-        initialData={{ id } as any}
+        initialData={{ id }}
+        onNavigate={handleNavigate}
       />
     </div>
   )
