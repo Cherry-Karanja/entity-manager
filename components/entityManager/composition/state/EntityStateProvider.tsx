@@ -47,8 +47,9 @@ function entityStateReducer<T extends BaseEntity>(
 ): EntityState<T> {
   switch (action.type) {
     case 'SET_ENTITIES': {
-      const entitiesById = new Map(action.payload.map(e => [e.id, e]));
-      return { ...state, entities: action.payload, entitiesById };
+      const payload = action.payload || [];
+      const entitiesById = new Map(payload.map(e => [e.id, e]));
+      return { ...state, entities: payload, entitiesById };
     }
     
     case 'ADD_ENTITY': {

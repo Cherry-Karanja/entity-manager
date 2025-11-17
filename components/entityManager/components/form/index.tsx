@@ -250,7 +250,8 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
   const renderLayout = () => {
     switch (layout) {
       case 'tabs':
-        return tabs ? <TabsLayout /> : <VerticalLayout />;
+        // Use tabs if provided, otherwise convert sections to tabs
+        return tabs ? <TabsLayout /> : sections ? <SectionsAsTabsLayout /> : <VerticalLayout />;
       
       case 'wizard':
         return steps ? <WizardLayout /> : <VerticalLayout />;
@@ -380,6 +381,58 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
             return (
               <div key={tab.id}>
                 {tabFields.map(field => (
+                  <FormFieldComponent key={String(field.name)} field={field} />
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  /**
+   * Sections as Tabs Layout
+   * Uses sections prop to render as tabs
+   */
+  const SectionsAsTabsLayout = () => {
+    if (!sections) return null;
+
+    const sortedSections = sortSections(sections);
+    const groupedFields = groupFieldsBySections(fields.filter(f => isFieldVisible(f, state.values)), sections);
+    const currentSection = state.currentTab || sortedSections[0]?.id;
+
+    return (
+      <div className="form-layout-tabs space-y-4">
+        <div className="border-b border-border">
+          <div className="flex space-x-2">
+            {sortedSections.map(section => (
+              <button
+                key={section.id}
+                type="button"
+                className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
+                  currentSection === section.id 
+                    ? 'border-primary text-primary' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setState(prev => ({ ...prev, currentTab: section.id }))}
+              >
+                {section.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="tab-content p-4">
+          {sortedSections.map(section => {
+            if (section.id !== currentSection) return null;
+            
+            const sectionFields = groupedFields.get(section.id) || [];
+            return (
+              <div key={section.id} className="space-y-4">
+                {section.description && (
+                  <p className="text-sm text-muted-foreground">{section.description}</p>
+                )}
+                {sectionFields.map(field => (
                   <FormFieldComponent key={String(field.name)} field={field} />
                 ))}
               </div>

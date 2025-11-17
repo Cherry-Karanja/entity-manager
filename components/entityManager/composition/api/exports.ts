@@ -9,6 +9,10 @@ export { EntityApiProvider, useEntityApiContext } from './EntityApiProvider';
 export { useEntityApi } from './useEntityApi';
 export { useEntityMutations } from './useEntityMutations';
 
+// HTTP Client Factory
+export { createHttpClient } from './createHttpClient';
+export type { HttpClientConfig } from './createHttpClient';
+
 // Types
 export type {
   ApiResponse,

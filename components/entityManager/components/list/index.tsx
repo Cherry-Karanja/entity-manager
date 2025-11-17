@@ -228,32 +228,59 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     }
 
     return (
-      <div className="entity-list-toolbar">
-        {(toolbar?.search || searchable) && (
-          <input
-            type="text"
-            placeholder={searchPlaceholder}
-            value={state.search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="search-input"
-          />
-        )}
-        
-        {toolbar.viewSwitcher && (
-          <div className="view-switcher">
-            {(['table', 'card', 'list', 'grid', 'compact', 'timeline', 'detailed', 'gallery'] as ListView[]).map(v => (
-              <button
-                key={v}
-                onClick={() => handleViewChange(v)}
-                className={state.view === v ? 'active' : ''}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-card border-b">
+        <div className="flex-1 w-full sm:w-auto">
+          {(toolbar?.search || searchable) && (
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                {v}
-              </button>
-            ))}
-          </div>
-        )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder={searchPlaceholder}
+                value={state.search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              />
+            </div>
+          )}
+        </div>
         
-        {toolbar.actions}
+        <div className="flex gap-2 items-center flex-wrap">
+          {toolbar.viewSwitcher && (
+            <div className="inline-flex rounded-md shadow-sm" role="group">
+              {(['table', 'card', 'list', 'grid'] as ListView[]).map(v => (
+                <button
+                  key={v}
+                  onClick={() => handleViewChange(v)}
+                  className={`px-3 py-2 text-sm font-medium border first:rounded-l-md last:rounded-r-md ${
+                    state.view === v
+                      ? 'bg-primary text-primary-foreground border-primary z-10'
+                      : 'bg-background text-muted-foreground border-input hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {toolbar.actions && (
+            <div className="flex gap-2">
+              {toolbar.actions}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -263,48 +290,58 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     if (!pagination) return null;
 
     return (
-      <nav className="entity-list-pagination" role="navigation" aria-label="Pagination">
-        <div className="page-info">
-          Page {state.page} of {totalPages} ({processedData.length} items)
+      <nav className="flex flex-col sm:flex-row gap-4 items-center justify-between px-4 py-3 bg-card border-t" role="navigation" aria-label="Pagination">
+        <div className="text-sm text-muted-foreground">
+          Showing <span className="font-medium text-foreground">{((state.page - 1) * state.pageSize) + 1}</span> to <span className="font-medium text-foreground">{Math.min(state.page * state.pageSize, processedData.length)}</span> of <span className="font-medium text-foreground">{processedData.length}</span> results
         </div>
         
-        <div className="page-controls">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => handlePageChange(1)}
             disabled={state.page === 1}
+            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
             First
           </button>
           <button
             onClick={() => handlePageChange(state.page - 1)}
             disabled={state.page === 1}
+            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
+          
+          <span className="text-sm text-muted-foreground px-2">
+            Page <span className="font-medium text-foreground">{state.page}</span> of <span className="font-medium text-foreground">{totalPages}</span>
+          </span>
+          
           <button
             onClick={() => handlePageChange(state.page + 1)}
             disabled={state.page >= totalPages}
+            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>
           <button
             onClick={() => handlePageChange(totalPages)}
             disabled={state.page >= totalPages}
+            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Last
           </button>
+          
+          <select
+            title='Items per page'
+            aria-label='Items per page'
+            value={state.pageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            className="ml-2 px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {getDefaultPageSizes().map(size => (
+              <option key={size} value={size}>{size} per page</option>
+            ))}
+          </select>
         </div>
-        
-        <select
-          title='Items per page'
-          aria-label='Items per page'
-          value={state.pageSize}
-          onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-        >
-          {getDefaultPageSizes().map(size => (
-            <option key={size} value={size}>{size} per page</option>
-          ))}
-        </select>
       </nav>
     );
   };
@@ -321,88 +358,108 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render table view
   const renderTableView = () => {
     return (
-      <table className={`entity-list-table ${bordered ? 'bordered' : ''} ${striped ? 'striped' : ''}`}>
-        <thead>
-          <tr>
-            {selectable && (
-              <th className="select-column">
-                {multiSelect && (
-                  <input
-                    title="Select all"
-                    aria-label="Select all"
-                    type="checkbox"
-                    checked={state.selectedIds.size === processedData.length && processedData.length > 0}
-                    onChange={() => state.selectedIds.size === processedData.length ? handleDeselectAll() : handleSelectAll()}
-                  />
-                )}
-              </th>
-            )}
-            {visibleColumns.map(column => (
-              <th
-                key={String(column.key)}
-                style={{ width: column.width, textAlign: column.align }}
-                className={column.sortable && sortable ? 'sortable' : ''}
-                onClick={() => column.sortable && sortable && handleSort(String(column.key))}
-              >
-                {column.label}
-                {state.sort?.field === column.key && (
-                  <span className="sort-indicator">
-                    {state.sort.direction === 'asc' ? ' ↑' : ' ↓'}
-                  </span>
-                )}
-              </th>
-            ))}
-            {(RowActions || actions) && <th className="actions-column">Actions</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedData.map((entity, index) => {
-            const isSelected = state.selectedIds.has(entity.id);
-            const rowClass = rowClassName ? rowClassName(entity, index) : '';
-            
-            return (
-              <tr
-                key={entity.id}
-                className={`${isSelected ? 'selected' : ''} ${hover ? 'hover' : ''} ${rowClass}`}
-                onClick={() => onRowClick?.(entity, index)}
-                onDoubleClick={() => onRowDoubleClick?.(entity, index)}
-              >
-                {selectable && (
-                  <td className="select-column">
+      <div className="relative overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs uppercase bg-muted/50">
+            <tr className="border-b">
+              {selectable && (
+                <th scope="col" className="px-4 py-3 w-12">
+                  {multiSelect && (
                     <input
-                      title="Select row"
+                      title="Select all"
+                      aria-label="Select all"
                       type="checkbox"
-                      checked={isSelected}
-                      onChange={() => handleSelectRow(entity.id)}
-                      onClick={(e) => e.stopPropagation()}
+                      checked={state.selectedIds.size === processedData.length && processedData.length > 0}
+                      onChange={() => state.selectedIds.size === processedData.length ? handleDeselectAll() : handleSelectAll()}
+                      className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
                     />
-                  </td>
-                )}
-                {visibleColumns.map(column => {
-                  const value = getColumnValue(entity, column.key);
-                  return (
-                    <td
-                      key={String(column.key)}
-                      style={{ textAlign: column.align }}
-                    >
-                      {renderCell({ column, entity, value, index })}
+                  )}
+                </th>
+              )}
+              {visibleColumns.map(column => (
+                <th
+                  key={String(column.key)}
+                  scope="col"
+                  style={{ width: column.width, textAlign: column.align }}
+                  className={`px-4 py-3 font-medium text-muted-foreground ${
+                    column.sortable && sortable ? 'cursor-pointer select-none hover:text-foreground' : ''
+                  }`}
+                  onClick={() => column.sortable && sortable && handleSort(String(column.key))}
+                >
+                  <div className="flex items-center gap-1">
+                    {column.label}
+                    {state.sort?.field === column.key && (
+                      <span className="text-primary">
+                        {state.sort.direction === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </th>
+              ))}
+              {(RowActions || actions) && (
+                <th scope="col" className="px-4 py-3 text-right">
+                  <span className="sr-only">Actions</span>
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedData.map((entity, index) => {
+              const isSelected = state.selectedIds.has(entity.id);
+              const rowClass = rowClassName ? rowClassName(entity, index) : '';
+              
+              return (
+                <tr
+                  key={entity.id}
+                  className={`border-b transition-colors ${
+                    isSelected ? 'bg-muted' : ''
+                  } ${hover ? 'hover:bg-muted/50' : ''} ${
+                    striped && index % 2 === 0 ? 'bg-muted/20' : ''
+                  } ${rowClass}`}
+                  onClick={() => onRowClick?.(entity, index)}
+                  onDoubleClick={() => onRowDoubleClick?.(entity, index)}
+                >
+                  {selectable && (
+                    <td className="px-4 py-3">
+                      <input
+                        title="Select row"
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleSelectRow(entity.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
+                      />
                     </td>
-                  );
-                })}
-                {(RowActions || actions) && (
-                  <td className="actions-column">
-                    {actions ? (
-                      <EntityActions actions={actions} entity={entity} mode="buttons" />
-                    ) : RowActions ? (
-                      <RowActions entity={entity} index={index} />
-                    ) : null}
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  )}
+                  {visibleColumns.map(column => {
+                    const value = getColumnValue(entity, column.key);
+                    return (
+                      <td
+                        key={String(column.key)}
+                        className="px-4 py-3"
+                        style={{ textAlign: column.align }}
+                      >
+                        {renderCell({ column, entity, value, index })}
+                      </td>
+                    );
+                  })}
+                  {(RowActions || actions) && (
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        {actions ? (
+                          <EntityActions actions={actions} entity={entity} mode="buttons" />
+                        ) : RowActions ? (
+                          <RowActions entity={entity} index={index} />
+                        ) : null}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
@@ -739,13 +796,15 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   }
 
   return (
-    <div className={`entity-list ${className}`}>
+    <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
       {renderToolbar()}
       
       {selectable && multiSelect && state.selectedIds.size > 0 && bulkActions && (
-        <div className="bulk-actions-bar">
-          <span>{state.selectedIds.size} selected</span>
-          {bulkActions}
+        <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b">
+          <span className="text-sm font-medium">{state.selectedIds.size} selected</span>
+          <div className="flex gap-2">
+            {bulkActions}
+          </div>
         </div>
       )}
       
@@ -759,7 +818,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           </div>
         </div>
       ) : (
-        <div className="entity-list-content">
+        <div>
           {renderView()}
         </div>
       )}

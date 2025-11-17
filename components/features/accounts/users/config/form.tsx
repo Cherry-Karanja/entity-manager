@@ -42,10 +42,10 @@ export const userFormSections: FieldSection[] = [
 export const userFormMode: Record<string, Partial<{ layout: FormLayout; sections: FieldSection[] }>> = {
   create: {
     layout: 'tabs',
-    sections: userFormSections.filter(s => s.id !== 'status'),
+    sections: userFormSections,
   },
   edit: {
     layout: 'tabs',
-    sections: userFormSections.filter(s => s.id !== 'authentication'),
+    sections: userFormSections,
   },
 };

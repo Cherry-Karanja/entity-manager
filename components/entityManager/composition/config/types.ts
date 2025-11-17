@@ -6,7 +6,7 @@
 
 import { BaseEntity } from '../../primitives/types';
 import { Column } from '../../components/list/types';
-import { FormField } from '../../components/form/types';
+import { FormField, FormLayout, FieldSection } from '../../components/form/types';
 import { ViewField } from '../../components/view/types';
 import { Action } from '../../components/actions/types';
 import { ExportField } from '../../components/exporter/types';
@@ -29,6 +29,12 @@ export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   
   /** Form fields */
   fields: FormField[];
+  
+  /** Form layout */
+  formLayout?: FormLayout;
+  
+  /** Form sections */
+  formSections?: FieldSection[];
   
   /** View fields */
   viewFields: ViewField[];
