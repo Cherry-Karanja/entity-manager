@@ -147,14 +147,27 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
    * Handle confirm action
    */
   const handleConfirmAction = async (action: ConfirmAction<T>) => {
-    const message = getConfirmMessage(action.confirmMessage, entity);
-    const confirmed = window.confirm(message);
-    
-    if (confirmed) {
-      await action.onConfirm(entity, context);
-    } else {
-      action.onCancel?.();
-    }
+    // Show confirmation dialog
+    setState(prev => ({
+      ...prev,
+      modalOpen: true,
+      modalContent: (
+        <ConfirmDialog
+          title={action.confirmText || action.label}
+          message={getConfirmMessage(action.confirmMessage, entity)}
+          confirmText={action.confirmText || 'Confirm'}
+          cancelText={action.cancelText || 'Cancel'}
+          onConfirm={async () => {
+            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
+            await action.onConfirm(entity, context);
+          }}
+          onCancel={() => {
+            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
+            action.onCancel?.();
+          }}
+        />
+      ),
+    }));
   };
 
   /**
@@ -338,7 +351,54 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
 }
 
 /**
- * FormModal Component
+ * Confirmation Dialog Component
+ */
+function ConfirmDialog({
+  title,
+  message,
+  confirmText,
+  cancelText,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  onConfirm: () => void | Promise<void>;
+  onCancel: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirm = async () => {
+    try {
+      setConfirming(true);
+      await onConfirm();
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>{title}</h2>
+        <p>{message}</p>
+        <div className="modal-actions">
+          <button onClick={handleConfirm} disabled={confirming}>
+            {confirming ? 'Processing...' : confirmText}
+          </button>
+          <button onClick={onCancel} disabled={confirming}>
+            {cancelText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Form Modal Component
  */
 function FormModal({
   title,

@@ -15,10 +15,11 @@ import {
   EntityStateProvider,
   useEntityState,
   EntityConfigBuilder,
-  type EntityConfig
+  type EntityConfig,
+  type BaseEntity
 } from '@/components/new/entityManager';
 
-interface User {
+interface User extends BaseEntity {
   id: string;
   name: string;
   email: string;
@@ -27,13 +28,15 @@ interface User {
   department: string;
   avatar?: string;
   createdAt: Date;
+  [key: string]: unknown;
 }
 
 // 1. Custom Split Layout (List + Detail Side-by-Side)
 export function SplitLayoutOrchestrator({ config }: { config: EntityConfig<User> }) {
-  const { entities, selectedIds, setSelectedIds } = useEntityState<User>('users');
+  const { state, select, deselect } = useEntityState<User>();
+  const { entities, selectedIds } = state;
   const selectedUser = selectedIds.size === 1 
-    ? entities.find(e => e.id === Array.from(selectedIds)[0])
+    ? entities.find((e: User) => e.id === Array.from(selectedIds)[0])
     : null;
 
   return (
@@ -44,13 +47,18 @@ export function SplitLayoutOrchestrator({ config }: { config: EntityConfig<User>
           <h2 className="text-xl font-bold mb-4">Users</h2>
           <EntityList
             data={entities}
-            columns={config.columns}
+            columns={config.fields.map((f: any) => ({
+              key: f.name,
+              header: f.label,
+              label: f.label,
+              sortable: true
+            }))}
             view="table"
             searchable
             sortable
             selectable
             selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
+            onSelectionChange={select as any}
           />
         </div>
       </div>
@@ -64,14 +72,17 @@ export function SplitLayoutOrchestrator({ config }: { config: EntityConfig<User>
                 <h2 className="text-xl font-bold">Details</h2>
                 <EntityActions
                   entity={selectedUser}
-                  actions={config.actions}
-                  layout="horizontal"
+                  actions={config.actions || []}
                 />
               </div>
               <EntityView
-                data={selectedUser}
-                fields={config.viewFields || config.formFields}
-                view="detail"
+                entity={selectedUser}
+                fields={config.fields.map((f: any) => ({
+                  key: f.name,
+                  label: f.label,
+                  type: f.type
+                }))}
+                mode="detail"
               />
             </>
           ) : (
@@ -87,10 +98,11 @@ export function SplitLayoutOrchestrator({ config }: { config: EntityConfig<User>
 
 // 2. Custom Tab Layout (List, Form, Detail as Tabs)
 export function TabLayoutOrchestrator({ config }: { config: EntityConfig<User> }) {
-  const [activeTab, setActiveTab] = useState<'list' | 'form' | 'detail'>('list');
-  const { entities, selectedIds } = useEntityState<User>('users');
+  const [activeTab, setActiveTab] = useState<'list' | 'form' | 'view' | 'detail'>('list');
+  const { state } = useEntityState<User>();
+  const { entities, selectedIds } = state;
   const selectedUser = selectedIds.size === 1 
-    ? entities.find(e => e.id === Array.from(selectedIds)[0])
+    ? entities.find((e: User) => e.id === Array.from(selectedIds)[0])
     : null;
 
   return (
@@ -150,7 +162,7 @@ export function TabLayoutOrchestrator({ config }: { config: EntityConfig<User> }
           <div className="max-w-2xl mx-auto">
             <h2 className="text-xl font-bold mb-4">Create New User</h2>
             <EntityForm
-              fields={config.formFields}
+              fields={config.fields}
               onSubmit={async (data) => {
                 console.log('Create:', data);
                 setActiveTab('list');
@@ -163,10 +175,13 @@ export function TabLayoutOrchestrator({ config }: { config: EntityConfig<User> }
         {activeTab === 'detail' && selectedUser && (
           <div className="max-w-2xl mx-auto">
             <EntityView
-              data={selectedUser}
-              fields={config.viewFields || config.formFields}
-              view="detail"
-              actions={config.actions}
+              entity={selectedUser}
+              fields={config.fields.map((f: any) => ({
+                key: f.name,
+                label: f.label,
+                type: f.type
+              }))}
+              mode="detail"
             />
           </div>
         )}
@@ -179,7 +194,8 @@ export function TabLayoutOrchestrator({ config }: { config: EntityConfig<User> }
 export function ModalLayoutOrchestrator({ config }: { config: EntityConfig<User> }) {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const { entities } = useEntityState<User>('users');
+  const { state } = useEntityState<User>();
+  const { entities } = state;
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -210,16 +226,7 @@ export function ModalLayoutOrchestrator({ config }: { config: EntityConfig<User>
         rowActions={({ entity }) => (
           <EntityActions
             entity={entity}
-            actions={[
-              {
-                key: 'edit',
-                label: 'Edit',
-                type: 'immediate',
-                onClick: handleEdit
-              },
-              ...config.actions
-            ]}
-            layout="horizontal"
+            actions={config.actions || []}
           />
         )}
       />
@@ -232,14 +239,13 @@ export function ModalLayoutOrchestrator({ config }: { config: EntityConfig<User>
               {editingUser ? 'Edit User' : 'Create User'}
             </h2>
             <EntityForm
-              fields={config.formFields}
-              initialData={editingUser || undefined}
+              fields={config.fields}
+              entity={editingUser || undefined}
               onSubmit={async (data) => {
                 console.log('Submit:', data);
                 setShowForm(false);
               }}
               onCancel={() => setShowForm(false)}
-              submitLabel={editingUser ? 'Update' : 'Create'}
             />
           </div>
         </div>
@@ -250,13 +256,14 @@ export function ModalLayoutOrchestrator({ config }: { config: EntityConfig<User>
 
 // 4. Custom Dashboard Layout (Cards + Stats)
 export function DashboardLayoutOrchestrator({ config }: { config: EntityConfig<User> }) {
-  const { entities } = useEntityState<User>('users');
+  const { state } = useEntityState<User>();
+  const { entities } = state;
 
   const stats = {
     total: entities.length,
-    active: entities.filter(u => u.status === 'active').length,
-    admins: entities.filter(u => u.role === 'admin').length,
-    pending: entities.filter(u => u.status === 'pending').length
+    active: entities.filter((u: User) => u.status === 'active').length,
+    admins: entities.filter((u: User) => u.role === 'admin').length,
+    pending: entities.filter((u: User) => u.status === 'pending').length
   };
 
   return (
@@ -299,12 +306,11 @@ export function DashboardLayoutOrchestrator({ config }: { config: EntityConfig<U
         <h2 className="text-xl font-bold mb-4">Export Data</h2>
         <EntityExporter
           data={entities}
-          fields={config.columns.map(c => ({
-            key: c.key,
-            label: c.label,
-            type: c.type
+          fields={config.fields.map(f => ({
+            key: f.key,
+            label: f.label,
+            type: f.type
           }))}
-          formats={['csv', 'xlsx', 'json']}
           filename="users"
         />
       </div>
@@ -320,20 +326,20 @@ export function WizardLayoutOrchestrator({ config }: { config: EntityConfig<User
   const steps = [
     {
       title: 'Basic Info',
-      fields: config.formFields.filter(f => 
-        ['name', 'email'].includes(f.key)
+      fields: config.fields.filter((f: any) =>
+        ['name', 'email'].includes(f.name)
       )
     },
     {
-      title: 'Role & Department',
-      fields: config.formFields.filter(f => 
-        ['role', 'department'].includes(f.key)
+      title: 'Role & Access',
+      fields: config.fields.filter((f: any) =>
+        ['role', 'department'].includes(f.name)
       )
     },
     {
-      title: 'Additional Info',
-      fields: config.formFields.filter(f => 
-        ['avatar', 'status'].includes(f.key)
+      title: 'Additional Details',
+      fields: config.fields.filter((f: any) =>
+        ['status', 'avatar'].includes(f.name)
       )
     }
   ];
@@ -378,11 +384,10 @@ export function WizardLayoutOrchestrator({ config }: { config: EntityConfig<User
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-xl font-bold mb-4">{steps[step - 1].title}</h2>
         <EntityForm
-          fields={steps[step - 1].fields}
+          fields={steps[step - 1].fields as any}
           initialData={formData}
           onSubmit={handleNext}
           onCancel={step > 1 ? () => setStep(step - 1) : undefined}
-          submitLabel={step === steps.length ? 'Finish' : 'Next'}
           cancelLabel={step > 1 ? 'Back' : undefined}
         />
       </div>
@@ -392,7 +397,8 @@ export function WizardLayoutOrchestrator({ config }: { config: EntityConfig<User
 
 // 6. Custom Kanban Layout (Status-Based Columns)
 export function KanbanLayoutOrchestrator({ config }: { config: EntityConfig<User> }) {
-  const { entities } = useEntityState<User>('users');
+  const { state } = useEntityState<User>();
+  const { entities } = state;
 
   const columns = [
     { status: 'pending', title: 'Pending', color: 'yellow' },
@@ -403,7 +409,7 @@ export function KanbanLayoutOrchestrator({ config }: { config: EntityConfig<User
   return (
     <div className="flex gap-4 h-screen overflow-auto p-4">
       {columns.map(column => {
-        const columnUsers = entities.filter(u => u.status === column.status);
+        const columnUsers = entities.filter((u: User) => u.status === column.status);
         
         return (
           <div key={column.status} className="flex-1 min-w-[300px]">
@@ -414,7 +420,7 @@ export function KanbanLayoutOrchestrator({ config }: { config: EntityConfig<User
                 </h3>
               </div>
               <div className="flex-1 overflow-auto p-4 space-y-3">
-                {columnUsers.map(user => (
+                {columnUsers.map((user: User) => (
                   <div key={user.id} className="bg-gray-50 p-4 rounded border">
                     {user.avatar && (
                       <img 
@@ -429,9 +435,7 @@ export function KanbanLayoutOrchestrator({ config }: { config: EntityConfig<User
                     <div className="mt-3">
                       <EntityActions
                         entity={user}
-                        actions={config.actions}
-                        layout="horizontal"
-                        size="small"
+                        actions={config.actions || []}
                       />
                     </div>
                   </div>
@@ -445,9 +449,25 @@ export function KanbanLayoutOrchestrator({ config }: { config: EntityConfig<User
   );
 }
 
-// Example usage
-const userConfig = new EntityConfigBuilder<User>('user')
-  .setLabel('User', 'Users')
+// Example usage - EntityConfigBuilder
+// NOTE: This example uses an old API and needs to be updated
+/*
+const userConfig = new EntityConfigBuilder<User>({
+  name: 'user',
+  display: {
+    singular: 'User',
+    plural: 'Users'
+  },
+  endpoints: {
+    list: '/api/users',
+    create: '/api/users',
+    read: '/api/users/:id',
+    update: '/api/users/:id',
+    delete: '/api/users/:id'
+  },
+  fields: [],
+  actions: []
+})
   .addColumn('name', 'Name', { sortable: true })
   .addColumn('email', 'Email', { sortable: true })
   .addColumn('role', 'Role', { filterable: true })
@@ -482,6 +502,52 @@ const userConfig = new EntityConfigBuilder<User>('user')
     onClick: (user) => console.log('Delete:', user)
   })
   .build();
+*/
+
+// Simple user config for demo
+const userConfig: EntityConfig<User> = {
+  name: 'user',
+  display: {
+    singular: 'User',
+    plural: 'Users'
+  },
+  endpoints: {
+    list: '/api/users',
+    create: '/api/users',
+    read: '/api/users/:id',
+    update: '/api/users/:id',
+    delete: '/api/users/:id'
+  },
+  fields: [
+    { key: 'name', type: 'text', label: 'Name', required: true },
+    { key: 'email', type: 'text', label: 'Email', required: true },
+    { key: 'role', type: 'select', label: 'Role', options: [
+      { label: 'Admin', value: 'admin' },
+      { label: 'User', value: 'user' }
+    ]},
+    { key: 'department', type: 'select', label: 'Department', options: [
+      { label: 'Engineering', value: 'engineering' },
+      { label: 'Sales', value: 'sales' }
+    ]},
+    { key: 'status', type: 'select', label: 'Status', options: [
+      { label: 'Active', value: 'active' },
+      { label: 'Inactive', value: 'inactive' }
+    ]}
+  ],
+  actions: [
+    {
+      id: 'edit',
+      label: 'Edit',
+      onClick: (user: User) => console.log('Edit:', user)
+    },
+    {
+      id: 'delete',
+      label: 'Delete',
+      variant: 'danger',
+      onClick: (user: User) => console.log('Delete:', user)
+    }
+  ]
+};
 
 // Main demo page
 export default function CustomLayoutExamples() {

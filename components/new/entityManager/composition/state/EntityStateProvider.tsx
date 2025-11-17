@@ -34,7 +34,7 @@ function createInitialState<T extends BaseEntity>(
     filters: props.initialFilters || [],
     search: '',
     loading: false,
-    error: null
+    error: undefined
   };
 }
 
@@ -128,13 +128,13 @@ function entityStateReducer<T extends BaseEntity>(
       return { ...state, loading: action.payload };
     
     case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
+      return { ...state, error: action.payload || undefined, loading: false };
     
     case 'SET_TOTAL':
       return { ...state, total: action.payload };
     
     case 'RESET':
-      return createInitialState({ initialEntities: state.entities });
+      return createInitialState({ initialEntities: state.entities, children: null } as any);
     
     default:
       return state;

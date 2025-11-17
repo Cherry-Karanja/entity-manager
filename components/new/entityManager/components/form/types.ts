@@ -273,6 +273,9 @@ export interface EntityFormProps<T extends BaseEntity = BaseEntity> {
   
   /** Validate on blur */
   validateOnBlur?: boolean;
+  
+  /** Reset form after successful submission */
+  resetOnSubmit?: boolean;
 }
 
 /**
@@ -293,6 +296,9 @@ export interface FormState<T extends BaseEntity = BaseEntity> {
   
   /** Submitting state */
   submitting: boolean;
+  
+  /** Submission error */
+  submitError?: string;
   
   /** Current wizard step */
   currentStep?: number;
@@ -316,6 +322,7 @@ export interface FieldRenderProps<T extends BaseEntity = BaseEntity> {
   onBlur: () => void;
   disabled: boolean;
   mode: FormMode;
+  validateOnChange?: boolean;
 }
 
 /**

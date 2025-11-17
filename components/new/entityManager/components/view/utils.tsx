@@ -4,6 +4,7 @@
  * Pure functions for view operations.
  */
 
+import React from 'react';
 import { BaseEntity } from '../../primitives/types';
 import { formatDate, formatCurrency, formatBoolean } from '../../primitives/utils';
 import { ViewField, FieldGroup } from './types';

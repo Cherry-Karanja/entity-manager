@@ -304,7 +304,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
     this.config.exportFields = this.config.columns!.map(col => ({
       key: String(col.key),
       label: col.label,
-      formatter: col.formatter
+      formatter: col.formatter as any
     }));
     return this;
   }
@@ -313,13 +313,17 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Auto-generate view fields from columns
    */
   autoViewFields(): this {
-    this.config.viewFields = this.config.columns!.map(col => ({
-      key: String(col.key),
-      label: col.label,
-      type: col.type,
-      visible: col.visible,
-      order: col.order
-    }));
+    this.config.viewFields = this.config.columns!.map(col => {
+      // Map select type to text for view fields
+      const viewType = col.type === 'select' ? 'text' : col.type;
+      return {
+        key: String(col.key),
+        label: col.label,
+        type: viewType as any,
+        visible: col.visible,
+        order: col.order
+      };
+    });
     return this;
   }
 

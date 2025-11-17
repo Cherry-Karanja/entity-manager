@@ -90,10 +90,7 @@ export { useFilters } from './primitives/hooks/useFilters';
 export { usePagination } from './primitives/hooks/usePagination';
 export { useSelection } from './primitives/hooks/useSelection';
 export { useSort } from './primitives/hooks/useSort';
-export { useValidation } from './primitives/hooks/useValidation';
 
 // Utilities
 export * from './primitives/utils/validation';
 export * from './primitives/utils/formatting';
-export * from './primitives/utils/array';
-export * from './primitives/utils/object';

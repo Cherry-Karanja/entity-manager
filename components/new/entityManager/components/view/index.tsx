@@ -146,7 +146,7 @@ export function EntityView<T extends BaseEntity = BaseEntity>({
           className={className}
           onToggleGroup={toggleGroup}
           onCopy={handleCopy}
-          onTabChange={(tabId) => setState(prev => ({ ...prev, activeTab: tabId }))}
+          onTabChange={(tabId: string) => setState(prev => ({ ...prev, activeTab: tabId }))}
           copiedField={state.copiedField}
         />
       );
@@ -189,13 +189,13 @@ function DetailView<T extends BaseEntity>({
         {groupedFields.get(null) && (
           <div className="field-list">
             {groupedFields.get(null)!.map(field => (
-              <FieldRow key={String(field.key)} field={field} entity={entity} onCopy={onCopy} copiedField={copiedField} />
+              <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
             ))}
           </div>
         )}
 
         {/* Grouped fields */}
-        {sortedGroups.map(group => {
+        {sortedGroups.map((group: any) => {
           const groupFields = groupedFields.get(group.id);
           if (!groupFields || groupFields.length === 0) return null;
 
@@ -214,7 +214,7 @@ function DetailView<T extends BaseEntity>({
               {!isCollapsed && (
                 <div className="field-list">
                   {groupFields.map(field => (
-                    <FieldRow key={String(field.key)} field={field} entity={entity} onCopy={onCopy} copiedField={copiedField} />
+                    <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
                   ))}
                 </div>
               )}
@@ -244,7 +244,7 @@ function DetailView<T extends BaseEntity>({
       {tabs && tabs.length > 0 && (
         <div className="view-tabs">
           <div className="tab-headers">
-            {tabs.map(tab => (
+            {tabs.map((tab: any) => (
               <button
                 key={tab.id}
                 className={`tab-header ${state.activeTab === tab.id ? 'active' : ''}`}
@@ -257,7 +257,7 @@ function DetailView<T extends BaseEntity>({
             ))}
           </div>
           <div className="tab-content">
-            {tabs.map(tab => {
+            {tabs.map((tab: any) => {
               if (tab.id !== state.activeTab) return null;
               
               const TabContent = tab.content as any;
@@ -292,7 +292,7 @@ function FieldRow<T extends BaseEntity>({ field, entity, onCopy, copiedField }: 
         {field.copyable && (
           <button
             className="copy-button"
-            onClick={() => onCopy(field.key, value)}
+            onClick={() => onCopy?.(field.key, value)}
             title="Copy to clipboard"
           >
             {copiedField === String(field.key) ? '✓ Copied' : '📋'}

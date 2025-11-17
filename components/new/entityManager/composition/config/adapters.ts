@@ -63,13 +63,13 @@ export class JsonSchemaAdapter implements ConfigAdapter<any> {
     return config;
   }
 
-  private mapType(jsonType: string): string {
-    const typeMap: Record<string, string> = {
+  private mapType(jsonType: string): 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom' | undefined {
+    const typeMap: Record<string, 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom'> = {
       'string': 'text',
       'number': 'number',
       'integer': 'number',
-      'boolean': 'checkbox',
-      'array': 'multiselect',
+      'boolean': 'boolean',
+      'array': 'custom',
       'object': 'json'
     };
     return typeMap[jsonType] || 'text';
@@ -158,13 +158,13 @@ export class TypeScriptInterfaceAdapter implements ConfigAdapter<any> {
       .trim();
   }
 
-  private mapTsType(tsType: string): string {
-    const typeMap: Record<string, string> = {
+  private mapTsType(tsType: string): 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom' | undefined {
+    const typeMap: Record<string, 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom'> = {
       'string': 'text',
       'number': 'number',
-      'boolean': 'checkbox',
+      'boolean': 'boolean',
       'Date': 'date',
-      'Array': 'multiselect'
+      'Array': 'custom'
     };
     return typeMap[tsType] || 'text';
   }
@@ -224,11 +224,11 @@ export class DatabaseSchemaAdapter implements ConfigAdapter<any> {
       .replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  private mapDbType(dbType: string): string {
+  private mapDbType(dbType: string): 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom' | undefined {
     const type = dbType.toLowerCase();
     if (type.includes('varchar') || type.includes('text')) return 'text';
     if (type.includes('int') || type.includes('decimal') || type.includes('float')) return 'number';
-    if (type.includes('bool')) return 'checkbox';
+    if (type.includes('bool')) return 'boolean';
     if (type.includes('date') || type.includes('time')) return 'date';
     if (type.includes('json')) return 'json';
     return 'text';

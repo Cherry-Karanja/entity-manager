@@ -72,6 +72,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
   cancelText = 'Cancel',
   showCancel = true,
   showReset = false,
+  resetOnSubmit = false,
   loading = false,
   disabled = false,
   className = '',
@@ -84,6 +85,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     touched: new Set<string>(),
     dirty: new Set<string>(),
     submitting: false,
+    submitError: undefined,
     currentStep: 0,
     currentTab: tabs?.[0]?.id,
     collapsedSections: new Set<string>(),
@@ -100,18 +102,28 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
       onChange?.(newValues);
 
+      // Validate on change if enabled
+      if (validateOnChange) {
+        const field = fields.find(f => String(f.name) === fieldName);
+        if (field) {
+          validateField(value, field, newValues as Record<string, unknown>).then(error => {
+            setState(s => ({
+              ...s,
+              errors: error 
+                ? { ...s.errors, [fieldName]: error }
+                : Object.fromEntries(Object.entries(s.errors).filter(([k]) => k !== fieldName)),
+            }));
+          });
+        }
+      }
+
       return {
         ...prev,
         values: newValues,
         dirty: newDirty,
       };
     });
-
-    // Validate on change if enabled
-    if (validateOnChange) {
-      validateFieldAsync(fieldName);
-    }
-  }, [onChange, validateOnChange]);
+  }, [onChange, validateOnChange, fields]);
 
   /**
    * Set field touched
@@ -120,32 +132,26 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     setState(prev => {
       const newTouched = new Set(prev.touched);
       newTouched.add(fieldName);
+
+      // Validate on blur if enabled
+      if (validateOnBlur) {
+        const field = fields.find(f => String(f.name) === fieldName);
+        if (field) {
+          const value = prev.values[field.name as keyof T];
+          validateField(value, field, prev.values as Record<string, unknown>).then(error => {
+            setState(s => ({
+              ...s,
+              errors: error 
+                ? { ...s.errors, [fieldName]: error }
+                : Object.fromEntries(Object.entries(s.errors).filter(([k]) => k !== fieldName)),
+            }));
+          });
+        }
+      }
+
       return { ...prev, touched: newTouched };
     });
-
-    // Validate on blur if enabled
-    if (validateOnBlur) {
-      validateFieldAsync(fieldName);
-    }
-  }, [validateOnBlur]);
-
-  /**
-   * Validate single field
-   */
-  const validateFieldAsync = useCallback(async (fieldName: string) => {
-    const field = fields.find(f => String(f.name) === fieldName);
-    if (!field) return;
-
-    const value = state.values[field.name as keyof T];
-    const error = await validateField(value, field, state.values as Record<string, unknown>);
-
-    setState(prev => ({
-      ...prev,
-      errors: error 
-        ? { ...prev.errors, [fieldName]: error }
-        : Object.fromEntries(Object.entries(prev.errors).filter(([k]) => k !== fieldName)),
-    }));
-  }, [fields, state.values]);
+  }, [validateOnBlur, fields]);
 
   /**
    * Validate entire form
@@ -172,7 +178,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
     // Mark all fields as touched
     const allTouched = new Set(fields.map(f => String(f.name)));
-    setState(prev => ({ ...prev, touched: allTouched }));
+    setState(prev => ({ ...prev, touched: allTouched, submitError: undefined }));
 
     // Validate form
     const isValid = await validateFormAsync();
@@ -185,12 +191,31 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       const transformedValues = transformValues(state.values, fields);
       
       await onSubmit(transformedValues);
+      
+      // Reset form if resetOnSubmit is true
+      if (resetOnSubmit) {
+        const resetValues = getInitialValues(fields, undefined, initialValues);
+        setState(prev => ({
+          ...prev,
+          values: resetValues,
+          errors: {},
+          touched: new Set(),
+          dirty: new Set(),
+          submitting: false,
+          submitError: undefined,
+        }));
+      } else {
+        setState(prev => ({ ...prev, submitting: false }));
+      }
     } catch (error) {
       console.error('Form submission error:', error);
-    } finally {
-      setState(prev => ({ ...prev, submitting: false }));
+      setState(prev => ({ 
+        ...prev, 
+        submitting: false,
+        submitError: error instanceof Error ? error.message : 'An error occurred during submission'
+      }));
     }
-  }, [fields, state.values, validateFormAsync, onSubmit]);
+  }, [fields, state.values, validateFormAsync, onSubmit, resetOnSubmit, initialValues]);
 
   /**
    * Handle reset
@@ -449,6 +474,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       onBlur: () => setFieldTouched(fieldName),
       disabled: fieldDisabled,
       mode,
+      validateOnChange,
     };
 
     // Custom renderer
@@ -469,10 +495,18 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     return <DefaultFieldRenderer {...fieldProps} />;
   };
 
-  const isSubmitDisabled = disabled || loading || state.submitting || hasErrors(state.errors);
+  /**
+   * Render
+   */
+  const isSubmitDisabled = disabled || loading || state.submitting;
 
   return (
-    <form onSubmit={handleSubmit} className={`entity-form ${className} layout-${layout} mode-${mode}`}>
+    <form onSubmit={handleSubmit} className={`entity-form ${className} layout-${layout} mode-${mode}`} noValidate>
+      {state.submitError && (
+        <div className="form-error" role="alert">
+          {state.submitError}
+        </div>
+      )}
       {renderLayout()}
 
       <div className="form-actions">
@@ -507,8 +541,9 @@ function DefaultFieldRenderer<T extends BaseEntity>({
   onChange,
   onBlur,
   disabled,
+  validateOnChange,
 }: FieldRenderProps<T>) {
-  const [options, setOptions] = useState<any[]>([]);
+  const [options, setOptions] = useState<Array<{ label: string; value: string | number | boolean; disabled?: boolean }>>([]);
 
   useEffect(() => {
     if (field.type === 'select' || field.type === 'multiselect' || field.type === 'radio') {
@@ -516,11 +551,17 @@ function DefaultFieldRenderer<T extends BaseEntity>({
     }
   }, [field]);
 
-  const showError = touched && error;
+  // Show errors immediately if validateOnChange is true, otherwise wait for touch
+  const showError = validateOnChange ? !!error : (touched && !!error);
+  const errorId = `${String(field.name)}-error`;
 
   const commonProps = {
+    id: String(field.name),
     disabled,
     onBlur,
+    required: field.required,
+    'aria-invalid': showError ? ('true' as const) : undefined,
+    'aria-describedby': showError ? errorId : undefined,
   };
 
   const renderInput = () => {
@@ -591,11 +632,11 @@ function DefaultFieldRenderer<T extends BaseEntity>({
     <div className={`form-field ${showError ? 'error' : ''}`}>
       <label htmlFor={String(field.name)}>
         {field.label}
-        {field.required && <span className="required">*</span>}
+        {field.required && <span className="required" aria-hidden="true">*</span>}
       </label>
       {renderInput()}
       {field.helpText && <div className="field-help">{field.helpText}</div>}
-      {showError && <div className="field-error">{error}</div>}
+      {showError && <div className="field-error" id={errorId}>{error}</div>}
     </div>
   );
 }

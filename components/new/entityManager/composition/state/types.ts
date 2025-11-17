@@ -38,7 +38,7 @@ export interface EntityState<T extends BaseEntity = BaseEntity> {
   loading: boolean;
   
   /** Error state */
-  error: Error | string | null;
+  error: Error | string | undefined;
   
   /** Total count (server-side) */
   total?: number;

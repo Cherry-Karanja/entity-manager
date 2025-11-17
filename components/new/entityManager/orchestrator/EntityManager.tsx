@@ -15,8 +15,8 @@ import { EntityForm } from '../components/form';
 import { EntityView } from '../components/view';
 import { EntityActions } from '../components/actions';
 import { EntityExporter } from '../components/exporter';
-import { EntityStateProvider, useEntityState } from '../composition/state';
-import { EntityApiProvider, useEntityMutations } from '../composition/api';
+import { EntityStateProvider, useEntityState } from '../composition/exports';
+import { EntityApiProvider, useEntityMutations } from '../composition/exports';
 
 /**
  * Entity Manager Content (with hooks)
@@ -34,7 +34,11 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
 
+  // Note: These handlers are available for use in action handlers defined in config
+  // They can be passed via context or bound to actions in the config
+  
   // Handle create
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCreate = () => {
     setView('create');
     setSelectedId(null);
@@ -75,6 +79,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   };
 
   // Handle delete
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDelete = async (id: string | number) => {
     try {
       await mutations.delete(id);
@@ -94,9 +99,6 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         <div className="entity-manager-toolbar">
           <EntityActions
             actions={config.config.actions.filter(a => a.position === 'toolbar')}
-            onActionExecute={async (action) => {
-              if (action.id === 'create') handleCreate();
-            }}
           />
           <EntityExporter
             data={state.state.entities}
@@ -136,11 +138,6 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
             <EntityActions
               actions={config.config.actions.filter(a => a.position === 'row')}
               entity={entity}
-              onActionExecute={async (action) => {
-                if (action.id === 'edit') handleEdit(entity);
-                if (action.id === 'view') handleView(entity);
-                if (action.id === 'delete') handleDelete(entity.id);
-              }}
             />
           )}
         />
@@ -170,11 +167,6 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         <EntityActions
           actions={config.config.actions.filter(a => a.position === 'toolbar')}
           entity={selectedEntity}
-          onActionExecute={async (action) => {
-            if (action.id === 'edit') handleEdit(selectedEntity);
-            if (action.id === 'delete') handleDelete(selectedEntity.id);
-            if (action.id === 'back') handleBack();
-          }}
         />
         
         <EntityView

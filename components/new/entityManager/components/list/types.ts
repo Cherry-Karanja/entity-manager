@@ -116,7 +116,7 @@ export interface EntityListProps<T extends BaseEntity = BaseEntity> {
   selectedIds?: Set<string | number>;
   
   /** Selection change handler */
-  onSelectionChange?: (selectedIds: Set<string | number>) => void;
+  onSelectionChange?: (selectedIds: Set<string | number>, selectedEntities: T[]) => void;
   
   /** Row click handler */
   onRowClick?: (entity: T, index: number) => void;
@@ -177,6 +177,9 @@ export interface EntityListProps<T extends BaseEntity = BaseEntity> {
   
   /** Row actions */
   rowActions?: React.ComponentType<{ entity: T; index: number }>;
+  
+  /** Actions (alternative to rowActions) */
+  actions?: import('../actions/types').Action<T>[];
   
   /** Bulk actions */
   bulkActions?: React.ReactNode;

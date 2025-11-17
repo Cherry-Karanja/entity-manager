@@ -91,7 +91,7 @@ export class FieldBuilder {
   /**
    * Set email validation
    */
-  email(message?: string): this {
+  email(message = 'Please enter a valid email address'): this {
     this.addValidation({ type: 'email', message });
     return this;
   }
@@ -99,7 +99,7 @@ export class FieldBuilder {
   /**
    * Set URL validation
    */
-  url(message?: string): this {
+  url(message = 'Please enter a valid URL'): this {
     this.addValidation({ type: 'url', message });
     return this;
   }
@@ -107,7 +107,7 @@ export class FieldBuilder {
   /**
    * Set min length validation
    */
-  minLength(value: number, message?: string): this {
+  minLength(value: number, message = `Minimum length is ${value}`): this {
     this.addValidation({ type: 'minLength', value, message });
     return this;
   }
@@ -115,7 +115,7 @@ export class FieldBuilder {
   /**
    * Set max length validation
    */
-  maxLength(value: number, message?: string): this {
+  maxLength(value: number, message = `Maximum length is ${value}`): this {
     this.addValidation({ type: 'maxLength', value, message });
     return this;
   }
@@ -123,7 +123,7 @@ export class FieldBuilder {
   /**
    * Set min value validation
    */
-  min(value: number, message?: string): this {
+  min(value: number, message = `Minimum value is ${value}`): this {
     this.addValidation({ type: 'min', value, message });
     return this;
   }
@@ -131,7 +131,7 @@ export class FieldBuilder {
   /**
    * Set max value validation
    */
-  max(value: number, message?: string): this {
+  max(value: number, message = `Maximum value is ${value}`): this {
     this.addValidation({ type: 'max', value, message });
     return this;
   }
@@ -139,7 +139,7 @@ export class FieldBuilder {
   /**
    * Set pattern validation
    */
-  pattern(value: string | RegExp, message?: string): this {
+  pattern(value: string | RegExp, message = 'Please match the required pattern'): this {
     this.addValidation({ type: 'pattern', value, message });
     return this;
   }
@@ -147,8 +147,8 @@ export class FieldBuilder {
   /**
    * Set custom validation
    */
-  custom(validate: (value: unknown, values: Record<string, unknown>) => string | null, message?: string): this {
-    this.addValidation({ type: 'custom', validate, message });
+  custom(validator: (value: unknown, values: Record<string, unknown>) => string | null, message = 'Validation failed'): this {
+    this.addValidation({ type: 'custom', validator: validator as any, message });
     return this;
   }
 
@@ -179,8 +179,8 @@ export class FieldBuilder {
   /**
    * Set select options
    */
-  options(options: Array<{ label: string; value: unknown }>): this {
-    this.field.options = options;
+  options(options: Array<{ label: string; value: string | number | boolean }>): this {
+    this.field.options = options as any;
     return this;
   }
 
@@ -254,10 +254,13 @@ export class FieldBuilder {
    * Build as view field
    */
   buildViewField(): ViewField {
+    // Map select type to text for view (select isn't a valid ViewField type)
+    const viewType = this.field.type === 'select' ? 'text' : this.field.type;
+    
     return {
       key: this.field.name!,
       label: this.field.label!,
-      type: this.field.type,
+      type: viewType as any,
       visible: typeof this.field.visible === 'boolean' ? this.field.visible : undefined,
       order: this.field.order,
       group: this.field.group

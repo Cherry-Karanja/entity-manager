@@ -16,24 +16,24 @@ import {
   DownloadAction,
   CustomAction,
   FormFieldDefinition,
-  ValidationRule
+  ActionContext
 } from '../../components/actions/types';
-import { BuilderCallback } from './types';
+import { BaseEntity } from '../../primitives/types';
 
 /**
  * Action builder class
  */
-export class ActionBuilder {
-  private action: Partial<Action>;
+export class ActionBuilder<T extends BaseEntity = BaseEntity> {
+  private action: Partial<Action<T>>;
 
-  constructor(id: string, label: string, type: ActionType = 'immediate') {
-    this.action = { id, label, type };
+  constructor(id: string, label: string, actionType: ActionType = 'immediate') {
+    this.action = { id, label, actionType } as Partial<Action<T>>;
   }
 
   /**
    * Set action icon
    */
-  icon(icon: string): this {
+  icon(icon: string | React.ReactNode): this {
     this.action.icon = icon;
     return this;
   }
@@ -41,7 +41,7 @@ export class ActionBuilder {
   /**
    * Set action variant
    */
-  variant(variant: 'primary' | 'secondary' | 'danger' | 'success' | 'warning'): this {
+  variant(variant: 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'ghost'): this {
     this.action.variant = variant;
     return this;
   }
@@ -49,23 +49,15 @@ export class ActionBuilder {
   /**
    * Set action position
    */
-  position(position: 'toolbar' | 'row' | 'bulk' | 'dropdown'): this {
+  position(position: 'toolbar' | 'row' | 'dropdown' | 'context-menu'): this {
     this.action.position = position;
-    return this;
-  }
-
-  /**
-   * Set action priority
-   */
-  priority(priority: number): this {
-    this.action.priority = priority;
     return this;
   }
 
   /**
    * Set visibility condition
    */
-  visible(visible: Action['visible']): this {
+  visible(visible: boolean | ((entity?: T, context?: ActionContext<T>) => boolean)): this {
     this.action.visible = visible;
     return this;
   }
@@ -73,7 +65,7 @@ export class ActionBuilder {
   /**
    * Set disabled condition
    */
-  disabled(disabled: Action['disabled']): this {
+  disabled(disabled: boolean | ((entity?: T, context?: ActionContext<T>) => boolean)): this {
     this.action.disabled = disabled;
     return this;
   }
@@ -87,42 +79,88 @@ export class ActionBuilder {
   }
 
   /**
-   * Set loading state
+   * Set permission requirement
    */
-  loading(loading: boolean): this {
-    this.action.loading = loading;
+  permission(permission: string): this {
+    this.action.permission = permission;
     return this;
   }
+
+  /**
+   * Set requires selection
+   */
+  requiresSelection(required = true): this {
+    this.action.requiresSelection = required;
+    return this;
+  }
+
+  /**
+   * Set allow multiple selection
+   */
+  allowMultiple(allow = true): this {
+    this.action.allowMultiple = allow;
+    return this;
+  }
+
+  // === Immediate Action Methods ===
+
+  /**
+   * Set immediate action handler
+   */
+  handler(handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>): this {
+    (this.action as Partial<ImmediateAction<T>>).handler = handler;
+    return this;
+  }
+
+  // === Confirm Action Methods ===
 
   /**
    * Set confirmation message
    */
-  confirm(message: string): this {
-    (this.action as ConfirmAction).confirmMessage = message;
-    return this;
-  }
-
-  /**
-   * Set confirm title
-   */
-  confirmTitle(title: string): this {
-    (this.action as ConfirmAction).confirmTitle = title;
+  confirmMessage(message: string | ((entity?: T) => string)): this {
+    (this.action as Partial<ConfirmAction<T>>).confirmMessage = message;
     return this;
   }
 
   /**
    * Set confirm button text
    */
-  confirmButton(text: string): this {
-    (this.action as ConfirmAction).confirmButtonText = text;
+  confirmText(text: string): this {
+    (this.action as Partial<ConfirmAction<T>>).confirmText = text;
     return this;
   }
 
   /**
    * Set cancel button text
    */
-  cancelButton(text: string): this {
-    (this.action as ConfirmAction).cancelButtonText = text;
+  cancelText(text: string): this {
+    (this.action as Partial<ConfirmAction<T>>).cancelText = text;
+    return this;
+  }
+
+  /**
+   * Set confirm handler
+   */
+  onConfirm(handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>): this {
+    (this.action as Partial<ConfirmAction<T>>).onConfirm = handler;
+    return this;
+  }
+
+  /**
+   * Set cancel handler
+   */
+  onCancel(handler: () => void): this {
+    (this.action as Partial<ConfirmAction<T>>).onCancel = handler;
+    return this;
+  }
+
+  // === Form Action Methods ===
+
+  /**
+   * Set form title
+   */
+  formTitle(title: string): this {
+    (this.action as Partial<FormAction<T>>).formTitle = title;
     return this;
   }
 
@@ -130,203 +168,253 @@ export class ActionBuilder {
    * Set form fields
    */
   fields(fields: FormFieldDefinition[]): this {
-    (this.action as FormAction).fields = fields;
+    (this.action as Partial<FormAction<T>>).fields = fields;
     return this;
   }
 
   /**
-   * Set form title
+   * Set initial form values
    */
-  formTitle(title: string): this {
-    (this.action as FormAction).formTitle = title;
+  initialValues(values: Record<string, unknown> | ((entity?: T) => Record<string, unknown>)): this {
+    (this.action as Partial<FormAction<T>>).initialValues = values;
     return this;
   }
 
   /**
-   * Set submit button text
+   * Set form submit handler
    */
-  submitButton(text: string): this {
-    (this.action as FormAction).submitButtonText = text;
+  onSubmit(handler: (values: Record<string, unknown>, entity?: T, context?: ActionContext<T>) => void | Promise<void>): this {
+    (this.action as Partial<FormAction<T>>).onSubmit = handler;
     return this;
   }
 
   /**
-   * Set form validation
+   * Set form submit button text
    */
-  validation(validate: (values: Record<string, unknown>) => Record<string, string>): this {
-    (this.action as FormAction).validate = validate;
+  submitText(text: string): this {
+    (this.action as Partial<FormAction<T>>).submitText = text;
     return this;
   }
 
-  /**
-   * Set modal content
-   */
-  modalContent(content: React.ReactNode): this {
-    (this.action as ModalAction).modalContent = content;
-    return this;
-  }
+  // === Modal Action Methods ===
 
   /**
    * Set modal title
    */
   modalTitle(title: string): this {
-    (this.action as ModalAction).modalTitle = title;
+    (this.action as Partial<ModalAction<T>>).modalTitle = title;
     return this;
   }
 
   /**
-   * Set modal width
+   * Set modal content component
    */
-  modalWidth(width: string): this {
-    (this.action as ModalAction).modalWidth = width;
+  content(content: React.ComponentType<{ entity?: T; context?: ActionContext<T>; onClose: () => void }>): this {
+    (this.action as Partial<ModalAction<T>>).content = content;
     return this;
   }
+
+  /**
+   * Set modal size
+   */
+  modalSize(size: 'small' | 'medium' | 'large' | 'fullscreen'): this {
+    (this.action as Partial<ModalAction<T>>).size = size;
+    return this;
+  }
+
+  // === Navigation Action Methods ===
 
   /**
    * Set navigation URL
    */
-  url(url: string): this {
-    (this.action as NavigationAction).url = url;
+  url(url: string | ((entity?: T, context?: ActionContext<T>) => string)): this {
+    (this.action as Partial<NavigationAction<T>>).url = url;
     return this;
   }
 
   /**
-   * Set navigation target
+   * Set whether to open in new tab
    */
-  target(target: '_self' | '_blank' | '_parent' | '_top'): this {
-    (this.action as NavigationAction).target = target;
+  newTab(newTab = true): this {
+    (this.action as Partial<NavigationAction<T>>).newTab = newTab;
+    return this;
+  }
+
+  // === Bulk Action Methods ===
+
+  /**
+   * Set bulk action handler
+   */
+  bulkHandler(handler: (entities: T[], context?: ActionContext<T>) => void | Promise<void>): this {
+    (this.action as Partial<BulkAction<T>>).handler = handler;
     return this;
   }
 
   /**
    * Set bulk confirmation message
    */
-  bulkConfirm(message: string): this {
-    (this.action as BulkAction).bulkConfirmMessage = message;
+  bulkConfirmMessage(message: string | ((count: number) => string)): this {
+    (this.action as Partial<BulkAction<T>>).bulkConfirmMessage = message;
     return this;
   }
 
   /**
-   * Require selection for bulk action
+   * Set whether to confirm bulk action
    */
-  requiresSelection(required = true): this {
-    (this.action as BulkAction).requiresSelection = required;
+  confirmBulk(confirm = true): this {
+    (this.action as Partial<BulkAction<T>>).confirmBulk = confirm;
+    return this;
+  }
+
+  // === Download Action Methods ===
+
+  /**
+   * Set download handler
+   */
+  downloadHandler(handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>): this {
+    (this.action as Partial<DownloadAction<T>>).handler = handler;
     return this;
   }
 
   /**
    * Set download URL
    */
-  downloadUrl(url: string): this {
-    (this.action as DownloadAction).downloadUrl = url;
+  downloadUrl(url: string | ((entity?: T) => string)): this {
+    (this.action as Partial<DownloadAction<T>>).downloadUrl = url;
     return this;
   }
 
   /**
    * Set download filename
    */
-  filename(filename: string): this {
-    (this.action as DownloadAction).filename = filename;
+  filename(filename: string | ((entity?: T) => string)): this {
+    (this.action as Partial<DownloadAction<T>>).filename = filename;
+    return this;
+  }
+
+  // === Custom Action Methods ===
+
+  /**
+   * Set custom component
+   */
+  component(component: React.ComponentType<{ entity?: T; context?: ActionContext<T> }>): this {
+    (this.action as Partial<CustomAction<T>>).component = component;
     return this;
   }
 
   /**
    * Set custom handler
    */
-  handler(handler: CustomAction['handler']): this {
-    (this.action as CustomAction).handler = handler;
-    return this;
-  }
-
-  /**
-   * Set custom render
-   */
-  render(render: CustomAction['render']): this {
-    (this.action as CustomAction).render = render;
+  customHandler(handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>): this {
+    (this.action as Partial<CustomAction<T>>).handler = handler;
     return this;
   }
 
   /**
    * Build the action
    */
-  build(): Action {
-    return this.action as Action;
+  build(): Action<T> {
+    return this.action as Action<T>;
   }
 
   /**
    * Create a new action builder
    */
-  static create(id: string, label: string, type?: ActionType): ActionBuilder {
-    return new ActionBuilder(id, label, type);
+  static create<T extends BaseEntity = BaseEntity>(id: string, label: string, actionType?: ActionType): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, actionType);
   }
 
   /**
    * Create immediate action
    */
-  static immediate(id: string, label: string): ActionBuilder {
-    return new ActionBuilder(id, label, 'immediate');
+  static immediate<T extends BaseEntity = BaseEntity>(
+    id: string, 
+    label: string,
+    handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'immediate').handler(handler);
   }
 
   /**
    * Create confirm action
    */
-  static confirm(id: string, label: string, message: string): ActionBuilder {
-    return new ActionBuilder(id, label, 'confirm').confirm(message);
+  static confirm<T extends BaseEntity = BaseEntity>(
+    id: string, 
+    label: string, 
+    message: string,
+    onConfirm: (entity?: T, context?: ActionContext<T>) => void | Promise<void>
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'confirm')
+      .confirmMessage(message)
+      .onConfirm(onConfirm);
   }
 
   /**
    * Create form action
    */
-  static form(id: string, label: string, fields: FormFieldDefinition[]): ActionBuilder {
-    return new ActionBuilder(id, label, 'form').fields(fields);
+  static form<T extends BaseEntity = BaseEntity>(
+    id: string, 
+    label: string,
+    fields: FormFieldDefinition[],
+    onSubmit: (values: Record<string, unknown>, entity?: T, context?: ActionContext<T>) => void | Promise<void>
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'form')
+      .fields(fields)
+      .onSubmit(onSubmit);
   }
 
   /**
    * Create modal action
    */
-  static modal(id: string, label: string, content: React.ReactNode): ActionBuilder {
-    return new ActionBuilder(id, label, 'modal').modalContent(content);
+  static modal<T extends BaseEntity = BaseEntity>(
+    id: string,
+    label: string,
+    content: React.ComponentType<{ entity?: T; context?: ActionContext<T>; onClose: () => void }>
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'modal').content(content);
   }
 
   /**
    * Create navigation action
    */
-  static navigation(id: string, label: string, url: string): ActionBuilder {
-    return new ActionBuilder(id, label, 'navigation').url(url);
+  static navigation<T extends BaseEntity = BaseEntity>(
+    id: string,
+    label: string,
+    url: string | ((entity?: T, context?: ActionContext<T>) => string)
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'navigation').url(url);
   }
 
   /**
    * Create bulk action
    */
-  static bulk(id: string, label: string): ActionBuilder {
-    return new ActionBuilder(id, label, 'bulk').requiresSelection();
+  static bulk<T extends BaseEntity = BaseEntity>(
+    id: string,
+    label: string,
+    handler: (entities: T[], context?: ActionContext<T>) => void | Promise<void>
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'bulk').bulkHandler(handler);
   }
 
   /**
    * Create download action
    */
-  static download(id: string, label: string, url: string): ActionBuilder {
-    return new ActionBuilder(id, label, 'download').downloadUrl(url);
+  static download<T extends BaseEntity = BaseEntity>(
+    id: string,
+    label: string,
+    handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'download').downloadHandler(handler);
   }
 
   /**
    * Create custom action
    */
-  static custom(id: string, label: string, handler: CustomAction['handler']): ActionBuilder {
-    return new ActionBuilder(id, label, 'custom').handler(handler);
-  }
-
-  /**
-   * Create action with callback
-   */
-  static build(
+  static custom<T extends BaseEntity = BaseEntity>(
     id: string,
     label: string,
-    type: ActionType,
-    callback: BuilderCallback<Action, ActionBuilder>
-  ): Action {
-    const builder = new ActionBuilder(id, label, type);
-    const result = callback(builder);
-    return result || builder.build();
+    component: React.ComponentType<{ entity?: T; context?: ActionContext<T> }>
+  ): ActionBuilder<T> {
+    return new ActionBuilder<T>(id, label, 'custom').component(component);
   }
 }

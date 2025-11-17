@@ -106,9 +106,9 @@ export function getInitialValues<T extends BaseEntity>(
 /**
  * Validate single field
  */
-export async function validateField(
+export async function validateField<T extends BaseEntity = BaseEntity>(
   value: unknown,
-  field: FormField,
+  field: FormField<T>,
   values: Record<string, unknown>
 ): Promise<string | undefined> {
   // Check required
@@ -270,7 +270,7 @@ export async function validateForm<T extends BaseEntity>(
 
     const fieldName = String(field.name);
     const value = values[field.name as keyof T];
-    const error = await validateField(value, field, values as Record<string, unknown>);
+    const error = await validateField<T>(value, field, values as Record<string, unknown>);
     
     if (error) {
       errors[fieldName] = error;
@@ -437,7 +437,7 @@ export async function getFieldOptions<T extends BaseEntity>(
 /**
  * Format field value for display
  */
-export function formatFieldValue(value: unknown, field: FormField): string {
+export function formatFieldValue<T extends BaseEntity>(value: unknown, field: FormField<T>): string {
   if (value === null || value === undefined) return '';
 
   switch (field.type) {

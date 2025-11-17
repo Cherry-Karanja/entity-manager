@@ -9,6 +9,8 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { BaseEntity } from '../../primitives/types';
+import { EntityActions } from '../actions';
+import { Action } from '../actions/types';
 import { 
   EntityListProps, 
   ListView, 
@@ -70,6 +72,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     error,
     rowHeight = 'auto',
     rowActions: RowActions,
+    actions,
     bulkActions,
     className = '',
     rowClassName,
@@ -152,13 +155,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   const handleSelectAll = useCallback(() => {
     const allIds = new Set(processedData.map(e => e.id));
     setState(prev => ({ ...prev, selectedIds: allIds }));
-    onSelectionChange?.(allIds);
+    onSelectionChange?.(allIds, processedData);
   }, [processedData, onSelectionChange]);
 
   const handleDeselectAll = useCallback(() => {
     const empty = new Set<string | number>();
     setState(prev => ({ ...prev, selectedIds: empty }));
-    onSelectionChange?.(empty);
+    onSelectionChange?.(empty, []);
   }, [onSelectionChange]);
 
   const handleSelectRow = useCallback((id: string | number) => {
@@ -174,10 +177,11 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
         newSelected.clear();
         newSelected.add(id);
       }
-      onSelectionChange?.(newSelected);
+      const selectedEntities = data.filter(e => newSelected.has(e.id));
+      onSelectionChange?.(newSelected, selectedEntities);
       return { ...prev, selectedIds: newSelected };
     });
-  }, [multiSelect, onSelectionChange]);
+  }, [multiSelect, onSelectionChange, data]);
 
   // Search handler
   const handleSearchChange = useCallback((value: string) => {
@@ -199,12 +203,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Pagination handlers
   const handlePageChange = useCallback((page: number) => {
     setState(prev => ({ ...prev, page }));
-    onPaginationChange?.({ ...paginationConfig, page });
-  }, [paginationConfig, onPaginationChange]);
+    const pageSize = paginationConfig?.pageSize ?? state.pageSize;
+    onPaginationChange?.({ ...(paginationConfig ?? {}), page, pageSize });
+  }, [paginationConfig, onPaginationChange, state.pageSize]);
 
   const handlePageSizeChange = useCallback((pageSize: number) => {
     setState(prev => ({ ...prev, pageSize, page: 1 }));
-    onPaginationChange?.({ ...paginationConfig, pageSize, page: 1 });
+    onPaginationChange?.({ ...(paginationConfig ?? {}), pageSize, page: 1 });
   }, [paginationConfig, onPaginationChange]);
 
   // View switcher
@@ -217,13 +222,14 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
 
   // Render toolbar
   const renderToolbar = () => {
-    if (!toolbar || Object.keys(toolbar).length === 0) {
+    const hasToolbar = (toolbar && Object.keys(toolbar).length > 0) || searchable;
+    if (!hasToolbar) {
       return null;
     }
 
     return (
       <div className="entity-list-toolbar">
-        {toolbar.search && (
+        {(toolbar?.search || searchable) && (
           <input
             type="text"
             placeholder={searchPlaceholder}
@@ -257,7 +263,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     if (!pagination) return null;
 
     return (
-      <div className="entity-list-pagination">
+      <nav className="entity-list-pagination" role="navigation" aria-label="Pagination">
         <div className="page-info">
           Page {state.page} of {totalPages} ({processedData.length} items)
         </div>
@@ -290,6 +296,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
         </div>
         
         <select
+          title='Items per page'
+          aria-label='Items per page'
           value={state.pageSize}
           onChange={(e) => handlePageSizeChange(Number(e.target.value))}
         >
@@ -297,7 +305,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             <option key={size} value={size}>{size} per page</option>
           ))}
         </select>
-      </div>
+      </nav>
     );
   };
 
@@ -320,6 +328,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               <th className="select-column">
                 {multiSelect && (
                   <input
+                    title="Select all"
+                    aria-label="Select all"
                     type="checkbox"
                     checked={state.selectedIds.size === processedData.length && processedData.length > 0}
                     onChange={() => state.selectedIds.size === processedData.length ? handleDeselectAll() : handleSelectAll()}
@@ -342,7 +352,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 )}
               </th>
             ))}
-            {RowActions && <th className="actions-column">Actions</th>}
+            {(RowActions || actions) && <th className="actions-column">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -360,6 +370,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 {selectable && (
                   <td className="select-column">
                     <input
+                      title="Select row"
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleSelectRow(entity.id)}
@@ -378,9 +389,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                     </td>
                   );
                 })}
-                {RowActions && (
+                {(RowActions || actions) && (
                   <td className="actions-column">
-                    <RowActions entity={entity} index={index} />
+                    {actions ? (
+                      <EntityActions actions={actions} entity={entity} mode="buttons" />
+                    ) : RowActions ? (
+                      <RowActions entity={entity} index={index} />
+                    ) : null}
                   </td>
                 )}
               </tr>
@@ -409,6 +424,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             >
               {selectable && (
                 <input
+                  title="Select card"
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
@@ -440,9 +456,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 </div>
               </div>
               
-              {RowActions && (
+              {(RowActions || actions) && (
                 <div className="card-actions">
-                  <RowActions entity={entity} index={index} />
+                  {actions ? (
+                    <EntityActions actions={actions} entity={entity} mode="buttons" />
+                  ) : RowActions ? (
+                    <RowActions entity={entity} index={index} />
+                  ) : null}
                 </div>
               )}
             </div>
@@ -469,6 +489,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             >
               {selectable && (
                 <input
+                  title="Select item"
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
@@ -481,9 +502,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 {subtitle && <div className="list-subtitle">{subtitle}</div>}
               </div>
               
-              {RowActions && (
+              {(RowActions || actions) && (
                 <div className="list-actions">
-                  <RowActions entity={entity} index={index} />
+                  {actions ? (
+                    <EntityActions actions={actions} entity={entity} mode="buttons" />
+                  ) : RowActions ? (
+                    <RowActions entity={entity} index={index} />
+                  ) : null}
                 </div>
               )}
             </div>
@@ -571,6 +596,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             >
               {selectable && (
                 <input
+                  title="Select detailed item"
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
@@ -591,9 +617,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 })}
               </div>
               
-              {RowActions && (
+              {(RowActions || actions) && (
                 <div className="detailed-actions">
-                  <RowActions entity={entity} index={index} />
+                  {actions ? (
+                    <EntityActions actions={actions} entity={entity} mode="buttons" />
+                  ) : RowActions ? (
+                    <RowActions entity={entity} index={index} />
+                  ) : null}
                 </div>
               )}
             </div>
