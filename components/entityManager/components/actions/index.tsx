@@ -303,9 +303,9 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
 
   // Determine max visible actions based on mode and context
   const getMaxVisibleActions = () => {
-    if (position === 'row') return 2; // In table rows, show only 2 actions + more
-    if (position === 'toolbar') return 5; // In toolbar, show 5 actions + more
-    return 3; // Default: show 3 actions + more
+    if (position === 'row') return 1; // In table rows, show only 1 actions + more
+    if (position === 'toolbar') return 3; // In toolbar, show 3 actions + more
+    return 2; // Default: show 2 actions + more
   };
 
   const maxVisible = getMaxVisibleActions();
