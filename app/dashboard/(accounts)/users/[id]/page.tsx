@@ -9,7 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { EntityView } from '@/components/entityManager';
-import { userViewFields } from '@/components/features/accounts/users/config';
+import { userViewFields, userViewGroups } from '@/components/features/accounts/users/config';
 import { usersApiClient } from '@/components/features/accounts/users/api/client';
 import { User } from '@/components/features/accounts/types';
 import { Button } from '@/components/ui/button';
@@ -96,6 +96,8 @@ export default function UserViewPage() {
       <EntityView
         entity={user}
         fields={userViewFields}
+        groups={userViewGroups}
+        mode="detail"
       />
     </div>
   );

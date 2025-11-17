@@ -103,6 +103,52 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, state]);
 
+  // Refetch data when pagination, sorting, or search changes
+  useEffect(() => {
+    if (!config.apiClient || view !== 'list') return;
+
+    const { page, pageSize, sort, search } = state.state;
+    
+    state.setLoading(true);
+    
+    // Build query parameters for server-side filtering/sorting/pagination
+    const queryParams: {
+      page?: number;
+      pageSize?: number;
+      sortField?: string;
+      sortDirection?: 'asc' | 'desc';
+      search?: string;
+    } = {
+      page,
+      pageSize,
+    };
+    
+    if (sort) {
+      queryParams.sortField = sort.field;
+      queryParams.sortDirection = sort.direction;
+    }
+    
+    if (search) {
+      queryParams.search = search;
+    }
+
+    config.apiClient.list(queryParams)
+      .then((response) => {
+        const data = response.data || [];
+        state.setEntities(data);
+        if (response.meta?.total !== undefined) {
+          state.setTotal(response.meta.total);
+        }
+        state.setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch entities:', error);
+        state.setError(error.message || 'Failed to load data');
+        state.setLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.state.page, state.state.pageSize, state.state.sort, state.state.search, view]);
+
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
 
