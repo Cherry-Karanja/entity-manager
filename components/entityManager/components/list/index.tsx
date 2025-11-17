@@ -677,8 +677,31 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render empty state
   if (!loading && processedData.length === 0) {
     return (
-      <div className={`entity-list-empty ${className}`}>
-        <p>{emptyMessage}</p>
+      <div className={`flex flex-col items-center justify-center min-h-[400px] p-8 ${className}`}>
+        <div className="text-center space-y-3">
+          <div className="text-muted-foreground text-lg">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+          </div>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            {emptyMessage}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Get started by creating a new item.
+          </p>
+        </div>
       </div>
     );
   }
@@ -686,8 +709,31 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render error state
   if (error) {
     return (
-      <div className={`entity-list-error ${className}`}>
-        <p>Error: {typeof error === 'string' ? error : error.message}</p>
+      <div className={`flex flex-col items-center justify-center min-h-[400px] p-8 ${className}`}>
+        <div className="text-center space-y-3">
+          <div className="text-destructive text-lg">
+            <svg
+              className="mx-auto h-12 w-12 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Error Loading Data
+          </h3>
+          <p className="text-sm text-destructive">
+            {typeof error === 'string' ? error : error.message}
+          </p>
+        </div>
       </div>
     );
   }
@@ -704,7 +750,14 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
       )}
       
       {loading ? (
-        <div className="entity-list-loading">Loading...</div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-3">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+              <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Loading data...</p>
+          </div>
+        </div>
       ) : (
         <div className="entity-list-content">
           {renderView()}

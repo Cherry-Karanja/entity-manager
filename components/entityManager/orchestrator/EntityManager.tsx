@@ -94,18 +94,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
 
   // Render list view
   if (view === 'list') {
-    return (
-      <div className="entity-manager-list-view">
-        <div className="entity-manager-toolbar">
-          <EntityActions
-            actions={config.config.actions.filter(a => a.position === 'toolbar')}
-          />
-          <EntityExporter
-            data={state.state.entities}
-            fields={config.config.exportFields}
-          />
-        </div>
-        
+    return (   
         <EntityList
           data={state.state.entities}
           columns={config.config.columns}
@@ -120,11 +109,12 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           pagination={true}
           paginationConfig={{
             page: state.state.page,
-            pageSize: state.state.pageSize
+            pageSize: state.state.pageSize,
+            totalCount: state.state.total
           }}
-          onPaginationChange={(config) => {
-            state.setPage(config.page || 1);
-            state.setPageSize(config.pageSize || 10);
+          onPaginationChange={(paginationConfig) => {
+            state.setPage(paginationConfig.page || 1);
+            state.setPageSize(paginationConfig.pageSize || 10);
           }}
           sortable={true}
           sortConfig={state.state.sort}
@@ -136,12 +126,11 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           error={state.state.error}
           rowActions={({ entity }) => (
             <EntityActions
-              actions={config.config.actions.filter(a => a.position === 'row')}
+              actions={config.config.actions.filter(a => a.position === 'row') as any}
               entity={entity}
             />
           )}
         />
-      </div>
     );
   }
 

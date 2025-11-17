@@ -71,15 +71,15 @@ const sidebarItems = [
     items: [
       {
         title: "Users",
-        href: "/dashboard/accounts/users",
+        href: "/dashboard/users",
       },
       {
         title: "Roles",
-        href: "/dashboard/accounts/roles",
+        href: "/dashboard/roles",
       },
       {
         title: "Permissions",
-        href: "/dashboard/accounts/permissions",
+        href: "/dashboard/permissions",
       },
     ],
   },
