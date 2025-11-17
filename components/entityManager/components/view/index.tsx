@@ -131,6 +131,18 @@ export function EntityView<T extends BaseEntity = BaseEntity>({
     case 'timeline':
       return <TimelineView entity={entity} fields={visibleFields} {...{ showMetadata, className }} />;
     
+    case 'compact':
+      return <CompactView entity={entity} fields={visibleFields} {...{ titleField, className, state, onCopy: handleCopy, copiedField: state.copiedField }} />;
+    
+    case 'profile':
+      return <ProfileView entity={entity} fields={visibleFields} groups={groups} {...{ titleField, subtitleField, imageField, actions, className, state, toggleGroup, onCopy: handleCopy, copiedField: state.copiedField }} />;
+    
+    case 'split':
+      return <SplitView entity={entity} fields={visibleFields} groups={groups} {...{ titleField, subtitleField, className, state, toggleGroup, onCopy: handleCopy, copiedField: state.copiedField }} />;
+    
+    case 'table':
+      return <TableView entity={entity} fields={visibleFields} groups={groups} {...{ className, state, toggleGroup, onCopy: handleCopy, copiedField: state.copiedField }} />;
+    
     case 'detail':
     default:
       return (
@@ -176,18 +188,18 @@ function DetailView<T extends BaseEntity>({
   const sortedGroups = groups ? sortGroups(groups) : [];
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-4 sm:space-y-6 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b">
-        <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
-        {actions && <div className="flex gap-2">{actions}</div>}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b">
+        <h2 className="text-xl sm:text-2xl font-semibold text-foreground">{title}</h2>
+        {actions && <div className="flex gap-2 w-full sm:w-auto justify-end">{actions}</div>}
       </div>
 
       {/* Main content */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Ungrouped fields */}
         {groupedFields.get(null) && (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {groupedFields.get(null)!.map(field => (
               <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
             ))}
@@ -204,30 +216,33 @@ function DetailView<T extends BaseEntity>({
           return (
             <div key={group.id} className="border rounded-lg overflow-hidden">
               <div 
-                className={`flex items-center justify-between px-4 py-3 bg-muted/50 ${
+                className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${
                   group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
                 }`}
                 onClick={() => group.collapsible && onToggleGroup(group.id)}
+                role={group.collapsible ? 'button' : undefined}
+                aria-expanded={group.collapsible ? !isCollapsed : undefined}
               >
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
-                  {group.description && <p className="text-xs text-muted-foreground mt-1">{group.description}</p>}
+                  {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
                 </div>
                 {group.collapsible && (
                   <svg
-                    className={`w-5 h-5 text-muted-foreground transition-transform ${
+                    className={`w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground transition-transform ${
                       isCollapsed ? 'rotate-0' : 'rotate-180'
                     }`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 )}
               </div>
               {!isCollapsed && (
-                <div className="p-4 space-y-3 bg-card">
+                <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-card">
                   {groupFields.map(field => (
                     <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
                   ))}
@@ -240,14 +255,14 @@ function DetailView<T extends BaseEntity>({
         {/* Metadata */}
         {showMetadata && (
           <div className="border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 bg-muted/50">
+            <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50">
               <h3 className="text-sm font-semibold text-foreground">Metadata</h3>
             </div>
-            <div className="p-4 space-y-3 bg-card">
+            <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-card">
               {getMetadataFields(entity).map(({ label, value }) => (
-                <div key={label} className="flex items-start">
-                  <div className="w-1/3 text-sm font-medium text-muted-foreground">{label}</div>
-                  <div className="w-2/3 text-sm text-foreground">{String(value)}</div>
+                <div key={label} className="flex flex-col sm:flex-row items-start">
+                  <div className="w-full sm:w-1/3 text-xs sm:text-sm font-medium text-muted-foreground mb-0.5 sm:mb-0">{label}</div>
+                  <div className="w-full sm:w-2/3 text-xs sm:text-sm text-foreground">{String(value)}</div>
                 </div>
               ))}
             </div>
@@ -258,22 +273,24 @@ function DetailView<T extends BaseEntity>({
       {/* Tabs */}
       {tabs && tabs.length > 0 && (
         <div className="border rounded-lg overflow-hidden">
-          <div className="border-b bg-muted/50">
-            <div className="flex">
+          <div className="border-b bg-muted/50 overflow-x-auto">
+            <div className="flex min-w-max">
               {tabs.map((tab: any) => (
                 <button
                   key={tab.id}
-                  className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                     state.activeTab === tab.id
                       ? 'border-primary text-primary bg-background'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                   onClick={() => onTabChange(tab.id)}
+                  role="tab"
+                  aria-selected={state.activeTab === tab.id}
                 >
                   {tab.icon && <span className="mr-2">{tab.icon}</span>}
                   <span>{tab.label}</span>
                   {tab.badge && (
-                    <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
+                    <span className="ml-2 px-1.5 sm:px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
                       {typeof tab.badge === 'function' ? tab.badge(entity) : tab.badge}
                     </span>
                   )}
@@ -281,7 +298,7 @@ function DetailView<T extends BaseEntity>({
               ))}
             </div>
           </div>
-          <div className="p-4 bg-card">
+          <div className="p-3 sm:p-4 bg-card">
             {tabs.map((tab: any) => {
               if (tab.id !== state.activeTab) return null;
               
@@ -307,37 +324,42 @@ function FieldRow<T extends BaseEntity>({ field, entity, onCopy, copiedField }: 
   const renderedValue = renderField(field, entity);
 
   return (
-    <div className="flex items-start py-2">
-      <div className="w-1/3 pr-4">
-        <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+    <div className="flex flex-col sm:flex-row items-start py-1.5 sm:py-2 gap-1 sm:gap-0">
+      <div className="w-full sm:w-1/3 sm:pr-4">
+        <div className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
           {field.label}
           {field.helpText && (
-            <span className="inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-muted text-muted-foreground cursor-help" title={field.helpText}>
+            <span 
+              className="inline-flex items-center justify-center w-3.5 h-3.5 text-xs rounded-full bg-muted text-muted-foreground cursor-help" 
+              title={field.helpText}
+              aria-label={field.helpText}
+            >
               ?
             </span>
           )}
         </div>
       </div>
-      <div className="w-2/3 flex items-start gap-2">
-        <div className="flex-1 text-sm text-foreground break-words">
+      <div className="w-full sm:w-2/3 flex items-start gap-2">
+        <div className="flex-1 text-xs sm:text-sm text-foreground break-words">
           {renderedValue}
         </div>
         {field.copyable && (
           <button
-            className={`flex-shrink-0 p-1.5 text-xs rounded-md transition-colors ${
+            className={`flex-shrink-0 p-1 sm:p-1.5 text-xs rounded-md transition-colors ${
               copiedField === String(field.key)
                 ? 'bg-primary/10 text-primary'
                 : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
             }`}
             onClick={() => onCopy?.(field.key, value)}
             title="Copy to clipboard"
+            aria-label="Copy to clipboard"
           >
             {copiedField === String(field.key) ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             )}
@@ -360,23 +382,23 @@ function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleFi
     <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
       {image && (
         <div className="aspect-video w-full overflow-hidden bg-muted">
-          <img src={image} alt={title} className="w-full h-full object-cover" />
+          <img src={image} alt={title} className="w-full h-full object-cover" loading="lazy" />
         </div>
       )}
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
-          {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">{title}</h2>
+          {subtitle && <p className="text-xs sm:text-sm text-muted-foreground mt-1">{subtitle}</p>}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           {fields.slice(0, 5).map((field: any) => (
-            <div key={String(field.key)} className="flex items-start">
-              <span className="text-sm font-medium text-muted-foreground w-1/3">{field.label}:</span>
-              <span className="text-sm text-foreground w-2/3">{renderField(field, entity)}</span>
+            <div key={String(field.key)} className="flex flex-col sm:flex-row items-start gap-0.5 sm:gap-0">
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground w-full sm:w-1/3">{field.label}:</span>
+              <span className="text-xs sm:text-sm text-foreground w-full sm:w-2/3 break-words">{renderField(field, entity)}</span>
             </div>
           ))}
         </div>
-        {actions && <div className="flex items-center gap-2 pt-4 border-t">{actions}</div>}
+        {actions && <div className="flex items-center gap-2 pt-3 sm:pt-4 border-t">{actions}</div>}
       </div>
     </div>
   );
@@ -387,11 +409,11 @@ function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleFi
  */
 function SummaryView<T extends BaseEntity>({ entity, fields, className }: any) {
   return (
-    <div className={`bg-card rounded-lg border shadow-sm p-4 space-y-2 ${className}`}>
+    <div className={`bg-card rounded-lg border shadow-sm p-3 sm:p-4 space-y-1.5 sm:space-y-2 ${className}`}>
       {fields.map((field: any) => (
-        <div key={String(field.key)} className="flex items-start py-1">
-          <span className="text-sm font-medium text-muted-foreground w-1/3">{field.label}:</span>
-          <span className="text-sm text-foreground w-2/3">{renderField(field, entity)}</span>
+        <div key={String(field.key)} className="flex flex-col sm:flex-row items-start py-0.5 sm:py-1 gap-0.5 sm:gap-0">
+          <span className="text-xs sm:text-sm font-medium text-muted-foreground w-full sm:w-1/3">{field.label}:</span>
+          <span className="text-xs sm:text-sm text-foreground w-full sm:w-2/3 break-words">{renderField(field, entity)}</span>
         </div>
       ))}
     </div>
@@ -410,17 +432,321 @@ function TimelineView<T extends BaseEntity>({ entity, fields, showMetadata, clas
   }
 
   return (
-    <div className={`relative space-y-6 ${className}`}>
-      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border"></div>
+    <div className={`relative space-y-4 sm:space-y-6 ${className}`}>
+      <div className="absolute left-3 sm:left-4 top-0 bottom-0 w-0.5 bg-border"></div>
       {events.map((field: any, index: number) => (
-        <div key={String(field.key)} className="relative pl-12">
-          <div className="absolute left-2.5 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
-          <div className="bg-card rounded-lg border shadow-sm p-4">
-            <div className="text-sm font-medium text-foreground">{field.label}</div>
-            <div className="text-sm text-muted-foreground mt-1">{renderField(field, entity)}</div>
+        <div key={String(field.key)} className="relative pl-8 sm:pl-12">
+          <div className="absolute left-1.5 sm:left-2.5 top-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
+          <div className="bg-card rounded-lg border shadow-sm p-3 sm:p-4">
+            <div className="text-xs sm:text-sm font-medium text-foreground">{field.label}</div>
+            <div className="text-xs sm:text-sm text-muted-foreground mt-1">{renderField(field, entity)}</div>
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Compact View - Minimal space usage
+ */
+function CompactView<T extends BaseEntity>({ entity, fields, titleField, className, onCopy, copiedField }: any) {
+  const title = getEntityTitle(entity, titleField);
+  
+  return (
+    <div className={`bg-card rounded-lg border p-3 sm:p-4 ${className}`}>
+      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2 sm:mb-3">{title}</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
+        {fields.map((field: any) => (
+          <div key={String(field.key)} className="flex items-start gap-1.5 text-xs sm:text-sm">
+            <span className="font-medium text-muted-foreground whitespace-nowrap">{field.label}:</span>
+            <span className="text-foreground truncate flex-1">{renderField(field, entity)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Profile View - User-centric layout with avatar
+ */
+function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField, subtitleField, imageField, actions, className, state, toggleGroup, onCopy, copiedField }: any) {
+  const title = getEntityTitle(entity, titleField);
+  const subtitle = getEntitySubtitle(entity, subtitleField);
+  const image = getEntityImage(entity, imageField);
+  const groupedFields = groupFields(fields, groups);
+  const sortedGroups = groups ? sortGroups(groups) : [];
+
+  return (
+    <div className={`space-y-4 sm:space-y-6 ${className}`}>
+      {/* Profile Header */}
+      <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            {image ? (
+              <img 
+                src={image} 
+                alt={title} 
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-background shadow-lg object-cover" 
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-background shadow-lg bg-muted flex items-center justify-center">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            )}
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h2>
+              {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+              {actions && <div className="flex gap-2 mt-3 justify-center sm:justify-start">{actions}</div>}
+            </div>
+          </div>
+        </div>
+        
+        {/* Quick Info */}
+        {groupedFields.get(null) && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 p-4 sm:p-6 border-t">
+            {groupedFields.get(null)!.slice(0, 6).map(field => {
+              const value = getFieldValue(entity, field.key);
+              return (
+                <div key={String(field.key)} className="flex flex-col">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">{field.label}</span>
+                  <span className="text-sm font-medium text-foreground mt-0.5 truncate">{renderField(field, entity)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Grouped Information */}
+      {sortedGroups.map((group: any) => {
+        const groupFields = groupedFields.get(group.id);
+        if (!groupFields || groupFields.length === 0) return null;
+
+        const isCollapsed = state.collapsedGroups.has(group.id);
+
+        return (
+          <div key={group.id} className="bg-card rounded-lg border shadow-sm overflow-hidden">
+            <div 
+              className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${
+                group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
+              }`}
+              onClick={() => group.collapsible && toggleGroup(group.id)}
+              role={group.collapsible ? 'button' : undefined}
+            >
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
+                {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
+              </div>
+              {group.collapsible && (
+                <svg className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-0' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </div>
+            {!isCollapsed && (
+              <div className="p-3 sm:p-4 space-y-2">
+                {groupFields.map(field => (
+                  <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Split View - Two column layout
+ */
+function SplitView<T extends BaseEntity>({ entity, fields, groups, titleField, subtitleField, className, state, toggleGroup, onCopy, copiedField }: any) {
+  const title = getEntityTitle(entity, titleField);
+  const subtitle = getEntitySubtitle(entity, subtitleField);
+  const groupedFields = groupFields(fields, groups);
+  const sortedGroups = groups ? sortGroups(groups) : [];
+  
+  // Split groups into two columns
+  const midpoint = Math.ceil(sortedGroups.length / 2);
+  const leftGroups = sortedGroups.slice(0, midpoint);
+  const rightGroups = sortedGroups.slice(midpoint);
+
+  const renderGroupContent = (group: any) => {
+    const groupFields = groupedFields.get(group.id);
+    if (!groupFields || groupFields.length === 0) return null;
+
+    const isCollapsed = state.collapsedGroups.has(group.id);
+
+    return (
+      <div key={group.id} className="border rounded-lg overflow-hidden">
+        <div 
+          className={`flex items-center justify-between px-3 py-2.5 bg-muted/50 transition-colors ${
+            group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
+          }`}
+          onClick={() => group.collapsible && toggleGroup(group.id)}
+        >
+          <h4 className="text-sm font-semibold text-foreground">{group.label}</h4>
+          {group.collapsible && (
+            <svg className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-0' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          )}
+        </div>
+        {!isCollapsed && (
+          <div className="p-3 space-y-2 bg-card">
+            {groupFields.map(field => (
+              <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className={`space-y-4 ${className}`}>
+      {/* Header */}
+      <div className="bg-card rounded-lg border p-4">
+        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+        {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-4">
+          {leftGroups.map(renderGroupContent)}
+        </div>
+        <div className="space-y-4">
+          {rightGroups.map(renderGroupContent)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Table View - Data in table format
+ */
+function TableView<T extends BaseEntity>({ entity, fields, groups, className, state, toggleGroup, onCopy, copiedField }: any) {
+  const groupedFields = groupFields(fields, groups);
+  const sortedGroups = groups ? sortGroups(groups) : [];
+
+  return (
+    <div className={`space-y-4 ${className}`}>
+      {/* Ungrouped fields */}
+      {groupedFields.get(null) && (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <tbody className="divide-y divide-border">
+                {groupedFields.get(null)!.map(field => {
+                  const value = getFieldValue(entity, field.key);
+                  return (
+                    <tr key={String(field.key)} className="hover:bg-muted/50 transition-colors">
+                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-muted-foreground w-1/3">
+                        {field.label}
+                      </td>
+                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="break-words">{renderField(field, entity)}</span>
+                          {field.copyable && (
+                            <button
+                              className={`flex-shrink-0 p-1 rounded transition-colors ${
+                                copiedField === String(field.key) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                              onClick={() => onCopy?.(field.key, value)}
+                              title="Copy"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {copiedField === String(field.key) ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                ) : (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                )}
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Grouped fields */}
+      {sortedGroups.map((group: any) => {
+        const groupFields = groupedFields.get(group.id);
+        if (!groupFields || groupFields.length === 0) return null;
+
+        const isCollapsed = state.collapsedGroups.has(group.id);
+
+        return (
+          <div key={group.id} className="bg-card rounded-lg border overflow-hidden">
+            <div 
+              className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${
+                group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
+              }`}
+              onClick={() => group.collapsible && toggleGroup(group.id)}
+            >
+              <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
+              {group.collapsible && (
+                <svg className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-0' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </div>
+            {!isCollapsed && (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <tbody className="divide-y divide-border">
+                    {groupFields.map(field => {
+                      const value = getFieldValue(entity, field.key);
+                      return (
+                        <tr key={String(field.key)} className="hover:bg-muted/50 transition-colors">
+                          <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-muted-foreground w-1/3">
+                            {field.label}
+                          </td>
+                          <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="break-words">{renderField(field, entity)}</span>
+                              {field.copyable && (
+                                <button
+                                  className={`flex-shrink-0 p-1 rounded transition-colors ${
+                                    copiedField === String(field.key) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+                                  }`}
+                                  onClick={() => onCopy?.(field.key, value)}
+                                  title="Copy"
+                                >
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    {copiedField === String(field.key) ? (
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    ) : (
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    )}
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
