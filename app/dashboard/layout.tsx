@@ -34,6 +34,7 @@ export default function DashboardLayoutWrapper({
             last_name: user?.last_name || "Doe",
             email: user?.email || "john.doe@entitymanager.com",
         }}
+        actions={null}
         >
         {children}
       </DashboardLayout>

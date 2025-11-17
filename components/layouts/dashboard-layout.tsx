@@ -66,9 +66,22 @@ const sidebarItems = [
     href: "/dashboard/entities",
   },
   {
-    title: "Users",
+    title: "Accounts",
     icon: Users,
-    href: "/dashboard/users",
+    items: [
+      {
+        title: "Users",
+        href: "/dashboard/accounts/users",
+      },
+      {
+        title: "Roles",
+        href: "/dashboard/accounts/roles",
+      },
+      {
+        title: "Permissions",
+        href: "/dashboard/accounts/permissions",
+      },
+    ],
   },
   {
     title: "Analytics",
@@ -141,12 +154,34 @@ export function DashboardLayout({
             <SidebarMenu>
               {sidebarItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.href} className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  {item.items ? (
+                    // Collapsible group for items with subitems
+                    <div className="py-2">
+                      <div className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-sidebar-foreground">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </div>
+                      <div className="ml-7 space-y-1">
+                        {item.items.map((subItem) => (
+                          <Link
+                            key={subItem.title}
+                            href={subItem.href}
+                            className="block px-4 py-1.5 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-md transition-colors"
+                          >
+                            {subItem.title}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    // Regular menu button for items without subitems
+                    <SidebarMenuButton asChild>
+                      <Link href={item.href!} className="flex items-center gap-3">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  )}
                   <Separator />
                 </SidebarMenuItem>
               ))}

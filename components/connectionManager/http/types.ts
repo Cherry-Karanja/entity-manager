@@ -10,6 +10,9 @@ export interface DjangoPaginatedResponse<T> {
   count: number
   next: string | null
   previous: string | null
+  page_size: number
+  total_pages: number
+  current_page: number
   results: T[]
 }
 

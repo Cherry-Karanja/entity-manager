@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApi } from './hooks';
 import { httpClient } from './client';
-import { EntityConfig } from "@/components/entityManager/manager";
+import { EntityConfig } from "@/components/entityManager/primitives";
 import { handleApiError } from "./client";
 import { AxiosError } from "axios";
 
@@ -15,7 +15,7 @@ function getEndpointUrl(
   operation: 'list' | 'create' | 'update' | 'delete'
 ): string {
   // Use top-level endpoints (simplified for v2)
-  return config.endpoints[operation];
+  return config.endpoints[operation] || '/';
 }
 
 /**
