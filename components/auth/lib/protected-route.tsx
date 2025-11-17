@@ -61,7 +61,7 @@ export function ProtectedRoute({
           <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
           <p className="text-muted-foreground">You need to be logged in to access this page.</p>
           <button
-            onClick={() => router.push(redirectTo)}
+            onClick={() => router.replace(`${redirectTo}?redirect=${encodeURIComponent(pathname)}`)}
             className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
           >
             Go to Login
