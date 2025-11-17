@@ -103,11 +103,11 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, state]);
 
-  // Refetch data when pagination, sorting, or search changes
+  // Refetch data when pagination, sorting, search, or filters change
   useEffect(() => {
     if (!config.apiClient || view !== 'list') return;
 
-    const { page, pageSize, sort, search } = state.state;
+    const { page, pageSize, sort, search, filters } = state.state;
     
     state.setLoading(true);
     
@@ -118,6 +118,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       sortField?: string;
       sortDirection?: 'asc' | 'desc';
       search?: string;
+      filters?: Array<{ field: string; operator?: string; value: unknown }>;
     } = {
       page,
       pageSize,
@@ -130,6 +131,10 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     
     if (search) {
       queryParams.search = search;
+    }
+    
+    if (filters && filters.length > 0) {
+      queryParams.filters = filters;
     }
 
     config.apiClient.list(queryParams)
@@ -147,7 +152,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         state.setLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.state.page, state.state.pageSize, state.state.sort, state.state.search, view]);
+  }, [state.state.page, state.state.pageSize, state.state.sort, state.state.search, state.state.filters, view]);
 
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
@@ -297,6 +302,9 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           searchable={true}
           searchValue={state.state.search}
           onSearchChange={state.setSearch}
+          filterable={true}
+          filterConfigs={state.state.filters}
+          onFilterChange={state.setFilters}
           loading={state.state.loading}
           error={state.state.error}
           rowActions={({ entity }) => (
@@ -305,6 +313,10 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
               entity={entity}
             />
           )}
+          titleField={config.config.titleField}
+          subtitleField={config.config.subtitleField}
+          imageField={config.config.imageField}
+          dateField={config.config.dateField}
         />
       </div>
     );

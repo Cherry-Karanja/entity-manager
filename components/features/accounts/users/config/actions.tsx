@@ -7,6 +7,7 @@
 
 import { Action } from '@/components/entityManager';
 import { User } from '../../types';
+import { userActions as apiActions } from '../api/client';
 import { 
   CheckCircle, 
   XCircle, 
@@ -35,9 +36,13 @@ export const userActions: Action<User>[] = [
     confirmText: 'Approve',
     onConfirm: async (user?: User, context?) => {
       if (!user || !context?.refresh) return;
-      // TODO: Implement API call
-      console.log('Approving user:', user.id);
-      await context.refresh();
+      try {
+        await apiActions.approve(user.id);
+        console.log('User approved:', user.id);
+        await context.refresh();
+      } catch (error) {
+        console.error('Failed to approve user:', error);
+      }
     },
   },
   {
@@ -102,9 +107,13 @@ export const userActions: Action<User>[] = [
     visible: (user?: User) => !!user?.account_locked_until,
     handler: async (user?: User, context?) => {
       if (!user || !context?.refresh) return;
-      // TODO: Implement API call
-      console.log('Unlocking account:', user.id);
-      await context.refresh();
+      try {
+        await apiActions.unlockAccount(user.id);
+        console.log('Account unlocked:', user.id);
+        await context.refresh();
+      } catch (error) {
+        console.error('Failed to unlock account:', error);
+      }
     },
   },
   {
@@ -119,8 +128,12 @@ export const userActions: Action<User>[] = [
     confirmText: 'Send Reset Email',
     onConfirm: async (user?: User) => {
       if (!user) return;
-      // TODO: Implement API call
-      console.log('Sending password reset for:', user.email);
+      try {
+        await apiActions.resetPassword(user.id);
+        console.log('Password reset sent to:', user.email);
+      } catch (error) {
+        console.error('Failed to send password reset:', error);
+      }
     },
   },
   {
@@ -146,9 +159,13 @@ export const userActions: Action<User>[] = [
     ],
     onSubmit: async (values, user?: User, context?) => {
       if (!user || !context?.refresh) return;
-      // TODO: Implement API call
-      console.log('Changing role for user:', user.id, 'to:', values.role);
-      await context.refresh();
+      try {
+        await apiActions.changeRole(user.id, values.role as string);
+        console.log('Role changed for user:', user.id, 'to:', values.role);
+        await context.refresh();
+      } catch (error) {
+        console.error('Failed to change role:', error);
+      }
     },
   },
   {
