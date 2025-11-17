@@ -313,6 +313,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 onClick={() => section.collapsible && toggleSection(section.id)}
                 role={section.collapsible ? 'button' : undefined}
                 aria-expanded={section.collapsible ? !isCollapsed : undefined}
+                tabIndex={section.collapsible ? 0 : undefined}
               >
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold text-foreground">{section.label}</h3>
@@ -428,7 +429,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
     return (
       <div className="space-y-4">
-        <div className="border-b border-border overflow-x-auto">
+        <div className="border-b border-border overflow-x-auto" role="tablist">
           <div className="flex space-x-1 min-w-max px-1">
             {sortedTabs.map(tab => (
               <button
@@ -441,7 +442,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: tab.id }))}
                 role="tab"
-                aria-selected={state.currentTab === tab.id}
+                aria-selected={state.currentTab === tab.id ? 'true' : 'false'}
               >
                 {tab.icon && <span className="text-base">{tab.icon}</span>}
                 {tab.label}
@@ -495,7 +496,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
     return (
       <div className="space-y-4">
-        <div className="border-b border-border overflow-x-auto">
+        <div className="border-b border-border overflow-x-auto" role="tablist">
           <div className="flex space-x-1 min-w-max px-1">
             {sortedSections.map(section => (
               <button
@@ -508,7 +509,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: section.id }))}
                 role="tab"
-                aria-selected={currentSection === section.id}
+                aria-selected={currentSection === section.id ? 'true' : 'false'}
               >
                 {section.label}
               </button>

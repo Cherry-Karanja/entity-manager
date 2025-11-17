@@ -271,7 +271,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                         ? 'bg-primary text-primary-foreground border-primary z-10'
                         : 'bg-background text-muted-foreground border-input hover:bg-muted hover:text-foreground'
                     }`}
-                    aria-pressed={state.view === v}
+                    aria-pressed={state.view === v ? 'true' : 'false'}
                     title={`Switch to ${v} view`}
                   >
                     {v.charAt(0).toUpperCase() + v.slice(1)}

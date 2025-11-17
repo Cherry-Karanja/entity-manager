@@ -273,7 +273,7 @@ function DetailView<T extends BaseEntity>({
       {/* Tabs */}
       {tabs && tabs.length > 0 && (
         <div className="border rounded-lg overflow-hidden">
-          <div className="border-b bg-muted/50 overflow-x-auto">
+          <div className="border-b bg-muted/50 overflow-x-auto" role="tablist">
             <div className="flex min-w-max">
               {tabs.map((tab: any) => (
                 <button
@@ -285,7 +285,7 @@ function DetailView<T extends BaseEntity>({
                   }`}
                   onClick={() => onTabChange(tab.id)}
                   role="tab"
-                  aria-selected={state.activeTab === tab.id}
+                  aria-selected={state.activeTab === tab.id ? 'true' : 'false'}
                 >
                   {tab.icon && <span className="mr-2">{tab.icon}</span>}
                   <span>{tab.label}</span>
@@ -537,6 +537,8 @@ function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField,
               }`}
               onClick={() => group.collapsible && toggleGroup(group.id)}
               role={group.collapsible ? 'button' : undefined}
+              aria-expanded={group.collapsible ? !isCollapsed : undefined}
+              tabIndex={group.collapsible ? 0 : undefined}
             >
               <div>
                 <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>

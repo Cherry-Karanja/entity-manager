@@ -136,6 +136,7 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
     } finally {
       setState(prev => ({ ...prev, loading: false, executing: undefined }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, context, onActionStart, onActionComplete, onActionError]);
 
   /**
@@ -529,6 +530,20 @@ function ConfirmDialog({
 }
 
 /**
+ * Field type for form modals
+ */
+interface FormFieldDefinition {
+  name: string;
+  label: string;
+  type: 'text' | 'email' | 'password' | 'textarea' | 'number' | 'select' | 'checkbox' | 'radio' | 'date';
+  required?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+  helpText?: string;
+  options?: Array<{ value: unknown; label: string }>;
+}
+
+/**
  * Form Modal Component
  */
 function FormModal({
@@ -540,7 +555,7 @@ function FormModal({
   onCancel,
 }: {
   title: string;
-  fields: any[];
+  fields: FormFieldDefinition[];
   initialValues: Record<string, unknown>;
   submitText?: string;
   onSubmit: (values: Record<string, unknown>) => void | Promise<void>;

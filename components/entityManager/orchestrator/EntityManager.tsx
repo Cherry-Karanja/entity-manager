@@ -7,15 +7,13 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef, use } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BaseEntity } from '../primitives/types';
 import { EntityManagerProps, EntityManagerView } from './types';
 import { EntityList } from '../components/list';
 import { EntityForm } from '../components/form';
 import { EntityView } from '../components/view';
 import { EntityActions } from '../components/actions';
-import { ActionDefinition } from '../components/actions/types';
-import { EntityExporter } from '../components/exporter';
 import { EntityStateProvider, useEntityState } from '../composition/exports';
 import { EntityApiProvider, useEntityMutations } from '../composition/exports';
 
@@ -112,14 +110,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     state.setLoading(true);
     
     // Build query parameters for server-side filtering/sorting/pagination
-    const queryParams: {
-      page?: number;
-      pageSize?: number;
-      sortField?: string;
-      sortDirection?: 'asc' | 'desc';
-      search?: string;
-      filters?: Array<{ field: string; operator?: string; value: unknown }>;
-    } = {
+    const queryParams: Record<string, unknown> = {
       page,
       pageSize,
     };
@@ -137,7 +128,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       queryParams.filters = filters;
     }
 
-    config.apiClient.list(queryParams)
+    config.apiClient.list(queryParams as never)
       .then((response) => {
         const data = response.data || [];
         state.setEntities(data);
@@ -160,13 +151,6 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // Note: These handlers are available for use in action handlers defined in config
   // They can be passed via context or bound to actions in the config
   
-  // Handle create
-  const handleCreate = () => {
-    setView('create');
-    setSelectedId(null);
-    onViewChangeToUse?.('create');
-  };
-
   // Handle edit
   const handleEdit = (entity: T) => {
     setView('edit');
