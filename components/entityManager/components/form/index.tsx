@@ -79,6 +79,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
   validateOnChange = false,
   validateOnBlur = true,
 }: EntityFormProps<T>): React.ReactElement {
+  console.log('EntityForm render:', { fieldsCount: fields?.length, mode, layout, sectionsCount: sections?.length });
   const [state, setState] = useState<FormState<T>>(() => ({
     values: getInitialValues(fields, entity, initialValues),
     errors: {},
@@ -554,30 +555,47 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
   const isSubmitDisabled = disabled || loading || state.submitting;
 
   return (
-    <form onSubmit={handleSubmit} className={`entity-form ${className} layout-${layout} mode-${mode}`} noValidate>
+    <form onSubmit={handleSubmit} className={`space-y-6 ${className}`} noValidate>
       {state.submitError && (
-        <div className="form-error" role="alert">
-          {state.submitError}
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md" role="alert">
+          <p className="text-sm font-medium">{state.submitError}</p>
         </div>
       )}
       {renderLayout()}
 
-      <div className="form-actions">
-        <button type="submit" disabled={isSubmitDisabled} className="submit-button">
-          {state.submitting ? 'Submitting...' : submitText}
-        </button>
-        
+      <div className="flex items-center justify-end gap-3 pt-4 border-t">
         {showCancel && (
-          <button type="button" onClick={onCancel} disabled={state.submitting} className="cancel-button">
+          <button 
+            type="button" 
+            onClick={onCancel} 
+            disabled={state.submitting}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
             {cancelText}
           </button>
         )}
         
         {showReset && (
-          <button type="button" onClick={handleReset} disabled={state.submitting} className="reset-button">
+          <button 
+            type="button" 
+            onClick={handleReset} 
+            disabled={state.submitting}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
             Reset
           </button>
         )}
+        
+        <button 
+          type="submit" 
+          disabled={isSubmitDisabled}
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+        >
+          {state.submitting && (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          )}
+          {state.submitting ? 'Submitting...' : submitText}
+        </button>
       </div>
     </form>
   );
@@ -618,6 +636,9 @@ function DefaultFieldRenderer<T extends BaseEntity>({
   };
 
   const renderInput = () => {
+    const inputClasses = "w-full px-3 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed";
+    const errorClasses = showError ? "border-destructive focus:ring-destructive" : "";
+    
     switch (field.type) {
       case 'textarea':
         return (
@@ -626,13 +647,19 @@ function DefaultFieldRenderer<T extends BaseEntity>({
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             rows={field.rows || 3}
+            className={`${inputClasses} ${errorClasses}`}
             {...commonProps}
           />
         );
 
       case 'select':
         return (
-          <select value={String(value || '')} onChange={(e) => onChange(e.target.value)} {...commonProps}>
+          <select 
+            value={String(value || '')} 
+            onChange={(e) => onChange(e.target.value)}
+            className={`${inputClasses} ${errorClasses}`}
+            {...commonProps}
+          >
             <option value="">Select...</option>
             {options.map(opt => (
               <option key={String(opt.value)} value={String(opt.value)} disabled={opt.disabled}>
@@ -649,6 +676,7 @@ function DefaultFieldRenderer<T extends BaseEntity>({
             type="checkbox"
             checked={Boolean(value)}
             onChange={(e) => onChange(e.target.checked)}
+            className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
             {...commonProps}
           />
         );
@@ -661,6 +689,7 @@ function DefaultFieldRenderer<T extends BaseEntity>({
             onChange={(e) => onChange(e.target.files?.[0])}
             accept={field.accept}
             multiple={field.multiple}
+            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             {...commonProps}
           />
         );
@@ -675,6 +704,7 @@ function DefaultFieldRenderer<T extends BaseEntity>({
             min={field.min}
             max={field.max}
             step={field.step}
+            className={`${inputClasses} ${errorClasses}`}
             {...commonProps}
           />
         );
@@ -682,14 +712,21 @@ function DefaultFieldRenderer<T extends BaseEntity>({
   };
 
   return (
-    <div className={`form-field ${showError ? 'error' : ''}`}>
-      <label htmlFor={String(field.name)}>
+    <div className={`space-y-1.5 ${showError ? '' : ''}`}>
+      <label 
+        htmlFor={String(field.name)}
+        className="block text-sm font-medium text-foreground"
+      >
         {field.label}
-        {field.required && <span className="required" aria-hidden="true">*</span>}
+        {field.required && <span className="text-destructive ml-1" aria-hidden="true">*</span>}
       </label>
       {renderInput()}
-      {field.helpText && <div className="field-help">{field.helpText}</div>}
-      {showError && <div className="field-error" id={errorId}>{error}</div>}
+      {field.helpText && (
+        <p className="text-xs text-muted-foreground">{field.helpText}</p>
+      )}
+      {showError && (
+        <p className="text-xs text-destructive" id={errorId}>{error}</p>
+      )}
     </div>
   );
 }

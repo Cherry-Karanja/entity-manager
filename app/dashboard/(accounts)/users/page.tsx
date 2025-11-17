@@ -18,6 +18,7 @@ import { EntityManagerView } from '@/components/entityManager';
 export default function UsersPage() {
   const { setPageActions } = usePageActions();
   const [initialView, setInitialView] = React.useState<EntityManagerView>('list');
+  const [initialId, setInitialId] = React.useState<string | number | undefined>(undefined);
 
   // Set actions to display in the layout header
   useEffect(() => {
@@ -26,7 +27,11 @@ export default function UsersPage() {
         <Button 
           variant="default" 
           size="sm"
-          onClick={() => setInitialView('create')}
+          onClick={() => {
+            console.log('Add User button clicked');
+            setInitialView('create');
+            setInitialId(undefined);
+          }}
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Add User
@@ -38,7 +43,14 @@ export default function UsersPage() {
     return () => setPageActions(null);
   }, [setPageActions]);
 
-
+  // Callback when view changes internally (e.g., back to list after submit)
+  const handleViewChange = React.useCallback((newView: EntityManagerView) => {
+    console.log('View changed to:', newView);
+    setInitialView(newView);
+    if (newView === 'list') {
+      setInitialId(undefined);
+    }
+  }, []);
 
   return (
     <EntityManager
@@ -47,6 +59,8 @@ export default function UsersPage() {
         apiClient: usersApiClient,
         initialData: [],
         initialView: initialView,
+        initialId: initialId,
+        onViewChange: handleViewChange,
         features: {
           offline: false,
           realtime: false,

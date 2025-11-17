@@ -25,21 +25,41 @@ import { EntityApiProvider, useEntityMutations } from '../composition/exports';
 function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   props: EntityManagerProps<T>
 ) {
-  const { config, initialView = 'list', initialId } = props;
-  const [view, setView] = useState<EntityManagerView>(initialView);
-  const [selectedId, setSelectedId] = useState<string | number | null>(initialId || null);
+  const { 
+    config, 
+    initialView: propsInitialView, 
+    initialId: propsInitialId,
+    onViewChange 
+  } = props;
+  
+  // Use initialView/initialId from config or props (props take precedence)
+  const initialViewToUse = propsInitialView ?? config.initialView ?? 'list';
+  const initialIdToUse = propsInitialId ?? config.initialId;
+  const onViewChangeToUse = onViewChange ?? config.onViewChange;
+  
+  const [view, setView] = useState<EntityManagerView>(initialViewToUse);
+  const [selectedId, setSelectedId] = useState<string | number | null>(initialIdToUse || null);
   const fetchAttempted = useRef(false);
   
   const state = useEntityState<T>();
   const mutations = useEntityMutations<T>();
 
-  // Watch for initialView changes from parent
+  // Watch for initialView and initialId changes from parent
   useEffect(() => {
-    setView(initialView);
-    if (initialView === 'list') {
+    console.log('initialView changed:', initialViewToUse, 'initialId:', initialIdToUse);
+    setView(initialViewToUse);
+    
+    if (initialViewToUse === 'list') {
       setSelectedId(null);
+    } else if (initialIdToUse !== undefined && initialIdToUse !== null) {
+      setSelectedId(initialIdToUse);
     }
-  }, [initialView]);
+    
+    // Reset fetch flag when view changes to allow refetching if needed
+    if (initialViewToUse !== 'list') {
+      fetchAttempted.current = false;
+    }
+  }, [initialViewToUse, initialIdToUse]);
 
   // Auto-fetch data on mount if API client is available
   useEffect(() => {
@@ -48,9 +68,9 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     fetchAttempted.current = true;
     
     // If starting in edit/view mode with an ID, fetch that specific entity
-    if ((initialView === 'edit' || initialView === 'view') && initialId) {
+    if ((initialViewToUse === 'edit' || initialViewToUse === 'view') && initialIdToUse) {
       state.setLoading(true);
-      config.apiClient.get(initialId)
+      config.apiClient.get(initialIdToUse)
         .then((response) => {
           const entity = response.data;
           state.addEntity(entity);
@@ -63,7 +83,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         });
     }
     // If starting in list mode or create mode, fetch all entities
-    else if ((initialView === 'list' || initialView === 'create') && state.state.entities.length === 0) {
+    else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state.state.entities.length === 0) {
       state.setLoading(true);
       config.apiClient.list()
         .then((response) => {
@@ -80,7 +100,8 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           state.setLoading(false);
         });
     }
-  }, [config.apiClient, initialView, initialId, state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.apiClient, state]);
 
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
@@ -89,28 +110,31 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // They can be passed via context or bound to actions in the config
   
   // Handle create
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCreate = () => {
     setView('create');
     setSelectedId(null);
+    onViewChangeToUse?.('create');
   };
 
   // Handle edit
   const handleEdit = (entity: T) => {
     setView('edit');
     setSelectedId(entity.id);
+    onViewChangeToUse?.('edit');
   };
 
   // Handle view
   const handleView = (entity: T) => {
     setView('view');
     setSelectedId(entity.id);
+    onViewChangeToUse?.('view');
   };
 
   // Handle back to list
   const handleBack = () => {
     setView('list');
     setSelectedId(null);
+    onViewChangeToUse?.('list');
   };
 
   // Handle form submit
@@ -245,20 +269,21 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     console.log('Form fields:', config.config.fields);
     console.log('Form layout:', config.config.formLayout);
     console.log('Form sections:', config.config.formSections);
+    console.log('Form fields:', config.config.fields);
     
     return (
       <div className="space-y-4">
         {renderBreadcrumbs()}
         <div className="bg-card rounded-lg border p-6">
           <EntityForm
-          fields={config.config.fields}
-          entity={view === 'edit' ? selectedEntity : undefined}
-          mode={view === 'create' ? 'create' : 'edit'}
-          layout={config.config.formLayout}
-          sections={config.config.formSections}
-          onSubmit={handleSubmit}
-          onCancel={handleBack}
-        />
+            fields={config.config.fields as never}
+            entity={view === 'edit' ? selectedEntity : undefined}
+            mode={view === 'create' ? 'create' : 'edit'}
+            layout={config.config.formLayout}
+            sections={config.config.formSections as never}
+            onSubmit={handleSubmit}
+            onCancel={handleBack}
+          />
         </div>
       </div>
     );

@@ -176,18 +176,18 @@ function DetailView<T extends BaseEntity>({
   const sortedGroups = groups ? sortGroups(groups) : [];
 
   return (
-    <div className={`entity-view detail ${className}`}>
+    <div className={`space-y-6 ${className}`}>
       {/* Header */}
-      <div className="view-header">
-        <h2 className="view-title">{title}</h2>
-        {actions && <div className="view-actions">{actions}</div>}
+      <div className="flex items-center justify-between pb-4 border-b">
+        <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+        {actions && <div className="flex gap-2">{actions}</div>}
       </div>
 
       {/* Main content */}
-      <div className="view-content">
+      <div className="space-y-6">
         {/* Ungrouped fields */}
         {groupedFields.get(null) && (
-          <div className="field-list">
+          <div className="space-y-3">
             {groupedFields.get(null)!.map(field => (
               <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
             ))}
@@ -202,17 +202,32 @@ function DetailView<T extends BaseEntity>({
           const isCollapsed = state.collapsedGroups.has(group.id);
 
           return (
-            <div key={group.id} className="field-group">
+            <div key={group.id} className="border rounded-lg overflow-hidden">
               <div 
-                className="group-header" 
+                className={`flex items-center justify-between px-4 py-3 bg-muted/50 ${
+                  group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
+                }`}
                 onClick={() => group.collapsible && onToggleGroup(group.id)}
               >
-                <h3>{group.label}</h3>
-                {group.description && <p className="group-description">{group.description}</p>}
-                {group.collapsible && <span className="collapse-icon">{isCollapsed ? '▶' : '▼'}</span>}
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
+                  {group.description && <p className="text-xs text-muted-foreground mt-1">{group.description}</p>}
+                </div>
+                {group.collapsible && (
+                  <svg
+                    className={`w-5 h-5 text-muted-foreground transition-transform ${
+                      isCollapsed ? 'rotate-0' : 'rotate-180'
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                )}
               </div>
               {!isCollapsed && (
-                <div className="field-list">
+                <div className="p-4 space-y-3 bg-card">
                   {groupFields.map(field => (
                     <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
                   ))}
@@ -224,15 +239,15 @@ function DetailView<T extends BaseEntity>({
 
         {/* Metadata */}
         {showMetadata && (
-          <div className="field-group metadata">
-            <div className="group-header">
-              <h3>Metadata</h3>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="px-4 py-3 bg-muted/50">
+              <h3 className="text-sm font-semibold text-foreground">Metadata</h3>
             </div>
-            <div className="field-list">
+            <div className="p-4 space-y-3 bg-card">
               {getMetadataFields(entity).map(({ label, value }) => (
-                <div key={label} className="field-row">
-                  <div className="field-label">{label}</div>
-                  <div className="field-value">{String(value)}</div>
+                <div key={label} className="flex items-start">
+                  <div className="w-1/3 text-sm font-medium text-muted-foreground">{label}</div>
+                  <div className="w-2/3 text-sm text-foreground">{String(value)}</div>
                 </div>
               ))}
             </div>
@@ -242,21 +257,31 @@ function DetailView<T extends BaseEntity>({
 
       {/* Tabs */}
       {tabs && tabs.length > 0 && (
-        <div className="view-tabs">
-          <div className="tab-headers">
-            {tabs.map((tab: any) => (
-              <button
-                key={tab.id}
-                className={`tab-header ${state.activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => onTabChange(tab.id)}
-              >
-                {tab.icon && <span className="tab-icon">{tab.icon}</span>}
-                <span>{tab.label}</span>
-                {tab.badge && <span className="tab-badge">{typeof tab.badge === 'function' ? tab.badge(entity) : tab.badge}</span>}
-              </button>
-            ))}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="border-b bg-muted/50">
+            <div className="flex">
+              {tabs.map((tab: any) => (
+                <button
+                  key={tab.id}
+                  className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                    state.activeTab === tab.id
+                      ? 'border-primary text-primary bg-background'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                  onClick={() => onTabChange(tab.id)}
+                >
+                  {tab.icon && <span className="mr-2">{tab.icon}</span>}
+                  <span>{tab.label}</span>
+                  {tab.badge && (
+                    <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
+                      {typeof tab.badge === 'function' ? tab.badge(entity) : tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="tab-content">
+          <div className="p-4 bg-card">
             {tabs.map((tab: any) => {
               if (tab.id !== state.activeTab) return null;
               
@@ -282,20 +307,40 @@ function FieldRow<T extends BaseEntity>({ field, entity, onCopy, copiedField }: 
   const renderedValue = renderField(field, entity);
 
   return (
-    <div className="field-row">
-      <div className="field-label">
-        {field.label}
-        {field.helpText && <span className="field-help" title={field.helpText}>?</span>}
+    <div className="flex items-start py-2">
+      <div className="w-1/3 pr-4">
+        <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+          {field.label}
+          {field.helpText && (
+            <span className="inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-muted text-muted-foreground cursor-help" title={field.helpText}>
+              ?
+            </span>
+          )}
+        </div>
       </div>
-      <div className="field-value">
-        {renderedValue}
+      <div className="w-2/3 flex items-start gap-2">
+        <div className="flex-1 text-sm text-foreground break-words">
+          {renderedValue}
+        </div>
         {field.copyable && (
           <button
-            className="copy-button"
+            className={`flex-shrink-0 p-1.5 text-xs rounded-md transition-colors ${
+              copiedField === String(field.key)
+                ? 'bg-primary/10 text-primary'
+                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+            }`}
             onClick={() => onCopy?.(field.key, value)}
             title="Copy to clipboard"
           >
-            {copiedField === String(field.key) ? '✓ Copied' : '📋'}
+            {copiedField === String(field.key) ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            )}
           </button>
         )}
       </div>
@@ -312,20 +357,26 @@ function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleFi
   const image = getEntityImage(entity, imageField);
 
   return (
-    <div className={`entity-view card ${className}`}>
-      {image && <img src={image} alt={title} className="card-image" />}
-      <div className="card-content">
-        <h2 className="card-title">{title}</h2>
-        {subtitle && <p className="card-subtitle">{subtitle}</p>}
-        <div className="card-fields">
+    <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
+      {image && (
+        <div className="aspect-video w-full overflow-hidden bg-muted">
+          <img src={image} alt={title} className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="p-6 space-y-4">
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+          {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+        </div>
+        <div className="space-y-2">
           {fields.slice(0, 5).map((field: any) => (
-            <div key={String(field.key)} className="card-field">
-              <span className="field-label">{field.label}:</span>
-              <span className="field-value">{renderField(field, entity)}</span>
+            <div key={String(field.key)} className="flex items-start">
+              <span className="text-sm font-medium text-muted-foreground w-1/3">{field.label}:</span>
+              <span className="text-sm text-foreground w-2/3">{renderField(field, entity)}</span>
             </div>
           ))}
         </div>
-        {actions && <div className="card-actions">{actions}</div>}
+        {actions && <div className="flex items-center gap-2 pt-4 border-t">{actions}</div>}
       </div>
     </div>
   );
@@ -336,11 +387,11 @@ function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleFi
  */
 function SummaryView<T extends BaseEntity>({ entity, fields, className }: any) {
   return (
-    <div className={`entity-view summary ${className}`}>
+    <div className={`bg-card rounded-lg border shadow-sm p-4 space-y-2 ${className}`}>
       {fields.map((field: any) => (
-        <div key={String(field.key)} className="summary-field">
-          <span className="field-label">{field.label}:</span>
-          <span className="field-value">{renderField(field, entity)}</span>
+        <div key={String(field.key)} className="flex items-start py-1">
+          <span className="text-sm font-medium text-muted-foreground w-1/3">{field.label}:</span>
+          <span className="text-sm text-foreground w-2/3">{renderField(field, entity)}</span>
         </div>
       ))}
     </div>
@@ -359,14 +410,14 @@ function TimelineView<T extends BaseEntity>({ entity, fields, showMetadata, clas
   }
 
   return (
-    <div className={`entity-view timeline ${className}`}>
-      <div className="timeline-line"></div>
+    <div className={`relative space-y-6 ${className}`}>
+      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border"></div>
       {events.map((field: any, index: number) => (
-        <div key={String(field.key)} className="timeline-event">
-          <div className="event-marker"></div>
-          <div className="event-content">
-            <div className="event-label">{field.label}</div>
-            <div className="event-value">{renderField(field, entity)}</div>
+        <div key={String(field.key)} className="relative pl-12">
+          <div className="absolute left-2.5 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
+          <div className="bg-card rounded-lg border shadow-sm p-4">
+            <div className="text-sm font-medium text-foreground">{field.label}</div>
+            <div className="text-sm text-muted-foreground mt-1">{renderField(field, entity)}</div>
           </div>
         </div>
       ))}

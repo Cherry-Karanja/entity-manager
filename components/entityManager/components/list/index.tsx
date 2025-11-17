@@ -358,115 +358,117 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render table view
   const renderTableView = () => {
     return (
-      <div className="relative overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs uppercase bg-muted/50">
-            <tr className="border-b">
-              {selectable && (
-                <th scope="col" className="px-4 py-3 w-12">
-                  {multiSelect && (
-                    <input
-                      title="Select all"
-                      aria-label="Select all"
-                      type="checkbox"
-                      checked={state.selectedIds.size === processedData.length && processedData.length > 0}
-                      onChange={() => state.selectedIds.size === processedData.length ? handleDeselectAll() : handleSelectAll()}
-                      className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
-                    />
-                  )}
-                </th>
-              )}
-              {visibleColumns.map(column => (
-                <th
-                  key={String(column.key)}
-                  scope="col"
-                  style={{ width: column.width, textAlign: column.align }}
-                  className={`px-4 py-3 font-medium text-muted-foreground ${
-                    column.sortable && sortable ? 'cursor-pointer select-none hover:text-foreground' : ''
-                  }`}
-                  onClick={() => column.sortable && sortable && handleSort(String(column.key))}
-                >
-                  <div className="flex items-center gap-1">
-                    {column.label}
-                    {state.sort?.field === column.key && (
-                      <span className="text-primary">
-                        {state.sort.direction === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
-              {(RowActions || actions) && (
-                <th scope="col" className="px-4 py-3 text-right">
-                  <span className="sr-only">Actions</span>
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.map((entity, index) => {
-              const isSelected = state.selectedIds.has(entity.id);
-              const rowClass = rowClassName ? rowClassName(entity, index) : '';
-              
-              return (
-                <tr
-                  key={entity.id}
-                  className={`border-b transition-colors ${
-                    isSelected ? 'bg-muted' : ''
-                  } ${hover ? 'hover:bg-muted/50' : ''} ${
-                    striped && index % 2 === 0 ? 'bg-muted/20' : ''
-                  } ${rowClass}`}
-                  onClick={() => onRowClick?.(entity, index)}
-                  onDoubleClick={() => onRowDoubleClick?.(entity, index)}
-                >
-                  {selectable && (
-                    <td className="px-4 py-3">
+      <div className="relative overflow-x-auto -mx-4 sm:mx-0">
+        <div className="inline-block min-w-full align-middle">
+          <table className="min-w-full divide-y divide-border text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                {selectable && (
+                  <th scope="col" className="px-3 sm:px-4 py-3 w-12">
+                    {multiSelect && (
                       <input
-                        title="Select row"
+                        title="Select all"
+                        aria-label="Select all"
                         type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleSelectRow(entity.id)}
-                        onClick={(e) => e.stopPropagation()}
+                        checked={state.selectedIds.size === processedData.length && processedData.length > 0}
+                        onChange={() => state.selectedIds.size === processedData.length ? handleDeselectAll() : handleSelectAll()}
                         className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
                       />
-                    </td>
-                  )}
-                  {visibleColumns.map(column => {
-                    const value = getColumnValue(entity, column.key);
-                    return (
-                      <td
-                        key={String(column.key)}
-                        className="px-4 py-3"
-                        style={{ textAlign: column.align }}
-                      >
-                        {renderCell({ column, entity, value, index })}
+                    )}
+                  </th>
+                )}
+                {visibleColumns.map(column => (
+                  <th
+                    key={String(column.key)}
+                    scope="col"
+                    style={{ width: column.width, textAlign: column.align }}
+                    className={`px-3 sm:px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider ${
+                      column.sortable && sortable ? 'cursor-pointer select-none hover:text-foreground' : ''
+                    }`}
+                    onClick={() => column.sortable && sortable && handleSort(String(column.key))}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="truncate">{column.label}</span>
+                      {state.sort?.field === column.key && (
+                        <span className="text-primary flex-shrink-0">
+                          {state.sort.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                ))}
+                {(RowActions || actions) && (
+                  <th scope="col" className="px-3 sm:px-4 py-3 text-right w-24">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="bg-card divide-y divide-border">
+              {paginatedData.map((entity, index) => {
+                const isSelected = state.selectedIds.has(entity.id);
+                const rowClass = rowClassName ? rowClassName(entity, index) : '';
+                
+                return (
+                  <tr
+                    key={entity.id}
+                    className={`transition-colors ${
+                      isSelected ? 'bg-muted' : ''
+                    } ${hover ? 'hover:bg-muted/50 cursor-pointer' : ''} ${
+                      striped && index % 2 === 0 ? 'bg-muted/20' : ''
+                    } ${rowClass}`}
+                    onClick={() => onRowClick?.(entity, index)}
+                    onDoubleClick={() => onRowDoubleClick?.(entity, index)}
+                  >
+                    {selectable && (
+                      <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                        <input
+                          title="Select row"
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleSelectRow(entity.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
+                        />
                       </td>
-                    );
-                  })}
-                  {(RowActions || actions) && (
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        {actions ? (
-                          <EntityActions actions={actions} entity={entity} mode="buttons" />
-                        ) : RowActions ? (
-                          <RowActions entity={entity} index={index} />
-                        ) : null}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    )}
+                    {visibleColumns.map(column => {
+                      const value = getColumnValue(entity, column.key);
+                      return (
+                        <td
+                          key={String(column.key)}
+                          className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm"
+                          style={{ textAlign: column.align }}
+                        >
+                          <div className="truncate max-w-xs">
+                            {renderCell({ column, entity, value, index })}
+                          </div>
+                        </td>
+                      );
+                    })}
+                    {(RowActions || actions) && (
+                      <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-right text-sm" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end gap-1 sm:gap-2">
+                          {actions ? (
+                            <EntityActions actions={actions} entity={entity} mode="buttons" />
+                          ) : RowActions ? (
+                            <RowActions entity={entity} index={index} />
+                          ) : null}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
-  };
-
-  // Render card view
+  };  // Render card view
   const renderCardView = () => {
     return (
-      <div className="entity-list-cards">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -476,35 +478,43 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           return (
             <div
               key={entity.id}
-              className={`entity-card ${isSelected ? 'selected' : ''}`}
+              className={`bg-card rounded-lg border shadow-sm overflow-hidden transition-all hover:shadow-md ${
+                isSelected ? 'ring-2 ring-primary' : ''
+              } cursor-pointer`}
               onClick={() => onRowClick?.(entity, index)}
             >
               {selectable && (
-                <input
-                  title="Select card"
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => handleSelectRow(entity.id)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="card-checkbox"
-                />
+                <div className="absolute top-2 right-2 z-10">
+                  <input
+                    title="Select card"
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => handleSelectRow(entity.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
+                  />
+                </div>
               )}
               
               {imageUrl && (
-                <img src={imageUrl} alt={title} className="card-image" />
+                <div className="aspect-video w-full overflow-hidden bg-muted">
+                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+                </div>
               )}
               
-              <div className="card-content">
-                <h3 className="card-title">{title}</h3>
-                {subtitle && <p className="card-subtitle">{subtitle}</p>}
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="text-base font-semibold text-foreground line-clamp-1">{title}</h3>
+                  {subtitle && <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{subtitle}</p>}
+                </div>
                 
-                <div className="card-fields">
+                <div className="space-y-2">
                   {visibleColumns.slice(0, 3).map(column => {
                     const value = getColumnValue(entity, column.key);
                     return (
-                      <div key={String(column.key)} className="card-field">
-                        <span className="field-label">{column.label}:</span>
-                        <span className="field-value">
+                      <div key={String(column.key)} className="flex items-start text-sm">
+                        <span className="font-medium text-muted-foreground w-1/3 flex-shrink-0">{column.label}:</span>
+                        <span className="text-foreground w-2/3 line-clamp-1">
                           {renderCell({ column, entity, value, index })}
                         </span>
                       </div>
@@ -514,7 +524,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
               
               {(RowActions || actions) && (
-                <div className="card-actions">
+                <div className="px-4 pb-4 pt-0 flex items-center gap-2 border-t pt-3">
                   {actions ? (
                     <EntityActions actions={actions} entity={entity} mode="buttons" />
                   ) : RowActions ? (
@@ -532,7 +542,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render list view
   const renderListView = () => {
     return (
-      <div className="entity-list-list">
+      <div className="divide-y">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -541,7 +551,9 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           return (
             <div
               key={entity.id}
-              className={`list-item ${isSelected ? 'selected' : ''}`}
+              className={`flex items-center gap-3 p-4 transition-colors ${
+                isSelected ? 'bg-muted' : ''
+              } hover:bg-muted/50 cursor-pointer`}
               onClick={() => onRowClick?.(entity, index)}
             >
               {selectable && (
@@ -551,17 +563,17 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
                   onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
                 />
               )}
               
-              <div className="list-content">
-                <div className="list-title">{title}</div>
-                {subtitle && <div className="list-subtitle">{subtitle}</div>}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-foreground truncate">{title}</div>
+                {subtitle && <div className="text-xs text-muted-foreground truncate mt-0.5">{subtitle}</div>}
               </div>
               
               {(RowActions || actions) && (
-                <div className="list-actions">
-                  {actions ? (
+                <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>\n                  {actions ? (
                     <EntityActions actions={actions} entity={entity} mode="buttons" />
                   ) : RowActions ? (
                     <RowActions entity={entity} index={index} />
@@ -578,23 +590,25 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render timeline view
   const renderTimelineView = () => {
     return (
-      <div className="entity-list-timeline">
+      <div className="relative space-y-6 p-4">
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border"></div>
         {paginatedData.map((entity, index) => {
           const title = getEntityTitle(entity, titleField);
           const subtitle = getEntitySubtitle(entity, subtitleField);
           const date = getEntityDate(entity, dateField);
           
           return (
-            <div key={entity.id} className="timeline-item">
-              <div className="timeline-marker" />
-              <div className="timeline-content">
+            <div key={entity.id} className="relative pl-12">
+              <div className="absolute left-4.5 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
+              <div className="bg-card rounded-lg border shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer"
+                   onClick={() => onRowClick?.(entity, index)}>
                 {date && (
-                  <div className="timeline-date">
+                  <div className="text-xs font-medium text-primary mb-2">
                     {date.toLocaleDateString()}
                   </div>
                 )}
-                <div className="timeline-title">{title}</div>
-                {subtitle && <div className="timeline-subtitle">{subtitle}</div>}
+                <div className="text-sm font-semibold text-foreground">{title}</div>
+                {subtitle && <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>}
               </div>
             </div>
           );
@@ -606,7 +620,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render grid view
   const renderGridView = () => {
     return (
-      <div className="entity-list-grid">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -614,7 +628,9 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           return (
             <div
               key={entity.id}
-              className={`grid-item ${isSelected ? 'selected' : ''}`}
+              className={`bg-card rounded-lg border shadow-sm p-4 transition-all hover:shadow-md ${
+                isSelected ? 'ring-2 ring-primary' : ''
+              } cursor-pointer relative`}
               onClick={() => onRowClick?.(entity, index)}
             >
               {selectable && (
@@ -623,9 +639,10 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
                   onClick={(e) => e.stopPropagation()}
+                  className="absolute top-2 right-2 w-3 h-3 text-primary bg-background border-input rounded focus:ring-ring focus:ring-1"
                 />
               )}
-              <div className="grid-title">{title}</div>
+              <div className="text-sm font-medium text-foreground text-center line-clamp-2">{title}</div>
             </div>
           );
         })}
@@ -641,7 +658,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render detailed view
   const renderDetailedView = () => {
     return (
-      <div className="entity-list-detailed">
+      <div className="space-y-4 p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -649,33 +666,37 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           return (
             <div
               key={entity.id}
-              className={`detailed-item ${isSelected ? 'selected' : ''}`}
+              className={`bg-card rounded-lg border shadow-sm overflow-hidden ${
+                isSelected ? 'ring-2 ring-primary' : ''
+              }`}
             >
-              {selectable && (
-                <input
-                  title="Select detailed item"
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => handleSelectRow(entity.id)}
-                />
-              )}
+              <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 border-b">
+                {selectable && (
+                  <input
+                    title="Select detailed item"
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => handleSelectRow(entity.id)}
+                    className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
+                  />
+                )}
+                <h3 className="text-base font-semibold text-foreground flex-1">{title}</h3>
+              </div>
               
-              <h3>{title}</h3>
-              
-              <div className="detailed-fields">
+              <div className="p-4 space-y-2">
                 {visibleColumns.map(column => {
                   const value = getColumnValue(entity, column.key);
                   return (
-                    <div key={String(column.key)} className="detailed-field">
-                      <label>{column.label}:</label>
-                      <span>{renderCell({ column, entity, value, index })}</span>
+                    <div key={String(column.key)} className="flex items-start py-1">
+                      <label className="text-sm font-medium text-muted-foreground w-1/3">{column.label}:</label>
+                      <span className="text-sm text-foreground w-2/3">{renderCell({ column, entity, value, index })}</span>
                     </div>
                   );
                 })}
               </div>
               
               {(RowActions || actions) && (
-                <div className="detailed-actions">
+                <div className="px-4 pb-4 pt-0 flex items-center gap-2 border-t pt-3">
                   {actions ? (
                     <EntityActions actions={actions} entity={entity} mode="buttons" />
                   ) : RowActions ? (
@@ -693,7 +714,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render gallery view
   const renderGalleryView = () => {
     return (
-      <div className="entity-list-gallery">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -702,13 +723,25 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           return (
             <div
               key={entity.id}
-              className={`gallery-item ${isSelected ? 'selected' : ''}`}
+              className={`bg-card rounded-lg border shadow-sm overflow-hidden transition-all hover:shadow-md ${
+                isSelected ? 'ring-2 ring-primary' : ''
+              } cursor-pointer`}
               onClick={() => onRowClick?.(entity, index)}
             >
-              {imageUrl && (
-                <img src={imageUrl} alt={title} className="gallery-image" />
+              {imageUrl ? (
+                <div className="aspect-square w-full overflow-hidden bg-muted">
+                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="aspect-square w-full bg-muted flex items-center justify-center">
+                  <svg className="w-12 h-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
               )}
-              <div className="gallery-caption">{title}</div>
+              <div className="p-3 text-center">
+                <div className="text-sm font-medium text-foreground line-clamp-2">{title}</div>
+              </div>
             </div>
           );
         })}

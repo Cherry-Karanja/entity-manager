@@ -21,8 +21,14 @@ export interface EntityManagerConfig<T extends BaseEntity = BaseEntity> {
   /** Initial view mode (default: 'list') */
   initialView?: EntityManagerView;
   
+  /** Initial entity ID (for edit/view modes) */
+  initialId?: string | number;
+  
   /** Initial data (optional) */
   initialData?: T[];
+  
+  /** Callback when view changes */
+  onViewChange?: (view: EntityManagerView) => void;
   
   /** Enable features */
   features?: {
@@ -45,6 +51,9 @@ export interface EntityManagerProps<T extends BaseEntity = BaseEntity> {
   
   /** Initial entity ID (required when initialView is 'edit' or 'view') */
   initialId?: string | number;
+  
+  /** Callback when view changes */
+  onViewChange?: (view: EntityManagerView) => void;
   
   /** Custom className */
   className?: string;

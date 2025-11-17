@@ -27,7 +27,7 @@ export const userActions: Action<User>[] = [
     label: 'Approve User',
     icon: <CheckCircle className="h-4 w-4" />,
     actionType: 'confirm',
-    variant: 'success',
+    variant: 'primary',
     position: 'row',
     visible: (user?: User) => !user?.is_approved,
     confirmMessage: (user?: User) => 
@@ -45,7 +45,7 @@ export const userActions: Action<User>[] = [
     label: 'Reject User',
     icon: <XCircle className="h-4 w-4" />,
     actionType: 'confirm',
-    variant: 'danger',
+    variant: 'destructive',
     position: 'row',
     visible: (user?: User) => !user?.is_rejected,
     confirmMessage: (user?: User) => 
@@ -63,7 +63,7 @@ export const userActions: Action<User>[] = [
     label: 'Activate User',
     icon: <CheckCircle className="h-4 w-4" />,
     actionType: 'confirm',
-    variant: 'success',
+    variant: 'primary',
     position: 'row',
     visible: (user?: User) => !user?.is_active,
     confirmMessage: 'Are you sure you want to activate this user?',
@@ -80,7 +80,7 @@ export const userActions: Action<User>[] = [
     label: 'Deactivate User',
     icon: <XCircle className="h-4 w-4" />,
     actionType: 'confirm',
-    variant: 'danger',
+    variant: 'destructive',
     position: 'row',
     visible: (user?: User) => user?.is_active === true,
     confirmMessage: 'Are you sure you want to deactivate this user?',
@@ -112,7 +112,7 @@ export const userActions: Action<User>[] = [
     label: 'Reset Password',
     icon: <Key className="h-4 w-4" />,
     actionType: 'confirm',
-    variant: 'warning',
+    variant: 'outline',
     position: 'row',
     confirmMessage: (user?: User) => 
       `Send password reset email to ${user?.email}?`,
@@ -188,7 +188,7 @@ export const userActions: Action<User>[] = [
     label: 'Activate Selected',
     icon: <CheckCircle className="h-4 w-4" />,
     actionType: 'bulk',
-    variant: 'success',
+    variant: 'primary',
     position: 'toolbar',
     confirmBulk: true,
     bulkConfirmMessage: (count: number) => 
@@ -205,7 +205,7 @@ export const userActions: Action<User>[] = [
     label: 'Deactivate Selected',
     icon: <XCircle className="h-4 w-4" />,
     actionType: 'bulk',
-    variant: 'danger',
+    variant: 'destructive',
     position: 'toolbar',
     confirmBulk: true,
     bulkConfirmMessage: (count: number) => 
@@ -222,7 +222,7 @@ export const userActions: Action<User>[] = [
     label: 'Delete Selected',
     icon: <Trash2 className="h-4 w-4" />,
     actionType: 'bulk',
-    variant: 'danger',
+    variant: 'destructive',
     position: 'toolbar',
     confirmBulk: true,
     bulkConfirmMessage: (count: number) => 

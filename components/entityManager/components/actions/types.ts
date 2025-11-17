@@ -26,10 +26,10 @@ export type ActionType =
 export type ActionVariant = 
   | 'primary' 
   | 'secondary' 
-  | 'danger' 
-  | 'success' 
-  | 'warning' 
-  | 'ghost';
+  | 'destructive'
+  | 'outline'
+  | 'ghost'
+  | 'link';
 
 /**
  * Action position in UI
@@ -362,4 +362,10 @@ export interface ActionState {
   
   /** Current modal content */
   modalContent?: React.ReactNode;
+  
+  /** Dropdown open state */
+  dropdownOpen?: boolean;
+  
+  /** Overflow menu open state */
+  overflowOpen?: boolean;
 }
