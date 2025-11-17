@@ -278,11 +278,26 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const sortedSections = sections ? sortSections(sections) : [];
 
     return (
-      <div className="form-layout-vertical">
+      <div className="space-y-4">
         {/* Ungrouped fields */}
-        {groupedFields.get(null)?.map(field => (
-          <FormFieldComponent key={String(field.name)} field={field} />
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {groupedFields.get(null)?.map(field => {
+            // Parse width to determine grid column span
+            let colSpan = 'col-span-1';
+            if (field.width) {
+              const widthStr = String(field.width);
+              if (widthStr.includes('%')) {
+                const percent = parseInt(widthStr);
+                if (percent >= 50) colSpan = 'md:col-span-2';
+              }
+            }
+            return (
+              <div key={String(field.name)} className={colSpan}>
+                <FormFieldComponent field={field} />
+              </div>
+            );
+          })}
+        </div>
 
         {/* Sectioned fields */}
         {sortedSections.map(section => {
@@ -292,20 +307,43 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
           const isCollapsed = state.collapsedSections.has(section.id);
 
           return (
-            <div key={section.id} className="form-section">
+            <div key={section.id} className="border rounded-lg overflow-hidden">
               <div 
-                className="section-header"
+                className={`flex items-center justify-between px-4 py-3 bg-muted/50 border-b ${section.collapsible ? 'cursor-pointer hover:bg-muted transition-colors' : ''}`}
                 onClick={() => section.collapsible && toggleSection(section.id)}
+                role={section.collapsible ? 'button' : undefined}
+                aria-expanded={section.collapsible ? !isCollapsed : undefined}
               >
-                <h3>{section.label}</h3>
-                {section.description && <p>{section.description}</p>}
-                {section.collapsible && <span>{isCollapsed ? '▶' : '▼'}</span>}
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-foreground">{section.label}</h3>
+                  {section.description && <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>}
+                </div>
+                {section.collapsible && (
+                  <span className="text-muted-foreground ml-2 transition-transform" style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
+                    ▼
+                  </span>
+                )}
               </div>
               {!isCollapsed && (
-                <div className="section-fields">
-                  {sectionFields.map(field => (
-                    <FormFieldComponent key={String(field.name)} field={field} />
-                  ))}
+                <div className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {sectionFields.map(field => {
+                      // Parse width to determine grid column span
+                      let colSpan = 'col-span-1';
+                      if (field.width) {
+                        const widthStr = String(field.width);
+                        if (widthStr.includes('%')) {
+                          const percent = parseInt(widthStr);
+                          if (percent >= 50) colSpan = 'md:col-span-2';
+                        }
+                      }
+                      return (
+                        <div key={String(field.name)} className={colSpan}>
+                          <FormFieldComponent field={field} />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -322,10 +360,25 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const visibleFields = sortFields(fields.filter(f => isFieldVisible(f, state.values)));
 
     return (
-      <div className="form-layout-horizontal">
-        {visibleFields.map(field => (
-          <FormFieldComponent key={String(field.name)} field={field} />
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {visibleFields.map(field => {
+          // Parse width to determine grid column span
+          let colSpan = 'col-span-1';
+          if (field.width) {
+            const widthStr = String(field.width);
+            if (widthStr.includes('%')) {
+              const percent = parseInt(widthStr);
+              if (percent >= 75) colSpan = 'sm:col-span-2 lg:col-span-3 xl:col-span-4';
+              else if (percent >= 50) colSpan = 'sm:col-span-2';
+              else if (percent >= 25) colSpan = 'sm:col-span-1';
+            }
+          }
+          return (
+            <div key={String(field.name)} className={colSpan}>
+              <FormFieldComponent field={field} />
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -337,15 +390,29 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const visibleFields = sortFields(fields.filter(f => isFieldVisible(f, state.values)));
 
     return (
-      <div className="form-layout-grid">
-        {visibleFields.map(field => (
-          <div 
-            key={String(field.name)} 
-            style={{ gridColumn: `span ${field.width || 1}` }}
-          >
-            <FormFieldComponent field={field} />
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {visibleFields.map(field => {
+          // Parse width to determine grid column span
+          let colSpan = 'col-span-1';
+          if (field.width) {
+            const widthStr = String(field.width);
+            if (widthStr.includes('%')) {
+              const percent = parseInt(widthStr);
+              if (percent >= 75) colSpan = 'md:col-span-2 lg:col-span-4';
+              else if (percent >= 50) colSpan = 'md:col-span-2';
+              else if (percent >= 25) colSpan = 'md:col-span-1';
+            } else {
+              const numWidth = parseInt(widthStr);
+              colSpan = `md:col-span-${Math.min(numWidth, 2)} lg:col-span-${Math.min(numWidth, 4)}`;
+            }
+          }
+          
+          return (
+            <div key={String(field.name)} className={colSpan}>
+              <FormFieldComponent field={field} />
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -360,30 +427,53 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const groupedFields = groupFieldsByTabs(fields, sortedTabs);
 
     return (
-      <div className="form-layout-tabs">
-        <div className="tab-headers">
-          {sortedTabs.map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              className={`tab-header ${state.currentTab === tab.id ? 'active' : ''}`}
-              onClick={() => setState(prev => ({ ...prev, currentTab: tab.id }))}
-            >
-              {tab.icon && <span className="tab-icon">{tab.icon}</span>}
-              {tab.label}
-            </button>
-          ))}
+      <div className="space-y-4">
+        <div className="border-b border-border overflow-x-auto">
+          <div className="flex space-x-1 min-w-max px-1">
+            {sortedTabs.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`flex items-center gap-2 px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${
+                  state.currentTab === tab.id
+                    ? 'border-primary text-primary bg-primary/5'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                }`}
+                onClick={() => setState(prev => ({ ...prev, currentTab: tab.id }))}
+                role="tab"
+                aria-selected={state.currentTab === tab.id}
+              >
+                {tab.icon && <span className="text-base">{tab.icon}</span>}
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="tab-content">
+        <div className="min-h-[300px]">
           {sortedTabs.map(tab => {
             if (tab.id !== state.currentTab) return null;
             
             const tabFields = groupedFields.get(tab.id) || [];
             return (
-              <div key={tab.id}>
-                {tabFields.map(field => (
-                  <FormFieldComponent key={String(field.name)} field={field} />
-                ))}
+              <div key={tab.id} role="tabpanel">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tabFields.map(field => {
+                    // Parse width to determine grid column span
+                    let colSpan = 'col-span-1';
+                    if (field.width) {
+                      const widthStr = String(field.width);
+                      if (widthStr.includes('%')) {
+                        const percent = parseInt(widthStr);
+                        if (percent >= 50) colSpan = 'md:col-span-2';
+                      }
+                    }
+                    return (
+                      <div key={String(field.name)} className={colSpan}>
+                        <FormFieldComponent field={field} />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
@@ -404,38 +494,55 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const currentSection = state.currentTab || sortedSections[0]?.id;
 
     return (
-      <div className="form-layout-tabs space-y-4">
-        <div className="border-b border-border">
-          <div className="flex space-x-2">
+      <div className="space-y-4">
+        <div className="border-b border-border overflow-x-auto">
+          <div className="flex space-x-1 min-w-max px-1">
             {sortedSections.map(section => (
               <button
                 key={section.id}
                 type="button"
-                className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
+                className={`px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${
                   currentSection === section.id 
-                    ? 'border-primary text-primary' 
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    ? 'border-primary text-primary bg-primary/5' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
                 }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: section.id }))}
+                role="tab"
+                aria-selected={currentSection === section.id}
               >
                 {section.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="tab-content p-4">
+        <div className="min-h-[300px]">
           {sortedSections.map(section => {
             if (section.id !== currentSection) return null;
             
             const sectionFields = groupedFields.get(section.id) || [];
             return (
-              <div key={section.id} className="space-y-4">
+              <div key={section.id} className="space-y-4" role="tabpanel">
                 {section.description && (
                   <p className="text-sm text-muted-foreground">{section.description}</p>
                 )}
-                {sectionFields.map(field => (
-                  <FormFieldComponent key={String(field.name)} field={field} />
-                ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {sectionFields.map(field => {
+                    // Parse width to determine grid column span
+                    let colSpan = 'col-span-1';
+                    if (field.width) {
+                      const widthStr = String(field.width);
+                      if (widthStr.includes('%')) {
+                        const percent = parseInt(widthStr);
+                        if (percent >= 50) colSpan = 'md:col-span-2';
+                      }
+                    }
+                    return (
+                      <div key={String(field.name)} className={colSpan}>
+                        <FormFieldComponent field={field} />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
@@ -477,32 +584,91 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     };
 
     return (
-      <div className="form-layout-wizard">
-        <div className="wizard-steps">
-          {sortedSteps.map((step, index) => (
-            <div key={step.id} className={`wizard-step ${index === currentStepIndex ? 'active' : ''}`}>
-              <div className="step-number">{index + 1}</div>
-              <div className="step-label">{step.label}</div>
-            </div>
-          ))}
-        </div>
-        <div className="wizard-content">
-          <h3>{currentStepData.label}</h3>
-          {currentStepData.description && <p>{currentStepData.description}</p>}
-          <div className="wizard-fields">
-            {stepFields.map(field => (
-              <FormFieldComponent key={String(field.name)} field={field} />
+      <div className="space-y-6">
+        {/* Step indicator */}
+        <div className="relative">
+          <div className="flex items-center justify-between overflow-x-auto pb-2">
+            {sortedSteps.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-1 min-w-0">
+                <div className={`flex flex-col items-center flex-1 ${index > 0 ? 'ml-2' : ''}`}>
+                  <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${
+                    index === currentStepIndex 
+                      ? 'border-primary bg-primary text-primary-foreground' 
+                      : index < currentStepIndex
+                      ? 'border-primary bg-primary/20 text-primary'
+                      : 'border-muted-foreground/30 bg-background text-muted-foreground'
+                  }`}>
+                    <span className="text-sm font-semibold">{index + 1}</span>
+                  </div>
+                  <span className={`mt-2 text-xs sm:text-sm font-medium text-center line-clamp-2 ${
+                    index === currentStepIndex ? 'text-primary' : 'text-muted-foreground'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+                {index < sortedSteps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-1 sm:mx-2 ${
+                    index < currentStepIndex ? 'bg-primary' : 'bg-muted-foreground/30'
+                  }`} />
+                )}
+              </div>
             ))}
           </div>
         </div>
-        <div className="wizard-actions">
-          {currentStepIndex > 0 && (
-            <button type="button" onClick={goToPreviousStep}>Previous</button>
-          )}
+
+        {/* Step content */}
+        <div className="min-h-[300px]">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-foreground">{currentStepData.label}</h3>
+            {currentStepData.description && (
+              <p className="text-sm text-muted-foreground mt-1">{currentStepData.description}</p>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {stepFields.map(field => {
+              // Parse width to determine grid column span
+              let colSpan = 'col-span-1';
+              if (field.width) {
+                const widthStr = String(field.width);
+                if (widthStr.includes('%')) {
+                  const percent = parseInt(widthStr);
+                  if (percent >= 50) colSpan = 'md:col-span-2';
+                }
+              }
+              return (
+                <div key={String(field.name)} className={colSpan}>
+                  <FormFieldComponent field={field} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Navigation buttons */}
+        <div className="flex items-center justify-between pt-4 border-t">
+          <button 
+            type="button" 
+            onClick={goToPreviousStep}
+            disabled={currentStepIndex === 0}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
           {currentStepIndex < sortedSteps.length - 1 ? (
-            <button type="button" onClick={goToNextStep}>Next</button>
+            <button 
+              type="button" 
+              onClick={goToNextStep}
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Next
+            </button>
           ) : (
-            <button type="submit">{submitText}</button>
+            <button 
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
+            >
+              {submitText}
+            </button>
           )}
         </div>
       </div>
@@ -563,13 +729,13 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       )}
       {renderLayout()}
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t">
         {showCancel && (
           <button 
             type="button" 
             onClick={onCancel} 
             disabled={state.submitting}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {cancelText}
           </button>
@@ -580,7 +746,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
             type="button" 
             onClick={handleReset} 
             disabled={state.submitting}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Reset
           </button>
@@ -589,7 +755,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
         <button 
           type="submit" 
           disabled={isSubmitDisabled}
-          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           {state.submitting && (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -783,20 +949,23 @@ function DefaultFieldRenderer<T extends BaseEntity>({
   };
 
   return (
-    <div className={`space-y-1.5 ${showError ? '' : ''}`}>
+    <div className="space-y-1.5">
       <label 
         htmlFor={String(field.name)}
         className="block text-sm font-medium text-foreground"
       >
         {field.label}
-        {field.required && <span className="text-destructive ml-1" aria-hidden="true">*</span>}
+        {field.required && <span className="text-destructive ml-1" aria-label="required" title="Required field">*</span>}
       </label>
       {renderInput()}
-      {field.helpText && (
+      {field.helpText && !showError && (
         <p className="text-xs text-muted-foreground">{field.helpText}</p>
       )}
       {showError && (
-        <p className="text-xs text-destructive" id={errorId}>{error}</p>
+        <p className="text-xs text-destructive flex items-center gap-1" id={errorId} role="alert">
+          <span aria-hidden="true">⚠</span>
+          {error}
+        </p>
       )}
     </div>
   );

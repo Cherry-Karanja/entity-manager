@@ -110,7 +110,7 @@ export default function UserEditPage() {
         <EntityForm
           mode="edit"
           fields={userFields}
-          initialValues={user}
+          entity={user}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           layout={userFormLayout}

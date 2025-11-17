@@ -103,6 +103,57 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, state]);
 
+  // Refetch data when pagination, sorting, search, or filters change
+  useEffect(() => {
+    if (!config.apiClient || view !== 'list') return;
+
+    const { page, pageSize, sort, search, filters } = state.state;
+    
+    state.setLoading(true);
+    
+    // Build query parameters for server-side filtering/sorting/pagination
+    const queryParams: {
+      page?: number;
+      pageSize?: number;
+      sortField?: string;
+      sortDirection?: 'asc' | 'desc';
+      search?: string;
+      filters?: Array<{ field: string; operator?: string; value: unknown }>;
+    } = {
+      page,
+      pageSize,
+    };
+    
+    if (sort) {
+      queryParams.sortField = sort.field;
+      queryParams.sortDirection = sort.direction;
+    }
+    
+    if (search) {
+      queryParams.search = search;
+    }
+    
+    if (filters && filters.length > 0) {
+      queryParams.filters = filters;
+    }
+
+    config.apiClient.list(queryParams)
+      .then((response) => {
+        const data = response.data || [];
+        state.setEntities(data);
+        if (response.meta?.total !== undefined) {
+          state.setTotal(response.meta.total);
+        }
+        state.setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch entities:', error);
+        state.setError(error.message || 'Failed to load data');
+        state.setLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.state.page, state.state.pageSize, state.state.sort, state.state.search, state.state.filters, view]);
+
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
 
@@ -170,29 +221,28 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // Render breadcrumbs
   const renderBreadcrumbs = () => {
     return (
-      <nav className="flex mb-4 text-sm" aria-label="Breadcrumb">
-        <ol className="inline-flex items-center space-x-1 md:space-x-3">
+      <nav className="flex mb-3 sm:mb-4 text-xs sm:text-sm overflow-x-auto" aria-label="Breadcrumb">
+        <ol className="inline-flex items-center space-x-1 md:space-x-2 min-w-max px-1">
           <li className="inline-flex items-center">
             <button
               onClick={handleBack}
-              className={`inline-flex items-center text-sm font-medium ${
+              className={`inline-flex items-center font-medium transition-colors ${
                 view === 'list'
                   ? 'text-primary cursor-default'
                   : 'text-muted-foreground hover:text-primary'
               }`}
               disabled={view === 'list'}
+              aria-current={view === 'list' ? 'page' : undefined}
             >
               {config.config.name || 'Items'}
             </button>
           </li>
           {view !== 'list' && (
             <>
-              <li>
+              <li aria-hidden="true">
                 <div className="flex items-center">
                   <svg
-                    className="w-3 h-3 text-muted-foreground mx-1"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground mx-1"
                     fill="none"
                     viewBox="0 0 6 10"
                   >
@@ -204,12 +254,14 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
                       d="m1 9 4-4-4-4"
                     />
                   </svg>
-                  <span className="ml-1 text-sm font-medium text-primary md:ml-2">
-                    {view === 'create' && 'Create New'}
-                    {view === 'edit' && 'Edit'}
-                    {view === 'view' && 'View Details'}
-                  </span>
                 </div>
+              </li>
+              <li>
+                <span className="ml-0.5 sm:ml-1 font-medium text-primary">
+                  {view === 'create' && 'Create New'}
+                  {view === 'edit' && 'Edit'}
+                  {view === 'view' && 'View Details'}
+                </span>
               </li>
             </>
           )}
@@ -250,6 +302,9 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           searchable={true}
           searchValue={state.state.search}
           onSearchChange={state.setSearch}
+          filterable={true}
+          filterConfigs={state.state.filters}
+          onFilterChange={state.setFilters}
           loading={state.state.loading}
           error={state.state.error}
           rowActions={({ entity }) => (
@@ -258,6 +313,10 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
               entity={entity}
             />
           )}
+          titleField={config.config.titleField}
+          subtitleField={config.config.subtitleField}
+          imageField={config.config.imageField}
+          dateField={config.config.dateField}
         />
       </div>
     );
@@ -272,9 +331,9 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     console.log('Form fields:', config.config.fields);
     
     return (
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {renderBreadcrumbs()}
-        <div className="bg-card rounded-lg border p-6">
+        <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6">
           <EntityForm
             fields={config.config.fields as never}
             entity={view === 'edit' ? selectedEntity : undefined}
@@ -293,11 +352,14 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   if (view === 'view') {
     if (!selectedEntity) {
       return (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {renderBreadcrumbs()}
-          <div className="bg-card rounded-lg border p-6 text-center">
-            <p className="text-muted-foreground">No entity selected</p>
-            <button onClick={handleBack} className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+          <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6 text-center">
+            <p className="text-sm sm:text-base text-muted-foreground mb-4">No entity selected</p>
+            <button 
+              onClick={handleBack} 
+              className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
               Back to List
             </button>
           </div>
@@ -306,9 +368,9 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     }
     
     return (
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {renderBreadcrumbs()}
-        <div className="bg-card rounded-lg border p-6">
+        <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6">
         <EntityActions
           actions={config.config.actions.filter(a => a.position === 'toolbar')}
           entity={selectedEntity}

@@ -10,7 +10,7 @@ import { BaseEntity } from '../../primitives/types';
 /**
  * View mode enumeration
  */
-export type ViewMode = 'detail' | 'card' | 'summary' | 'timeline';
+export type ViewMode = 'detail' | 'card' | 'summary' | 'timeline' | 'compact' | 'profile' | 'split' | 'table';
 
 /**
  * Field group for organizing fields
