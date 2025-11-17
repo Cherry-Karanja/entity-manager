@@ -30,6 +30,27 @@ export const userFields: FormField<User>[] = [
     width: '50%',
   },
   {
+    name: 'username',
+    label: 'Username',
+    type: 'text',
+    required: false,
+    placeholder: 'username',
+    validation: [
+      {
+        type: 'minLength',
+        value: 3,
+        message: 'Username must be at least 3 characters',
+      },
+      {
+        type: 'maxLength',
+        value: 150,
+        message: 'Username must be less than 150 characters',
+      },
+    ],
+    helpText: 'Unique username for login',
+    width: '50%',
+  },
+  {
     name: 'first_name',
     label: 'First Name',
     type: 'text',
@@ -194,6 +215,36 @@ export const userFields: FormField<User>[] = [
     ],
     width: '25%',
   },
+  {
+    name: 'job_title',
+    label: 'Job Title',
+    type: 'text',
+    required: false,
+    placeholder: 'Software Engineer',
+    validation: [
+      {
+        type: 'maxLength',
+        value: 100,
+        message: 'Job title must be less than 100 characters',
+      },
+    ],
+    width: '25%',
+  },
+  {
+    name: 'location',
+    label: 'Location',
+    type: 'text',
+    required: false,
+    placeholder: 'City, Country',
+    validation: [
+      {
+        type: 'maxLength',
+        value: 200,
+        message: 'Location must be less than 200 characters',
+      },
+    ],
+    width: '50%',
+  },
   
   // ===========================
   // Status Fields (Edit Only)
@@ -232,6 +283,15 @@ export const userFields: FormField<User>[] = [
     required: false,
     visible: (values) => !!values.id, // Only show on edit
     helpText: 'User must change password on next login',
+    width: '25%',
+  },
+  {
+    name: 'is_staff',
+    label: 'Staff Status',
+    type: 'switch',
+    required: false,
+    visible: (values) => !!values.id, // Only show on edit
+    helpText: 'User has staff privileges',
     width: '25%',
   },
 ];

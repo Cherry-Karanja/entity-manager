@@ -53,8 +53,18 @@ export function formatCellValue<T extends BaseEntity>(
   }
   
   // Type-based formatting
-  if (column.type === 'date' && value instanceof Date) {
-    return value.toLocaleDateString();
+  if (column.type === 'date') {
+    if (value instanceof Date) {
+      return value.toLocaleDateString();
+    }
+    if (typeof value === 'string' && value) {
+      try {
+        return new Date(value).toLocaleDateString();
+      } catch {
+        return value;
+      }
+    }
+    return '';
   }
   
   if (column.type === 'boolean') {

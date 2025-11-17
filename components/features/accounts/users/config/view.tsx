@@ -17,6 +17,7 @@ export const userViewFields: ViewField[] = [
     key: 'email',
     label: 'Email Address',
     group: 'personal',
+    // Keep custom render: composite display (email + verified badge)
     render: (user) => {
       const u = user as User;
       return (
@@ -31,6 +32,7 @@ export const userViewFields: ViewField[] = [
     key: 'full_name',
     label: 'Full Name',
     group: 'personal',
+    // Keep custom render: composite display (name + role badges)
     render: (user) => {
       const u = user as User;
       return (
@@ -46,13 +48,15 @@ export const userViewFields: ViewField[] = [
     key: 'phone_number',
     label: 'Phone Number',
     group: 'personal',
-    render: (user) => (user as User).phone_number || '-',
+    type: 'text',
+    formatter: (value) => (value as string) || '-',
   },
   {
     key: 'employee_id',
     label: 'Employee ID',
     group: 'personal',
-    render: (user) => (user as User).employee_id || '-',
+    type: 'text',
+    formatter: (value) => (value as string) || '-',
   },
   
   // ===========================
@@ -62,20 +66,15 @@ export const userViewFields: ViewField[] = [
     key: 'role_display',
     label: 'Role',
     group: 'organization',
-    render: (user) => {
-      const u = user as User;
-      return (
-        <Badge variant="outline" className="text-sm">
-          {u.role_display || 'No Role Assigned'}
-        </Badge>
-      );
-    },
+    type: 'text',
+    formatter: (value) => (value as string) || 'No Role Assigned',
   },
   {
     key: 'department',
     label: 'Department',
     group: 'organization',
-    render: (user) => (user as User).department || '-',
+    type: 'text',
+    formatter: (value) => (value as string) || '-',
   },
   
   // ===========================
@@ -85,6 +84,7 @@ export const userViewFields: ViewField[] = [
     key: 'is_active',
     label: 'Account Status',
     group: 'status',
+    // Keep custom render: complex multi-badge status display
     render: (user) => {
       const u = user as User;
       return (
@@ -120,6 +120,7 @@ export const userViewFields: ViewField[] = [
     key: 'account_locked_until',
     label: 'Account Lock',
     group: 'status',
+    // Keep custom render: complex conditional date logic
     render: (user) => {
       const u = user as User;
       if (!u.account_locked_until) {
@@ -141,43 +142,19 @@ export const userViewFields: ViewField[] = [
     key: 'failed_login_attempts',
     label: 'Failed Login Attempts',
     group: 'status',
-    render: (user) => {
-      const u = user as User;
-      return (
-        <span className={u.failed_login_attempts > 0 ? 'text-red-600 font-medium' : ''}>
-          {u.failed_login_attempts}
-        </span>
-      );
-    },
+    type: 'number',
   },
   {
     key: 'must_change_password',
     label: 'Password Change Required',
     group: 'status',
-    render: (user) => {
-      const u = user as User;
-      return u.must_change_password ? (
-        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Required</Badge>
-      ) : (
-        <span className="text-muted-foreground">No</span>
-      );
-    },
+    type: 'boolean',
   },
   {
     key: 'otp_enabled',
     label: 'Two-Factor Authentication',
     group: 'status',
-    render: (user) => {
-      const u = user as User;
-      return u.otp_enabled ? (
-        <Badge variant="default" className="bg-green-600 text-white">
-          <Shield className="h-3 w-3 mr-1" />
-          Enabled
-        </Badge>
-      ) : (
-        <Badge variant="secondary">Disabled</Badge>
-      );
-    },
+    type: 'boolean',
   },
   
   // ===========================
@@ -187,31 +164,28 @@ export const userViewFields: ViewField[] = [
     key: 'last_login',
     label: 'Last Login',
     group: 'activity',
-    render: (user) => {
-      const u = user as User;
-      return u.last_login ? new Date(u.last_login).toLocaleString() : 'Never';
-    },
+    type: 'date',
+    formatter: (value) => !value ? 'Never' : (value as string),
   },
   {
     key: 'last_login_ip',
     label: 'Last Login IP',
     group: 'activity',
-    render: (user) => (user as User).last_login_ip || '-',
+    type: 'text',
+    formatter: (value) => (value as string) || '-',
   },
   {
     key: 'date_joined',
     label: 'Date Joined',
     group: 'activity',
-    render: (user) => new Date((user as User).date_joined).toLocaleString(),
+    type: 'date',
   },
   {
     key: 'password_changed_at',
     label: 'Password Last Changed',
     group: 'activity',
-    render: (user) => {
-      const u = user as User;
-      return u.password_changed_at ? new Date(u.password_changed_at).toLocaleString() : 'Never';
-    },
+    type: 'date',
+    formatter: (value) => !value ? 'Never' : (value as string),
   },
 ];
 

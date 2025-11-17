@@ -639,6 +639,41 @@ function DefaultFieldRenderer<T extends BaseEntity>({
     const inputClasses = "w-full px-3 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed";
     const errorClasses = showError ? "border-destructive focus:ring-destructive" : "";
     
+    // Format date values for input fields
+    const getDateValue = (val: unknown): string => {
+      if (!val) return '';
+      if (typeof val === 'string') {
+        try {
+          // Convert ISO string to YYYY-MM-DD format for date input
+          const date = new Date(val);
+          return date.toISOString().slice(0, 10);
+        } catch {
+          return String(val);
+        }
+      }
+      if (val instanceof Date) {
+        return val.toISOString().slice(0, 10);
+      }
+      return String(val);
+    };
+
+    const getDateTimeValue = (val: unknown): string => {
+      if (!val) return '';
+      if (typeof val === 'string') {
+        try {
+          // Convert ISO string to datetime-local format
+          const date = new Date(val);
+          return date.toISOString().slice(0, 16);
+        } catch {
+          return String(val);
+        }
+      }
+      if (val instanceof Date) {
+        return val.toISOString().slice(0, 16);
+      }
+      return String(val);
+    };
+    
     switch (field.type) {
       case 'textarea':
         return (
@@ -690,6 +725,42 @@ function DefaultFieldRenderer<T extends BaseEntity>({
             accept={field.accept}
             multiple={field.multiple}
             className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            {...commonProps}
+          />
+        );
+
+      case 'date':
+        return (
+          <input
+            type="date"
+            value={getDateValue(value)}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            className={`${inputClasses} ${errorClasses}`}
+            {...commonProps}
+          />
+        );
+
+      case 'datetime':
+        return (
+          <input
+            type="datetime-local"
+            value={getDateTimeValue(value)}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            className={`${inputClasses} ${errorClasses}`}
+            {...commonProps}
+          />
+        );
+
+      case 'time':
+        return (
+          <input
+            type="time"
+            value={String(value || '')}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            className={`${inputClasses} ${errorClasses}`}
             {...commonProps}
           />
         );

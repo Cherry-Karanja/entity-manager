@@ -442,9 +442,41 @@ export function formatFieldValue<T extends BaseEntity>(value: unknown, field: Fo
 
   switch (field.type) {
     case 'date':
+      if (value instanceof Date) {
+        return value.toLocaleDateString();
+      }
+      if (typeof value === 'string' && value) {
+        try {
+          return new Date(value).toLocaleDateString();
+        } catch {
+          return value;
+        }
+      }
+      return String(value);
+
     case 'datetime':
       if (value instanceof Date) {
-        return value.toISOString().slice(0, 10);
+        return value.toLocaleString();
+      }
+      if (typeof value === 'string' && value) {
+        try {
+          return new Date(value).toLocaleString();
+        } catch {
+          return value;
+        }
+      }
+      return String(value);
+
+    case 'time':
+      if (value instanceof Date) {
+        return value.toLocaleTimeString();
+      }
+      if (typeof value === 'string' && value) {
+        try {
+          return new Date(value).toLocaleTimeString();
+        } catch {
+          return value;
+        }
       }
       return String(value);
 
