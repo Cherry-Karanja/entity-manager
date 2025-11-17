@@ -228,58 +228,64 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     }
 
     return (
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-card border-b">
-        <div className="flex-1 w-full sm:w-auto">
-          {(toolbar?.search || searchable) && (
-            <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={state.search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-          )}
-        </div>
-        
-        <div className="flex gap-2 items-center flex-wrap">
-          {toolbar.viewSwitcher && (
-            <div className="inline-flex rounded-md shadow-sm" role="group">
-              {(['table', 'card', 'list', 'grid'] as ListView[]).map(v => (
-                <button
-                  key={v}
-                  onClick={() => handleViewChange(v)}
-                  className={`px-3 py-2 text-sm font-medium border first:rounded-l-md last:rounded-r-md ${
-                    state.view === v
-                      ? 'bg-primary text-primary-foreground border-primary z-10'
-                      : 'bg-background text-muted-foreground border-input hover:bg-muted hover:text-foreground'
-                  }`}
+      <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 bg-card border-b">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
+          <div className="flex-1 w-full sm:max-w-md">
+            {(toolbar?.search || searchable) && (
+              <div className="relative">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
                 >
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </button>
-              ))}
-            </div>
-          )}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  placeholder={searchPlaceholder}
+                  value={state.search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-shadow"
+                  aria-label="Search"
+                />
+              </div>
+            )}
+          </div>
           
-          {toolbar.actions && (
-            <div className="flex gap-2">
-              {toolbar.actions}
-            </div>
-          )}
+          <div className="flex gap-2 items-center flex-wrap">
+            {toolbar.viewSwitcher && (
+              <div className="inline-flex rounded-md shadow-sm overflow-x-auto" role="group" aria-label="View switcher">
+                {(['table', 'card', 'list', 'grid'] as ListView[]).map(v => (
+                  <button
+                    key={v}
+                    onClick={() => handleViewChange(v)}
+                    className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border transition-colors first:rounded-l-md last:rounded-r-md ${
+                      state.view === v
+                        ? 'bg-primary text-primary-foreground border-primary z-10'
+                        : 'bg-background text-muted-foreground border-input hover:bg-muted hover:text-foreground'
+                    }`}
+                    aria-pressed={state.view === v}
+                    title={`Switch to ${v} view`}
+                  >
+                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {toolbar.actions && (
+              <div className="flex gap-2">
+                {toolbar.actions}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -289,53 +295,74 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   const renderPagination = () => {
     if (!pagination) return null;
 
+    const startItem = ((state.page - 1) * state.pageSize) + 1;
+    const endItem = Math.min(state.page * state.pageSize, processedData.length);
+
     return (
-      <nav className="flex flex-col sm:flex-row gap-4 items-center justify-between px-4 py-3 bg-card border-t" role="navigation" aria-label="Pagination">
-        <div className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{((state.page - 1) * state.pageSize) + 1}</span> to <span className="font-medium text-foreground">{Math.min(state.page * state.pageSize, processedData.length)}</span> of <span className="font-medium text-foreground">{processedData.length}</span> results
+      <nav 
+        className="flex flex-col gap-3 sm:gap-4 px-3 sm:px-4 py-3 bg-card border-t" 
+        role="navigation" 
+        aria-label="Pagination"
+      >
+        {/* Results info - always visible */}
+        <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+          Showing <span className="font-medium text-foreground">{startItem}</span> to{' '}
+          <span className="font-medium text-foreground">{endItem}</span> of{' '}
+          <span className="font-medium text-foreground">{processedData.length}</span> results
         </div>
         
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handlePageChange(1)}
-            disabled={state.page === 1}
-            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            First
-          </button>
-          <button
-            onClick={() => handlePageChange(state.page - 1)}
-            disabled={state.page === 1}
-            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
+        {/* Pagination controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Page navigation buttons */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={state.page === 1}
+              className="hidden sm:inline-flex px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              aria-label="Go to first page"
+            >
+              First
+            </button>
+            <button
+              onClick={() => handlePageChange(state.page - 1)}
+              disabled={state.page === 1}
+              className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              aria-label="Go to previous page"
+            >
+              <span className="hidden sm:inline">Previous</span>
+              <span className="sm:hidden">Prev</span>
+            </button>
+            
+            <span className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-3 whitespace-nowrap">
+              Page <span className="font-medium text-foreground">{state.page}</span> of{' '}
+              <span className="font-medium text-foreground">{totalPages}</span>
+            </span>
+            
+            <button
+              onClick={() => handlePageChange(state.page + 1)}
+              disabled={state.page >= totalPages}
+              className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              aria-label="Go to next page"
+            >
+              Next
+            </button>
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              disabled={state.page >= totalPages}
+              className="hidden sm:inline-flex px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              aria-label="Go to last page"
+            >
+              Last
+            </button>
+          </div>
           
-          <span className="text-sm text-muted-foreground px-2">
-            Page <span className="font-medium text-foreground">{state.page}</span> of <span className="font-medium text-foreground">{totalPages}</span>
-          </span>
-          
-          <button
-            onClick={() => handlePageChange(state.page + 1)}
-            disabled={state.page >= totalPages}
-            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-          <button
-            onClick={() => handlePageChange(totalPages)}
-            disabled={state.page >= totalPages}
-            className="px-3 py-1.5 text-sm font-medium border border-input rounded-md bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Last
-          </button>
-          
+          {/* Page size selector */}
           <select
             title='Items per page'
             aria-label='Items per page'
             value={state.pageSize}
             onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-            className="ml-2 px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-auto px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
           >
             {getDefaultPageSizes().map(size => (
               <option key={size} value={size}>{size} per page</option>
@@ -468,7 +495,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   };  // Render card view
   const renderCardView = () => {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -480,7 +507,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               key={entity.id}
               className={`bg-card rounded-lg border shadow-sm overflow-hidden transition-all hover:shadow-md ${
                 isSelected ? 'ring-2 ring-primary' : ''
-              } cursor-pointer`}
+              } cursor-pointer relative`}
               onClick={() => onRowClick?.(entity, index)}
             >
               {selectable && (
@@ -498,21 +525,21 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               
               {imageUrl && (
                 <div className="aspect-video w-full overflow-hidden bg-muted">
-                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" loading="lazy" />
                 </div>
               )}
               
-              <div className="p-4 space-y-3">
+              <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
                 <div>
-                  <h3 className="text-base font-semibold text-foreground line-clamp-1">{title}</h3>
-                  {subtitle && <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{subtitle}</p>}
+                  <h3 className="text-sm sm:text-base font-semibold text-foreground line-clamp-1">{title}</h3>
+                  {subtitle && <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1">{subtitle}</p>}
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   {visibleColumns.slice(0, 3).map(column => {
                     const value = getColumnValue(entity, column.key);
                     return (
-                      <div key={String(column.key)} className="flex items-start text-sm">
+                      <div key={String(column.key)} className="flex items-start text-xs sm:text-sm">
                         <span className="font-medium text-muted-foreground w-1/3 flex-shrink-0">{column.label}:</span>
                         <span className="text-foreground w-2/3 line-clamp-1">
                           {renderCell({ column, entity, value, index })}
@@ -524,7 +551,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
               
               {(RowActions || actions) && (
-                <div className="px-4 pb-4 pt-0 flex items-center gap-2 border-t pt-3">
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
                   {actions ? (
                     <EntityActions actions={actions} entity={entity} mode="buttons" />
                   ) : RowActions ? (
@@ -551,7 +578,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           return (
             <div
               key={entity.id}
-              className={`flex items-center gap-3 p-4 transition-colors ${
+              className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 transition-colors ${
                 isSelected ? 'bg-muted' : ''
               } hover:bg-muted/50 cursor-pointer`}
               onClick={() => onRowClick?.(entity, index)}
@@ -563,7 +590,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
+                  className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2 flex-shrink-0"
                 />
               )}
               
@@ -573,7 +600,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
               
               {(RowActions || actions) && (
-                <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>\n                  {actions ? (
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {actions ? (
                     <EntityActions actions={actions} entity={entity} mode="buttons" />
                   ) : RowActions ? (
                     <RowActions entity={entity} index={index} />
@@ -590,20 +618,20 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render timeline view
   const renderTimelineView = () => {
     return (
-      <div className="relative space-y-6 p-4">
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border"></div>
+      <div className="relative space-y-4 sm:space-y-6 p-3 sm:p-4">
+        <div className="absolute left-4 sm:left-6 top-0 bottom-0 w-0.5 bg-border"></div>
         {paginatedData.map((entity, index) => {
           const title = getEntityTitle(entity, titleField);
           const subtitle = getEntitySubtitle(entity, subtitleField);
           const date = getEntityDate(entity, dateField);
           
           return (
-            <div key={entity.id} className="relative pl-12">
-              <div className="absolute left-4.5 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
-              <div className="bg-card rounded-lg border shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer"
+            <div key={entity.id} className="relative pl-10 sm:pl-12">
+              <div className="absolute left-3 sm:left-4.5 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
+              <div className="bg-card rounded-lg border shadow-sm p-3 sm:p-4 hover:shadow-md transition-shadow cursor-pointer"
                    onClick={() => onRowClick?.(entity, index)}>
                 {date && (
-                  <div className="text-xs font-medium text-primary mb-2">
+                  <div className="text-xs font-medium text-primary mb-1.5 sm:mb-2">
                     {date.toLocaleDateString()}
                   </div>
                 )}
@@ -620,7 +648,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render grid view
   const renderGridView = () => {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3 p-3 sm:p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -628,9 +656,9 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           return (
             <div
               key={entity.id}
-              className={`bg-card rounded-lg border shadow-sm p-4 transition-all hover:shadow-md ${
+              className={`bg-card rounded-lg border shadow-sm p-3 sm:p-4 transition-all hover:shadow-md ${
                 isSelected ? 'ring-2 ring-primary' : ''
-              } cursor-pointer relative`}
+              } cursor-pointer relative aspect-square flex items-center justify-center`}
               onClick={() => onRowClick?.(entity, index)}
             >
               {selectable && (
@@ -639,10 +667,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                   checked={isSelected}
                   onChange={() => handleSelectRow(entity.id)}
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-2 right-2 w-3 h-3 text-primary bg-background border-input rounded focus:ring-ring focus:ring-1"
+                  className="absolute top-1.5 right-1.5 w-3 h-3 text-primary bg-background border-input rounded focus:ring-ring focus:ring-1"
+                  title="Select item"
                 />
               )}
-              <div className="text-sm font-medium text-foreground text-center line-clamp-2">{title}</div>
+              <div className="text-xs sm:text-sm font-medium text-foreground text-center line-clamp-3 px-1">
+                {title}
+              </div>
             </div>
           );
         })}
@@ -658,7 +689,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render detailed view
   const renderDetailedView = () => {
     return (
-      <div className="space-y-4 p-4">
+      <div className="space-y-3 sm:space-y-4 p-3 sm:p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -670,33 +701,35 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 isSelected ? 'ring-2 ring-primary' : ''
               }`}
             >
-              <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 border-b">
+              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 border-b">
                 {selectable && (
                   <input
                     title="Select detailed item"
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleSelectRow(entity.id)}
-                    className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2"
+                    className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2 flex-shrink-0"
                   />
                 )}
-                <h3 className="text-base font-semibold text-foreground flex-1">{title}</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground flex-1 truncate">{title}</h3>
               </div>
               
-              <div className="p-4 space-y-2">
+              <div className="p-3 sm:p-4 space-y-1.5 sm:space-y-2">
                 {visibleColumns.map(column => {
                   const value = getColumnValue(entity, column.key);
                   return (
                     <div key={String(column.key)} className="flex items-start py-1">
-                      <label className="text-sm font-medium text-muted-foreground w-1/3">{column.label}:</label>
-                      <span className="text-sm text-foreground w-2/3">{renderCell({ column, entity, value, index })}</span>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground w-1/3 flex-shrink-0">{column.label}:</label>
+                      <span className="text-xs sm:text-sm text-foreground w-2/3 break-words">
+                        {renderCell({ column, entity, value, index })}
+                      </span>
                     </div>
                   );
                 })}
               </div>
               
               {(RowActions || actions) && (
-                <div className="px-4 pb-4 pt-0 flex items-center gap-2 border-t pt-3">
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
                   {actions ? (
                     <EntityActions actions={actions} entity={entity} mode="buttons" />
                   ) : RowActions ? (
@@ -714,7 +747,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render gallery view
   const renderGalleryView = () => {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 p-3 sm:p-4">
         {paginatedData.map((entity, index) => {
           const isSelected = state.selectedIds.has(entity.id);
           const title = getEntityTitle(entity, titleField);
@@ -730,17 +763,17 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             >
               {imageUrl ? (
                 <div className="aspect-square w-full overflow-hidden bg-muted">
-                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" loading="lazy" />
                 </div>
               ) : (
                 <div className="aspect-square w-full bg-muted flex items-center justify-center">
-                  <svg className="w-12 h-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
               )}
-              <div className="p-3 text-center">
-                <div className="text-sm font-medium text-foreground line-clamp-2">{title}</div>
+              <div className="p-2 sm:p-3 text-center">
+                <div className="text-xs sm:text-sm font-medium text-foreground line-clamp-2">{title}</div>
               </div>
             </div>
           );
@@ -833,9 +866,9 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
       {renderToolbar()}
       
       {selectable && multiSelect && state.selectedIds.size > 0 && bulkActions && (
-        <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b">
-          <span className="text-sm font-medium">{state.selectedIds.size} selected</span>
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 px-3 sm:px-4 py-2 sm:py-2 bg-primary/10 border-b">
+          <span className="text-xs sm:text-sm font-medium text-center sm:text-left">{state.selectedIds.size} selected</span>
+          <div className="flex gap-2 justify-center sm:justify-end flex-wrap">
             {bulkActions}
           </div>
         </div>
