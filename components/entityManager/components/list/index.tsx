@@ -98,6 +98,11 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     columnWidths: new Map()
   });
 
+  // Click handling state
+  const [clickTimeoutRef, setClickTimeoutRef] = useState<NodeJS.Timeout | null>(null);
+  const [lastClickTime, setLastClickTime] = useState<number>(0);
+  const [clickCount, setClickCount] = useState<number>(0);
+
   // Sync external state
   React.useEffect(() => {
     if (selectedIdsProp) {
@@ -220,6 +225,44 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   const handleViewChange = useCallback((view: ListView) => {
     setState(prev => ({ ...prev, view }));
   }, []);
+
+  // Click/Double-click handler with manual timing
+  const handleRowClick = useCallback((entity: T, index: number) => {
+    const now = Date.now();
+    const timeDiff = now - lastClickTime;
+
+    console.log('handleRowClick called:', { entityId: entity.id, index, timeDiff, clickCount });
+
+    // If this is a double click (within 300ms of last click)
+    if (timeDiff < 300 && clickCount === 1) {
+      console.log('Detected double-click for entity:', entity.id);
+      // Clear any pending single click timeout
+      if (clickTimeoutRef) {
+        clearTimeout(clickTimeoutRef);
+        setClickTimeoutRef(null);
+      }
+      // Execute double click handler
+      onRowDoubleClick?.(entity, index);
+      // Reset click tracking
+      setClickCount(0);
+      setLastClickTime(0);
+    } else {
+      // This is a single click - set timeout
+      console.log('Detected single-click for entity:', entity.id);
+      setClickCount(1);
+      setLastClickTime(now);
+
+      const timeout = setTimeout(() => {
+        console.log('Executing single-click handler for entity:', entity.id);
+        onRowClick?.(entity, index);
+        setClickCount(0);
+        setLastClickTime(0);
+        setClickTimeoutRef(null);
+      }, 300); // 300ms delay for double-click detection
+
+      setClickTimeoutRef(timeout);
+    }
+  }, [onRowClick, onRowDoubleClick, clickTimeoutRef, lastClickTime, clickCount]);
 
   // Get visible columns
   const visibleColumns = getVisibleColumns(columns);
@@ -389,8 +432,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   const renderTableView = () => {
     return (
       <div className="relative overflow-x-auto -mx-4 sm:mx-0">
-        <div className="inline-block min-w-full align-middle">
-          <table className="min-w-full divide-y divide-border text-sm">
+        <div className="inline-block min-w-full align-middle max-w-full">
+          <table className="min-w-full divide-y divide-border text-sm w-full">
             <thead className="bg-muted/50">
               <tr>
                 {selectable && (
@@ -447,8 +490,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                     } ${hover ? 'hover:bg-muted/50 cursor-pointer' : ''} ${
                       striped && index % 2 === 0 ? 'bg-muted/20' : ''
                     } ${rowClass}`}
-                    onClick={() => onRowClick?.(entity, index)}
-                    onDoubleClick={() => onRowDoubleClick?.(entity, index)}
+                    onClick={() => handleRowClick(entity, index)}
+                    onDoubleClick={() => handleRowClick(entity, index)}
                   >
                     {selectable && (
                       <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
@@ -470,7 +513,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                           className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm"
                           style={{ textAlign: column.align }}
                         >
-                          <div className="truncate max-w-xs">
+                          <div className="truncate max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl">
                             {renderCell({ column, entity, value, index })}
                           </div>
                         </td>
@@ -511,7 +554,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               className={`bg-card rounded-lg border shadow-sm overflow-hidden transition-all hover:shadow-md ${
                 isSelected ? 'ring-2 ring-primary' : ''
               } cursor-pointer relative`}
-              onClick={() => onRowClick?.(entity, index)}
+              onClick={() => handleRowClick(entity, index)}
+              onDoubleClick={() => handleRowClick(entity, index)}
             >
               {selectable && (
                 <div className="absolute top-2 right-2 z-10">
@@ -584,7 +628,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 transition-colors ${
                 isSelected ? 'bg-muted' : ''
               } hover:bg-muted/50 cursor-pointer`}
-              onClick={() => onRowClick?.(entity, index)}
+              onClick={() => handleRowClick(entity, index)}
+              onDoubleClick={() => handleRowClick(entity, index)}
             >
               {selectable && (
                 <input
@@ -632,7 +677,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             <div key={entity.id} className="relative pl-10 sm:pl-12">
               <div className="absolute left-3 sm:left-4.5 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
               <div className="bg-card rounded-lg border shadow-sm p-3 sm:p-4 hover:shadow-md transition-shadow cursor-pointer"
-                   onClick={() => onRowClick?.(entity, index)}>
+                   onClick={() => handleRowClick(entity, index)}
+                   onDoubleClick={() => handleRowClick(entity, index)}>
                 {date && (
                   <div className="text-xs font-medium text-primary mb-1.5 sm:mb-2">
                     {date.toLocaleDateString()}
@@ -662,7 +708,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               className={`bg-card rounded-lg border shadow-sm p-3 sm:p-4 transition-all hover:shadow-md ${
                 isSelected ? 'ring-2 ring-primary' : ''
               } cursor-pointer relative aspect-square flex items-center justify-center`}
-              onClick={() => onRowClick?.(entity, index)}
+              onClick={() => handleRowClick(entity, index)}
+              onDoubleClick={() => handleRowClick(entity, index)}
             >
               {selectable && (
                 <input
@@ -762,7 +809,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               className={`bg-card rounded-lg border shadow-sm overflow-hidden transition-all hover:shadow-md ${
                 isSelected ? 'ring-2 ring-primary' : ''
               } cursor-pointer`}
-              onClick={() => onRowClick?.(entity, index)}
+              onClick={() => handleRowClick(entity, index)}
+              onDoubleClick={() => handleRowClick(entity, index)}
             >
               {imageUrl ? (
                 <div className="aspect-square w-full overflow-hidden bg-muted">

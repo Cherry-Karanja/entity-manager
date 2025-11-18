@@ -16,7 +16,8 @@ import {
   DownloadAction,
   CustomAction,
   FormFieldDefinition,
-  ActionContext
+  ActionContext,
+  ActionVariant
 } from '../../components/actions/types';
 import { BaseEntity } from '../../primitives/types';
 
@@ -41,13 +42,13 @@ export class ActionBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Set action variant
    */
-  variant(variant: 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'ghost'): this {
+  variant(variant: ActionVariant): this {
     this.action.variant = variant;
     return this;
   }
 
   /**
-   * Set action position
+   * Se action position
    */
   position(position: 'toolbar' | 'row' | 'dropdown' | 'context-menu'): this {
     this.action.position = position;

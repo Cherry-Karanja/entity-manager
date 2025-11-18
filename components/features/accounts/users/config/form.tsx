@@ -26,15 +26,15 @@ export const userFormSections: FieldSection[] = [
   {
     id: 'organization',
     label: 'Organization',
-    description: 'Role, department, and organizational details',
-    fields: ['role_name', 'employee_id', 'department', 'job_title', 'phone_number', 'location'],
+    description: 'Department and organizational details',
+    fields: ['employee_id', 'department', 'job_title', 'phone_number', 'location'],
     order: 3,
   },
   {
     id: 'status',
     label: 'Status & Permissions',
-    description: 'Account status and access control',
-    fields: ['is_active', 'is_approved', 'is_verified', 'is_staff', 'must_change_password'],
+    description: 'Account status, role and access control',
+    fields: ['role_name', 'is_active', 'is_approved', 'is_verified', 'is_staff', 'must_change_password'],
     order: 4,
   },
 ];

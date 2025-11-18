@@ -17,6 +17,7 @@ export const userFields: FormField<User>[] = [
     type: 'email',
     required: true,
     placeholder: 'user@example.com',
+    group: 'basic',
     validation: [
       {
         type: 'required',
@@ -35,6 +36,7 @@ export const userFields: FormField<User>[] = [
     type: 'text',
     required: false,
     placeholder: 'username',
+    group: 'basic',
     validation: [
       {
         type: 'minLength',
@@ -56,6 +58,7 @@ export const userFields: FormField<User>[] = [
     type: 'text',
     required: true,
     placeholder: 'John',
+    group: 'basic',
     validation: [
       {
         type: 'required',
@@ -80,6 +83,7 @@ export const userFields: FormField<User>[] = [
     type: 'text',
     required: true,
     placeholder: 'Doe',
+    group: 'basic',
     validation: [
       {
         type: 'required',
@@ -108,6 +112,7 @@ export const userFields: FormField<User>[] = [
     type: 'password',
     required: true,
     placeholder: '••••••••',
+    group: 'authentication',
     visible: (values) => !values.id, // Only show on create
     validation: [
       {
@@ -128,6 +133,7 @@ export const userFields: FormField<User>[] = [
     type: 'password',
     required: true,
     placeholder: '••••••••',
+    group: 'authentication',
     visible: (values) => !values.id, // Only show on create
     validation: [
       {
@@ -154,14 +160,14 @@ export const userFields: FormField<User>[] = [
     type: 'select',
     required: false,
     placeholder: 'Select role',
+    group: 'status',
     options: async () => {
-      // This will be populated by the API client
       try {
-        const response = await fetch('/api/v1/accounts/user-roles/');
-        const data = await response.json();
-        return data.results.map((role: { name: string; display_name: string }) => ({
+        const { authApi } = await import('@/components/connectionManager/http');
+        const response = await authApi.get('/api/v1/accounts/user-roles/');
+        return response.data.results.map((role: { name: string; description: string }) => ({
           value: role.name,
-          label: role.display_name,
+          label: role.description,
         }));
       } catch (error) {
         console.error('Failed to load roles:', error);
@@ -176,6 +182,7 @@ export const userFields: FormField<User>[] = [
     type: 'text',
     required: false,
     placeholder: 'EMP-001',
+    group: 'organization',
     validation: [
       {
         type: 'maxLength',
@@ -191,6 +198,7 @@ export const userFields: FormField<User>[] = [
     type: 'text',
     required: false,
     placeholder: 'IT Department',
+    group: 'organization',
     validation: [
       {
         type: 'maxLength',
@@ -206,6 +214,7 @@ export const userFields: FormField<User>[] = [
     type: 'tel',
     required: false,
     placeholder: '+1 (555) 123-4567',
+    group: 'organization',
     validation: [
       {
         type: 'maxLength',
@@ -221,6 +230,7 @@ export const userFields: FormField<User>[] = [
     type: 'text',
     required: false,
     placeholder: 'Software Engineer',
+    group: 'organization',
     validation: [
       {
         type: 'maxLength',
@@ -236,6 +246,7 @@ export const userFields: FormField<User>[] = [
     type: 'text',
     required: false,
     placeholder: 'City, Country',
+    group: 'organization',
     validation: [
       {
         type: 'maxLength',
@@ -254,6 +265,7 @@ export const userFields: FormField<User>[] = [
     label: 'Active',
     type: 'switch',
     required: false,
+    group: 'status',
     visible: (values) => !!values.id, // Only show on edit
     helpText: 'User can log in and access the system',
     width: '25%',
@@ -263,6 +275,7 @@ export const userFields: FormField<User>[] = [
     label: 'Approved',
     type: 'switch',
     required: false,
+    group: 'status',
     visible: (values) => !!values.id, // Only show on edit
     helpText: 'User account has been approved',
     width: '25%',
@@ -272,6 +285,7 @@ export const userFields: FormField<User>[] = [
     label: 'Verified',
     type: 'switch',
     required: false,
+    group: 'status',
     visible: (values) => !!values.id, // Only show on edit
     helpText: 'User email/identity has been verified',
     width: '25%',
@@ -281,6 +295,7 @@ export const userFields: FormField<User>[] = [
     label: 'Require Password Change',
     type: 'switch',
     required: false,
+    group: 'status',
     visible: (values) => !!values.id, // Only show on edit
     helpText: 'User must change password on next login',
     width: '25%',
@@ -290,6 +305,7 @@ export const userFields: FormField<User>[] = [
     label: 'Staff Status',
     type: 'switch',
     required: false,
+    group: 'status',
     visible: (values) => !!values.id, // Only show on edit
     helpText: 'User has staff privileges',
     width: '25%',

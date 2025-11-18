@@ -79,18 +79,20 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
   validateOnChange = false,
   validateOnBlur = true,
 }: EntityFormProps<T>): React.ReactElement {
-  console.log('EntityForm render:', { fieldsCount: fields?.length, mode, layout, sectionsCount: sections?.length });
-  const [state, setState] = useState<FormState<T>>(() => ({
-    values: getInitialValues(fields, entity, initialValues),
-    errors: {},
-    touched: new Set<string>(),
-    dirty: new Set<string>(),
-    submitting: false,
-    submitError: undefined,
-    currentStep: 0,
-    currentTab: tabs?.[0]?.id,
-    collapsedSections: new Set<string>(),
-  }));
+  const [state, setState] = useState<FormState<T>>(() => {
+    const initialVals = getInitialValues(fields, entity, initialValues);
+    return {
+      values: initialVals,
+      errors: {},
+      touched: new Set<string>(),
+      dirty: new Set<string>(),
+      submitting: false,
+      submitError: undefined,
+      currentStep: 0,
+      currentTab: tabs?.[0]?.id || sections?.[0]?.id,
+      collapsedSections: new Set<string>(),
+    };
+  });
 
   /**
    * Set field value
@@ -489,7 +491,18 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     if (!sections) return null;
 
     const sortedSections = sortSections(sections);
-    const groupedFields = groupFieldsBySections(fields.filter(f => isFieldVisible(f, state.values)), sections);
+    const visibleFields = fields.filter(f => isFieldVisible(f, state.values));
+    const groupedFields = groupFieldsBySections(visibleFields, sections);
+    
+    // If there are ungrouped fields, add them to the first section
+    const ungroupedFields = groupedFields.get(null) || [];
+    if (ungroupedFields.length > 0 && sortedSections.length > 0) {
+      const firstSectionId = sortedSections[0].id;
+      const firstSectionFields = groupedFields.get(firstSectionId) || [];
+      groupedFields.set(firstSectionId, [...firstSectionFields, ...ungroupedFields]);
+      groupedFields.delete(null);
+    }
+    
     const currentSection = state.currentTab || sortedSections[0]?.id;
 
     return (
