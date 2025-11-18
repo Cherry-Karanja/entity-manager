@@ -38,6 +38,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   const [view, setView] = useState<EntityManagerView>(initialViewToUse);
   const [selectedId, setSelectedId] = useState<string | number | null>(initialIdToUse || null);
   const fetchAttempted = useRef(false);
+  const initialListFetchCompleted = useRef(false);
   
   const state = useEntityState<T>();
   const mutations = useEntityMutations<T>();
@@ -83,7 +84,28 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     // If starting in list mode or create mode, fetch all entities
     else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state.state.entities.length === 0) {
       state.setLoading(true);
-      config.apiClient.list()
+      
+      // Build query parameters for initial load with all current state
+      const { page, pageSize, sort, search, filters } = state.state;
+      const queryParams: Record<string, unknown> = {
+        page,
+        pageSize,
+      };
+      
+      if (sort) {
+        queryParams.sortField = sort.field;
+        queryParams.sortDirection = sort.direction;
+      }
+      
+      if (search) {
+        queryParams.search = search;
+      }
+      
+      if (filters && filters.length > 0) {
+        queryParams.filters = filters;
+      }
+      
+      config.apiClient.list(queryParams as never)
         .then((response) => {
           const data = response.data || [];
           state.setEntities(data);
@@ -91,19 +113,21 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
             state.setTotal(response.meta.total);
           }
           state.setLoading(false);
+          initialListFetchCompleted.current = true;
         })
         .catch((error) => {
           console.error('Failed to fetch entities:', error);
           state.setError(error.message || 'Failed to load data');
           state.setLoading(false);
+          initialListFetchCompleted.current = true;
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, state]);
 
-  // Refetch data when pagination, sorting, search, or filters change
+  // Refetch data when sorting, search, or filters change (but not pagination, handled directly)
   useEffect(() => {
-    if (!config.apiClient || view !== 'list') return;
+    if (!config.apiClient || view !== 'list' || !initialListFetchCompleted.current) return;
 
     const { page, pageSize, sort, search, filters } = state.state;
     
@@ -139,11 +163,12 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       })
       .catch((error) => {
         console.error('Failed to fetch entities:', error);
-        state.setError(error.message || 'Failed to load data');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load data';
+        state.setError(errorMessage);
         state.setLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.state.page, state.state.pageSize, state.state.sort, state.state.search, state.state.filters, view]);
+  }, [state.state.sort, state.state.search, state.state.filters, view]);
 
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
@@ -276,9 +301,52 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
             pageSize: state.state.pageSize,
             totalCount: state.state.total
           }}
-          onPaginationChange={(paginationConfig) => {
-            state.setPage(paginationConfig.page || 1);
-            state.setPageSize(paginationConfig.pageSize || 10);
+          onPaginationChange={async (paginationConfig) => {
+            const newPage = paginationConfig.page || 1;
+            const newPageSize = paginationConfig.pageSize || 10;
+            
+            // Update state immediately
+            state.setPage(newPage);
+            state.setPageSize(newPageSize);
+            
+            // Trigger API call directly
+            if (config.apiClient && view === 'list') {
+              state.setLoading(true);
+              
+              const { sort, search, filters } = state.state;
+              const queryParams: Record<string, unknown> = {
+                page: newPage,
+                pageSize: newPageSize,
+              };
+              
+              if (sort) {
+                queryParams.sortField = sort.field;
+                queryParams.sortDirection = sort.direction;
+              }
+              
+              if (search) {
+                queryParams.search = search;
+              }
+              
+              if (filters && filters.length > 0) {
+                queryParams.filters = filters;
+              }
+
+              try {
+                const response = await config.apiClient.list(queryParams as never);
+                const data = response.data || [];
+                state.setEntities(data);
+                if (response.meta?.total !== undefined) {
+                  state.setTotal(response.meta.total);
+                }
+                state.setLoading(false);
+              } catch (error) {
+                console.error('Failed to fetch entities:', error);
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load data';
+                state.setError(errorMessage);
+                state.setLoading(false);
+              }
+            }
           }}
           sortable={true}
           sortConfig={state.state.sort}
@@ -389,7 +457,11 @@ export function EntityManager<T extends BaseEntity = BaseEntity>(
   // Default layout with providers
   return (
     <div className={`entity-manager ${className}`}>
-      <EntityStateProvider initialEntities={config.initialData}>
+      <EntityStateProvider 
+        initialEntities={config.initialData}
+        initialPageSize={config.config.defaultPageSize}
+        initialSort={config.config.defaultSort}
+      >
         {config.apiClient ? (
           <EntityApiProvider client={config.apiClient}>
             <EntityManagerContent {...props} />

@@ -311,8 +311,6 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
               <div 
                 className={`flex items-center justify-between px-4 py-3 bg-muted/50 border-b ${section.collapsible ? 'cursor-pointer hover:bg-muted transition-colors' : ''}`}
                 onClick={() => section.collapsible && toggleSection(section.id)}
-                role={section.collapsible ? 'button' : undefined}
-                aria-expanded={section.collapsible ? !isCollapsed : undefined}
                 tabIndex={section.collapsible ? 0 : undefined}
               >
                 <div className="flex-1">
@@ -442,7 +440,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: tab.id }))}
                 role="tab"
-                aria-selected={state.currentTab === tab.id ? 'true' : 'false'}
+                aria-selected={state.currentTab === tab.id}
               >
                 {tab.icon && <span className="text-base">{tab.icon}</span>}
                 {tab.label}
@@ -509,7 +507,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: section.id }))}
                 role="tab"
-                aria-selected={currentSection === section.id ? 'true' : 'false'}
+                aria-selected={currentSection === section.id}
               >
                 {section.label}
               </button>

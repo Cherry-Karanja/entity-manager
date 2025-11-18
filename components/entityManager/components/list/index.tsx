@@ -146,10 +146,14 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   }, [data, state.search, state.filters, state.sort, columns]);
 
   // Pagination
-  const totalPages = getTotalPages(processedData.length, state.pageSize);
-  const paginatedData = pagination 
-    ? paginateEntities(processedData, state.page, state.pageSize)
-    : processedData;
+  const totalItems = paginationConfig?.totalCount ?? processedData.length;
+  const totalPages = getTotalPages(totalItems, state.pageSize);
+  // For server-side pagination (when paginationConfig is provided), data is already paginated
+  const paginatedData = paginationConfig 
+    ? processedData 
+    : pagination 
+      ? paginateEntities(processedData, state.page, state.pageSize)
+      : processedData;
 
   // Selection handlers
   const handleSelectAll = useCallback(() => {
@@ -271,7 +275,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                         ? 'bg-primary text-primary-foreground border-primary z-10'
                         : 'bg-background text-muted-foreground border-input hover:bg-muted hover:text-foreground'
                     }`}
-                    aria-pressed={state.view === v ? 'true' : 'false'}
                     title={`Switch to ${v} view`}
                   >
                     {v.charAt(0).toUpperCase() + v.slice(1)}

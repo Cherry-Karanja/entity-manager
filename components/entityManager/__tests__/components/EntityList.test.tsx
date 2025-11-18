@@ -98,7 +98,7 @@ describe('EntityList', () => {
         />
       );
 
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      expect(screen.getByText('Loading data...')).toBeInTheDocument();
     });
   });
 
@@ -344,9 +344,11 @@ describe('EntityList', () => {
     });
 
     it('should show correct page size of data', () => {
+      // For server-side pagination, data should be pre-paginated
+      const pageData = mockData.slice(0, 5);
       render(
         <EntityList
-          data={mockData}
+          data={pageData}
           columns={mockColumns}
             pagination={true}
             paginationConfig={{
@@ -364,10 +366,13 @@ describe('EntityList', () => {
 
     it('should navigate to next page', async () => {
       const user = userEvent.setup();
+      const mockOnPaginationChange = vi.fn();
 
+      // For server-side pagination, data should be pre-paginated
+      const pageData = mockData.slice(0, 5);
       render(
         <EntityList
-          data={mockData}
+          data={pageData}
           columns={mockColumns}
             pagination={true}
             paginationConfig={{
@@ -375,23 +380,30 @@ describe('EntityList', () => {
                 pageSize: 5,
                 totalCount: mockData.length
             }}
+            onPaginationChange={mockOnPaginationChange}
         />
       );
 
       const nextButton = screen.getByRole('button', { name: /next/i });
       await user.click(nextButton);
 
-      // Should show items from second page
-      expect(screen.getByText('User 6')).toBeInTheDocument();
-      expect(screen.queryByText('User 1')).not.toBeInTheDocument();
+      // Should call onPaginationChange with page 2
+      expect(mockOnPaginationChange).toHaveBeenCalledWith({
+        page: 2,
+        pageSize: 5,
+        totalCount: mockData.length
+      });
     });
 
     it('should navigate to previous page', async () => {
       const user = userEvent.setup();
+      const mockOnPaginationChange = vi.fn();
 
+      // For server-side pagination, data should be pre-paginated (second page)
+      const pageData = mockData.slice(5, 10);
       render(
         <EntityList
-          data={mockData}
+          data={pageData}
           columns={mockColumns}
             pagination={true}
             paginationConfig={{
@@ -399,14 +411,19 @@ describe('EntityList', () => {
                 pageSize: 5,
                 totalCount: mockData.length
             }}
+            onPaginationChange={mockOnPaginationChange}
         />
       );
 
       const prevButton = screen.getByRole('button', { name: /previous/i });
       await user.click(prevButton);
 
-      // Should show items from first page
-      expect(screen.getByText('User 1')).toBeInTheDocument();
+      // Should call onPaginationChange with page 1
+      expect(mockOnPaginationChange).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 5,
+        totalCount: mockData.length
+      });
     });
 
     it('should allow page size change', async () => {

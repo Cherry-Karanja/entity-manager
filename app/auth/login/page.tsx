@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthForm } from '@/components/auth/forms/auth-form'
 import { useAuth } from '@/components/auth/contexts/auth-context'
 import { toast } from 'sonner'
@@ -11,17 +11,25 @@ type AuthMode = 'login' | 'signup' | 'reset' | 'reset-confirm'
 export default function LoginPage() {
   const { isAuthenticated } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [mode, setMode] = useState<AuthMode>('login')
+
+  const getRedirectPath = useCallback(() => {
+    const redirect = searchParams.get('redirect')
+    return redirect ? decodeURIComponent(redirect) : '/dashboard'
+  }, [searchParams])
 
   useEffect(() => {
     if (isAuthenticated) {
       toast.success('✅ You are already logged in!', { duration: 2000 })
-      router.push('/dashboard')
+      const redirectPath = getRedirectPath()
+      router.push(redirectPath)
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router, getRedirectPath])
 
   const handleSuccess = () => {
-    router.push('/dashboard')
+    const redirectPath = getRedirectPath()
+    router.push(redirectPath)
   }
 
   return (

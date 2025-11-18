@@ -132,7 +132,7 @@ export function DashboardLayout({
   }, []);
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full overflow-hidden">
+      <div className="flex min-h-screen w-full overflow-auto">
         <Sidebar>
           <SidebarHeader className="border-b border-sidebar-border">
             <div className="flex items-center gap-2 px-4 py-2">

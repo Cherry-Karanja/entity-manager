@@ -220,9 +220,9 @@ function DetailView<T extends BaseEntity>({
                   group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
                 }`}
                 onClick={() => group.collapsible && onToggleGroup(group.id)}
-                role={group.collapsible ? 'button' : undefined}
-                aria-expanded={group.collapsible ? !isCollapsed : undefined}
+                {...(group.collapsible ? { role: 'button' as const, 'aria-expanded': (!isCollapsed ? 'true' : 'false') as 'true' | 'false' } : {})}
               >
+              
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
                   {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
@@ -273,19 +273,23 @@ function DetailView<T extends BaseEntity>({
       {/* Tabs */}
       {tabs && tabs.length > 0 && (
         <div className="border rounded-lg overflow-hidden">
-          <div className="border-b bg-muted/50 overflow-x-auto" role="tablist">
-            <div className="flex min-w-max">
-              {tabs.map((tab: any) => (
+          <div className="border-b bg-muted/50 overflow-x-auto flex min-w-max" role="tablist">
+            {tabs.map((tab: any) => {
+              const isSelected = state.activeTab === tab.id;
+              return (
                 <button
                   key={tab.id}
+                  type="button"
                   className={`px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-                    state.activeTab === tab.id
+                    isSelected
                       ? 'border-primary text-primary bg-background'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                   onClick={() => onTabChange(tab.id)}
                   role="tab"
-                  aria-selected={state.activeTab === tab.id ? 'true' : 'false'}
+                  {...(isSelected ? { 'aria-selected': 'true' } : {})}
+                  id={`tab-${tab.id}`}
+                  aria-controls={`tabpanel-${tab.id}`}
                 >
                   {tab.icon && <span className="mr-2">{tab.icon}</span>}
                   <span>{tab.label}</span>
@@ -295,8 +299,8 @@ function DetailView<T extends BaseEntity>({
                     </span>
                   )}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
           <div className="p-3 sm:p-4 bg-card">
             {tabs.map((tab: any) => {
@@ -304,7 +308,7 @@ function DetailView<T extends BaseEntity>({
               
               const TabContent = tab.content as any;
               return (
-                <div key={tab.id}>
+                <div key={tab.id} role="tabpanel" id={`tabpanel-${tab.id}`} aria-labelledby={`tab-${tab.id}`}>
                   {typeof TabContent === 'function' ? <TabContent entity={entity} /> : TabContent}
                 </div>
               );
@@ -536,9 +540,7 @@ function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField,
                 group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
               }`}
               onClick={() => group.collapsible && toggleGroup(group.id)}
-              role={group.collapsible ? 'button' : undefined}
-              aria-expanded={group.collapsible ? !isCollapsed : undefined}
-              tabIndex={group.collapsible ? 0 : undefined}
+              {...(group.collapsible ? { role: 'button' as const, 'aria-expanded': (!isCollapsed ? 'true' : 'false') as 'true' | 'false', tabIndex: 0 } : {})}
             >
               <div>
                 <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>

@@ -127,7 +127,7 @@ export const userConfig: EntityConfig<User> = {
     direction: 'desc',
   },
   
-  defaultPageSize: 25,
+  defaultPageSize: 10,
   
   // ===========================
   // Search & Filter
