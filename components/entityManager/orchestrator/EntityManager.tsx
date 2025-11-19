@@ -25,15 +25,12 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
 ) {
   const { 
     config, 
-    initialView: propsInitialView, 
-    initialId: propsInitialId,
-    onViewChange 
   } = props;
   
   // Use initialView/initialId from config or props (props take precedence)
-  const initialViewToUse = propsInitialView ?? config.initialView ?? 'list';
-  const initialIdToUse = propsInitialId ?? config.initialId;
-  const onViewChangeToUse = onViewChange ?? config.onViewChange;
+  const initialViewToUse = config.initialView ?? 'list';
+  const initialIdToUse = config.initialId;
+  const onViewChangeToUse = config.onViewChange;
   
   const [view, setView] = useState<EntityManagerView>(initialViewToUse);
   const [selectedId, setSelectedId] = useState<string | number | null>(initialIdToUse || null);
@@ -72,13 +69,32 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       config.apiClient.get(initialIdToUse)
         .then((response) => {
           const entity = response.data;
-          state.addEntity(entity);
+          state.setEntities([entity]);
+          state.setTotal(1);
           state.setLoading(false);
         })
         .catch((error) => {
           console.error('Failed to fetch entity:', error);
           state.setError(error.message || 'Failed to load entity');
           state.setLoading(false);
+        });
+    }
+    // If starting in list mode with an initial ID, fetch only that entity
+    else if (initialViewToUse === 'list' && initialIdToUse) {
+      state.setLoading(true);
+      config.apiClient.get(initialIdToUse)
+        .then((response) => {
+          const entity = response.data;
+          state.setEntities([entity]);
+          state.setTotal(1);
+          state.setLoading(false);
+          initialListFetchCompleted.current = true;
+        })
+        .catch((error) => {
+          console.error('Failed to fetch entity:', error);
+          state.setError(error.message || 'Failed to load entity');
+          state.setLoading(false);
+          initialListFetchCompleted.current = true;
         });
     }
     // If starting in list mode or create mode, fetch all entities
@@ -170,6 +186,10 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.state.sort, state.state.search, state.state.filters, view]);
 
+  // listen for view change and call onviewchange callback
+  useEffect(() => {
+    onViewChangeToUse?.(view);
+  }, [view, onViewChangeToUse]);
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
 
@@ -180,21 +200,18 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   const handleEdit = (entity: T) => {
     setView('edit');
     setSelectedId(entity.id);
-    onViewChangeToUse?.('edit');
   };
 
   // Handle view
   const handleView = (entity: T) => {
     setView('view');
     setSelectedId(entity.id);
-    onViewChangeToUse?.('view');
   };
 
   // Handle back to list
   const handleBack = () => {
     setView('list');
     setSelectedId(null);
-    onViewChangeToUse?.('list');
   };
 
   // Handle form submit

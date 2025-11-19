@@ -423,12 +423,13 @@ export function isFormDirty(
  */
 export async function getFieldOptions<T extends BaseEntity>(
   field: FormField<T>,
-  values: Partial<T>
+  values: Partial<T>,
+  query?: string
 ): Promise<FieldOption[]> {
   if (!field.options) return [];
 
   if (typeof field.options === 'function') {
-    return await field.options(values);
+    return await field.options(values, query);
   }
 
   return field.options;

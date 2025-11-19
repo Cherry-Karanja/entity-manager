@@ -161,17 +161,29 @@ export const userFields: FormField<User>[] = [
     required: false,
     placeholder: 'Select role',
     group: 'status',
-    options: async () => {
+    searchable: true,
+    options: async (values, query = '') => {
       try {
         const { authApi } = await import('@/components/connectionManager/http');
-        const response = await authApi.get('/api/v1/accounts/user-roles/');
-        return response.data.results.map((role: { name: string; description: string }) => ({
+        const params = query ? { search: query } : {};
+        const response = await authApi.get('/api/v1/accounts/user-roles/', { params });
+        const options = response.data.results.map((role: { name: string; description: string }) => ({
           value: role.name,
           label: role.description,
         }));
+        
+        // Ensure the current role is included in options
+        const currentRole = (values as Record<string, unknown>).role_name as string;
+        if (currentRole && !options.some((opt: { value: string }) => opt.value === currentRole)) {
+          options.unshift({ value: currentRole, label: currentRole }); // Add at the top
+        }
+        
+        return options;
       } catch (error) {
         console.error('Failed to load roles:', error);
-        return [];
+        // Fallback: include current role if available
+        const currentRole = (values as Record<string, unknown>).role_name as string;
+        return currentRole ? [{ value: currentRole, label: currentRole }] : [];
       }
     },
     width: '25%',
@@ -266,7 +278,6 @@ export const userFields: FormField<User>[] = [
     type: 'switch',
     required: false,
     group: 'status',
-    visible: (values) => !!values.id, // Only show on edit
     helpText: 'User can log in and access the system',
     width: '25%',
   },
@@ -276,7 +287,6 @@ export const userFields: FormField<User>[] = [
     type: 'switch',
     required: false,
     group: 'status',
-    visible: (values) => !!values.id, // Only show on edit
     helpText: 'User account has been approved',
     width: '25%',
   },
@@ -286,7 +296,6 @@ export const userFields: FormField<User>[] = [
     type: 'switch',
     required: false,
     group: 'status',
-    visible: (values) => !!values.id, // Only show on edit
     helpText: 'User email/identity has been verified',
     width: '25%',
   },
@@ -296,7 +305,6 @@ export const userFields: FormField<User>[] = [
     type: 'switch',
     required: false,
     group: 'status',
-    visible: (values) => !!values.id, // Only show on edit
     helpText: 'User must change password on next login',
     width: '25%',
   },
@@ -306,7 +314,6 @@ export const userFields: FormField<User>[] = [
     type: 'switch',
     required: false,
     group: 'status',
-    visible: (values) => !!values.id, // Only show on edit
     helpText: 'User has staff privileges',
     width: '25%',
   },

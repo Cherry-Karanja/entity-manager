@@ -57,9 +57,9 @@ export default function UsersPage() {
       config={{
         config: userConfig,
         apiClient: usersApiClient,
-        initialData: [],
         initialView: initialView,
         initialId: initialId,
+        initialData: [],
         onViewChange: handleViewChange,
         features: {
           offline: false,

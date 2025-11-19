@@ -44,16 +44,7 @@ export interface EntityManagerConfig<T extends BaseEntity = BaseEntity> {
  */
 export interface EntityManagerProps<T extends BaseEntity = BaseEntity> {
   /** Configuration */
-  config: EntityManagerConfig<T>;
-  
-  /** Initial view mode (default: 'list') */
-  initialView?: EntityManagerView;
-  
-  /** Initial entity ID (required when initialView is 'edit' or 'view') */
-  initialId?: string | number;
-  
-  /** Callback when view changes */
-  onViewChange?: (view: EntityManagerView) => void;
+  config: EntityManagerConfig<T>; // note this is not entity config
   
   /** Custom className */
   className?: string;

@@ -7,13 +7,15 @@
 
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { BaseEntity } from '../../primitives/types';
 import {
   EntityFormProps,
   FormState,
   FormField,
   FieldRenderProps,
+  FieldOption,
 } from './types';
 import {
   getInitialValues,
@@ -34,6 +36,9 @@ import {
   formatFieldValue,
 } from './utils';
 import { FileUpload } from './fields/FileUpload';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 /**
  * EntityForm Component
@@ -718,6 +723,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       disabled: fieldDisabled,
       mode,
       validateOnChange,
+      formValues: state.values,
     };
 
     // Custom renderer
@@ -802,12 +808,13 @@ function DefaultFieldRenderer<T extends BaseEntity>({
   onBlur,
   disabled,
   validateOnChange,
+  formValues,
 }: FieldRenderProps<T>) {
   const [options, setOptions] = useState<Array<{ label: string; value: string | number | boolean; disabled?: boolean }>>([]);
 
   useEffect(() => {
-    if (field.type === 'select' || field.type === 'multiselect' || field.type === 'radio') {
-      getFieldOptions(field, {} as Partial<T>).then(setOptions);
+    if ((field.type === 'select' && !field.searchable) || field.type === 'multiselect' || field.type === 'radio') {
+      getFieldOptions(field, {} as Partial<T>, undefined).then(setOptions);
     }
   }, [field]);
 
@@ -877,23 +884,114 @@ function DefaultFieldRenderer<T extends BaseEntity>({
         );
 
       case 'select':
-        return (
-          <select 
-            value={String(value || '')} 
-            onChange={(e) => onChange(e.target.value)}
-            className={`${inputClasses} ${errorClasses}`}
-            {...commonProps}
-          >
-            <option value="">Select...</option>
-            {options.map(opt => (
-              <option key={String(opt.value)} value={String(opt.value)} disabled={opt.disabled}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        );
+        if (field.searchable) {
+          // Searchable combobox
+          const [open, setOpen] = useState(false);
+          const [searchQuery, setSearchQuery] = useState('');
+          const [debouncedQuery, setDebouncedQuery] = useState('');
+          const [searchOptions, setSearchOptions] = useState<FieldOption[]>([]);
+          const loadedInitialRef = useRef(false);
 
-      case 'checkbox':
+          // Debounce search query
+          useEffect(() => {
+            const timer = setTimeout(() => {
+              setDebouncedQuery(searchQuery);
+            }, 300);
+            return () => clearTimeout(timer);
+          }, [searchQuery]);
+
+          // Load options when opened or search changes
+          useEffect(() => {
+            if ((open && !loadedInitialRef.current) || debouncedQuery) {
+              const loadOptions = async () => {
+                try {
+                  const opts = await getFieldOptions(field, formValues, debouncedQuery);
+                  // Filter options based on search query
+                  const filtered = debouncedQuery 
+                    ? opts.filter(opt => 
+                        opt.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+                        String(opt.value).toLowerCase().includes(debouncedQuery.toLowerCase())
+                      )
+                    : opts;
+                  setSearchOptions(filtered);
+                  if (!loadedInitialRef.current) loadedInitialRef.current = true;
+                } catch (error) {
+                  console.error('Failed to load options:', error);
+                  setSearchOptions([]);
+                }
+              };
+              loadOptions();
+            }
+          }, [open, debouncedQuery, field, formValues]);
+
+          const selectedOption = options.find(opt => String(opt.value) === String(value));
+
+          return (
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={`${inputClasses} ${errorClasses} justify-between`}
+                  disabled={disabled}
+                >
+                  {selectedOption ? selectedOption.label : "Select..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search..." 
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                  />
+                  <CommandList>
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup>
+                      {searchOptions.map((option) => (
+                        <CommandItem
+                          key={String(option.value)}
+                          value={String(option.value)}
+                          onSelect={() => {
+                            onChange(option.value);
+                            setOpen(false);
+                            setSearchQuery('');
+                          }}
+                        >
+                          <Check
+                            className={`mr-2 h-4 w-4 ${
+                              String(value) === String(option.value) ? "opacity-100" : "opacity-0"
+                            }`}
+                          />
+                          {option.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          );
+        } else {
+          // Regular select
+          return (
+            <select 
+              value={String(value || '')} 
+              onChange={(e) => onChange(e.target.value)}
+              className={`${inputClasses} ${errorClasses}`}
+              {...commonProps}
+            >
+              <option value="">Select...</option>
+              {options.map(opt => (
+                <option key={String(opt.value)} value={String(opt.value)} disabled={opt.disabled}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          );
+        }      case 'checkbox':
       case 'switch':
         return (
           <input

@@ -88,7 +88,10 @@ export interface FormField<T extends BaseEntity = BaseEntity> {
   order?: number;
   
   /** Options for select/radio/multiselect */
-  options?: FieldOption[] | ((values: Partial<T>) => FieldOption[] | Promise<FieldOption[]>);
+  options?: FieldOption[] | ((values: Partial<T>, query?: string) => FieldOption[] | Promise<FieldOption[]>);
+  
+  /** Whether the select field is searchable */
+  searchable?: boolean;
   
   /** Min value (number/range) */
   min?: number;
@@ -327,6 +330,7 @@ export interface FieldRenderProps<T extends BaseEntity = BaseEntity> {
   disabled: boolean;
   mode: FormMode;
   validateOnChange?: boolean;
+  formValues: Partial<T>;
 }
 
 /**
