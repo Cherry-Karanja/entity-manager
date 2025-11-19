@@ -25,6 +25,8 @@ import {
   Shield,
   Bell,
   Search,
+  User,
+  UserCog,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -78,8 +80,8 @@ const sidebarItems = [
         href: "/dashboard/roles",
       },
       {
-        title: "Permissions",
-        href: "/dashboard/permissions",
+        title: "Profiles",
+        href: "/dashboard/profiles",
       },
     ],
   },
@@ -189,7 +191,7 @@ export function DashboardLayout({
           </SidebarContent>
 
           <SidebarFooter className="border-t border-sidebar-border">
-            <div className="px-4 py-2">
+            <Link href="/dashboard/profile" className="block px-4 py-2 hover:bg-sidebar-accent rounded-md transition-colors">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-sm font-medium">
                   {user?.first_name?.[0] || 'U'}
@@ -204,7 +206,7 @@ export function DashboardLayout({
                   </span>
                 </div>
               </div>
-            </div>
+            </Link>
           </SidebarFooter>
         </Sidebar>
 
@@ -253,8 +255,17 @@ export function DashboardLayout({
                 </Button>
 
                 {/* Notifications */}
-                <Button variant="ghost" size="sm" className="h-8 w-8">
-                  <Bell className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="h-8 w-8" asChild>
+                  <Link href="/dashboard/notifications">
+                    <Bell className="h-4 w-4" />
+                  </Link>
+                </Button>
+
+                {/* Profile */}
+                <Button variant="ghost" size="sm" className="h-8 w-8" asChild>
+                  <Link href="/dashboard/profile">
+                    <User className="h-4 w-4" />
+                  </Link>
                 </Button>
 
                 {/* Connection Status */}
@@ -318,44 +329,56 @@ export function DashboardLayout({
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Navigation">
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard'; }}>
               <Home className="mr-2 h-4 w-4" />
               <span>Dashboard</span>
             </CommandItem>
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/entities'; }}>
               <Database className="mr-2 h-4 w-4" />
               <span>Entities</span>
             </CommandItem>
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/users'; }}>
               <Users className="mr-2 h-4 w-4" />
               <span>Users</span>
             </CommandItem>
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/roles'; }}>
+              <UserCog className="mr-2 h-4 w-4" />
+              <span>Roles</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/profiles'; }}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profiles</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/analytics'; }}>
               <BarChart3 className="mr-2 h-4 w-4" />
               <span>Analytics</span>
             </CommandItem>
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/security'; }}>
               <Shield className="mr-2 h-4 w-4" />
               <span>Security</span>
             </CommandItem>
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/settings'; }}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </CommandItem>
           </CommandGroup>
           <CommandSeparator />
-          <CommandGroup heading="Actions">
-            <CommandItem>
-              <Database className="mr-2 h-4 w-4" />
-              <span>Create New Entity</span>
+          <CommandGroup heading="Quick Actions">
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/profile'; }}>
+              <User className="mr-2 h-4 w-4" />
+              <span>My Profile</span>
             </CommandItem>
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/notifications'; }}>
+              <Bell className="mr-2 h-4 w-4" />
+              <span>Notifications</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/users'; }}>
               <Users className="mr-2 h-4 w-4" />
               <span>Manage Users</span>
             </CommandItem>
-            <CommandItem>
-              <BarChart3 className="mr-2 h-4 w-4" />
-              <span>View Reports</span>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/dashboard/roles'; }}>
+              <UserCog className="mr-2 h-4 w-4" />
+              <span>Manage Roles</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

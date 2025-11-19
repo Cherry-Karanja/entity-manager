@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,31 +13,36 @@ import {
   Activity,
   AlertCircle,
   CheckCircle,
+  UserCog,
+  User,
 } from "lucide-react";
 
 export default function DashboardPage() {
 
   const stats = [
     {
-      title: "Total Entities",
-      value: "1,234",
-      change: "+12%",
-      changeType: "positive" as const,
-      icon: Database,
-    },
-    {
-      title: "Active Users",
+      title: "Total Users",
       value: "89",
       change: "+5%",
       changeType: "positive" as const,
       icon: Users,
+      href: "/dashboard/users",
     },
     {
-      title: "System Health",
-      value: "98.5%",
-      change: "+0.2%",
+      title: "Active Roles",
+      value: "12",
+      change: "+2",
       changeType: "positive" as const,
-      icon: Activity,
+      icon: UserCog,
+      href: "/dashboard/roles",
+    },
+    {
+      title: "User Profiles",
+      value: "85",
+      change: "+8%",
+      changeType: "positive" as const,
+      icon: User,
+      href: "/dashboard/profiles",
     },
     {
       title: "Security Alerts",
@@ -44,6 +50,7 @@ export default function DashboardPage() {
       change: "-2",
       changeType: "negative" as const,
       icon: Shield,
+      href: "/dashboard/security",
     },
   ];
 
@@ -87,26 +94,28 @@ export default function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <Badge
-                  variant={stat.changeType === "positive" ? "default" : "destructive"}
-                  className="text-xs"
-                >
-                  {stat.change}
-                </Badge>
-                <span>from last month</span>
-              </div>
-            </CardContent>
-          </Card>
+          <Link key={stat.title} href={stat.href}>
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                  <Badge
+                    variant={stat.changeType === "positive" ? "default" : "destructive"}
+                    className="text-xs"
+                  >
+                    {stat.change}
+                  </Badge>
+                  <span>from last month</span>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -124,21 +133,29 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full justify-start" variant="outline">
-              <Database className="mr-2 h-4 w-4" />
-              Create New Entity
+            <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/dashboard/users">
+                <Users className="mr-2 h-4 w-4" />
+                Manage Users
+              </Link>
             </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <Users className="mr-2 h-4 w-4" />
-              Manage Users
+            <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/dashboard/roles">
+                <UserCog className="mr-2 h-4 w-4" />
+                Manage Roles
+              </Link>
             </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              View Analytics
+            <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/dashboard/profiles">
+                <User className="mr-2 h-4 w-4" />
+                View Profiles
+              </Link>
             </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <Shield className="mr-2 h-4 w-4" />
-              Security Settings
+            <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/dashboard/analytics">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                View Analytics
+              </Link>
             </Button>
           </CardContent>
         </Card>

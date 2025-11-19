@@ -9,16 +9,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Database,
-  FileQuestion,
-  Search,
-  Filter,
-  Plus,
-  Inbox,
-  FolderOpen,
-  Package,
-} from 'lucide-react';
+import { Database, FileQuestion, Search, Filter, Plus, Inbox, Package } from 'lucide-react';
 
 export interface EmptyStateProps {
   /** Title text */

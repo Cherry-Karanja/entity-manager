@@ -107,7 +107,7 @@ export default function UserEditPage() {
 
       {/* Edit Form */}
       <div className="max-w-4xl">
-        <EntityForm
+        <EntityForm<User>
           mode="edit"
           fields={userFields}
           entity={user}

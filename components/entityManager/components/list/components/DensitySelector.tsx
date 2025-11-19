@@ -9,23 +9,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { AlignJustify, Check } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AlignJustify } from 'lucide-react';
 import { ListDensity } from '../variants';
 
 export interface DensitySelectorProps {
@@ -71,7 +57,7 @@ function DropdownDensitySelector({ value, onChange, className }: DensitySelector
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className={className}>
+              <Button variant="outline" size="sm" className={cn("min-h-[44px]", className)}>
                 <AlignJustify className="h-4 w-4" />
                 <span className="ml-2 hidden sm:inline">Density</span>
               </Button>

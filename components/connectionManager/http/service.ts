@@ -14,8 +14,8 @@ function getEndpointUrl(
   config: EntityConfig,
   operation: 'list' | 'create' | 'update' | 'delete'
 ): string {
-  // Use top-level endpoints (simplified for v2)
-  return config.endpoints[operation] || '/';
+  // Use apiEndpoint (simplified for v2)
+  return config.apiEndpoint || '/';
 }
 
 /**
@@ -88,7 +88,7 @@ export function createApiService<T, U = T>(
         },
         onSuccess: () => {
           // Invalidate queries for this entity
-          const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.endpoints.list;
+          const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.apiEndpoint;
           queryClient.invalidateQueries({ queryKey: [invalidateUrl] });
         },
         onError: (error:AxiosError) => {
@@ -115,7 +115,7 @@ export function createApiService<T, U = T>(
         },
         onSuccess: () => {
           // Invalidate queries for this entity
-          const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.endpoints.list;
+          const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.apiEndpoint;
           queryClient.invalidateQueries({ queryKey: [invalidateUrl] });
         },
         onError: (error:AxiosError) => {
@@ -142,7 +142,7 @@ export function createApiService<T, U = T>(
         },
         onSuccess: () => {
           // Invalidate queries for this entity
-          const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.endpoints.list;
+          const invalidateUrl = typeof urlOrConfig === 'string' ? urlOrConfig : urlOrConfig.apiEndpoint;
           queryClient.invalidateQueries({ queryKey: [invalidateUrl] });
         },
         onError: (error:AxiosError) => {

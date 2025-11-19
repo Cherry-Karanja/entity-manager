@@ -12,7 +12,6 @@ import { BaseEntity } from '../../primitives/types';
 import {
   EntityFormProps,
   FormState,
-  FormMode,
   FormField,
   FieldRenderProps,
 } from './types';
@@ -34,6 +33,7 @@ import {
   getFieldOptions,
   formatFieldValue,
 } from './utils';
+import { FileUpload } from './fields/FileUpload';
 
 /**
  * EntityForm Component
@@ -309,24 +309,35 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
           const isCollapsed = state.collapsedSections.has(section.id);
 
           return (
-            <div key={section.id} className="border rounded-lg overflow-hidden">
+            <div key={section.id} className="border rounded-lg overflow-hidden bg-card shadow-sm">
               <div 
-                className={`flex items-center justify-between px-4 py-3 bg-muted/50 border-b ${section.collapsible ? 'cursor-pointer hover:bg-muted transition-colors' : ''}`}
+                className={`flex items-center justify-between px-4 py-3 bg-muted/30 border-b ${section.collapsible ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
                 onClick={() => section.collapsible && toggleSection(section.id)}
+                onKeyDown={(e) => section.collapsible && (e.key === 'Enter' || e.key === ' ') && toggleSection(section.id)}
                 tabIndex={section.collapsible ? 0 : undefined}
+                role={section.collapsible ? 'button' : undefined}
+                aria-expanded={section.collapsible ? !isCollapsed : undefined}
               >
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-foreground">{section.label}</h3>
-                  {section.description && <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>}
+                <div className="flex items-center gap-2 flex-1">
+                  {section.icon && <span className="text-muted-foreground">{section.icon}</span>}
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">{section.label}</h3>
+                    {section.description && <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>}
+                  </div>
                 </div>
                 {section.collapsible && (
-                  <span className="text-muted-foreground ml-2 transition-transform" style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
-                    ▼
-                  </span>
+                  <svg
+                    className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 )}
               </div>
               {!isCollapsed && (
-                <div className="p-4">
+                <div className="p-4 bg-card">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {sectionFields.map(field => {
                       // Parse width to determine grid column span
@@ -897,13 +908,17 @@ function DefaultFieldRenderer<T extends BaseEntity>({
       case 'file':
       case 'image':
         return (
-          <input
-            type="file"
-            onChange={(e) => onChange(e.target.files?.[0])}
+          <FileUpload
+            value={value as File | string | null}
+            onChange={(file) => onChange(file)}
+            onBlur={onBlur}
             accept={field.accept}
             multiple={field.multiple}
-            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            {...commonProps}
+            disabled={disabled}
+            maxSize={field.maxSize}
+            showPreview={field.type === 'image'}
+            error={touched && error ? error : undefined}
+            helpText={field.helpText}
           />
         );
 

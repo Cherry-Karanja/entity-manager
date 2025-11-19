@@ -5,6 +5,7 @@
  */
 
 import { FormLayout, FieldSection } from '@/components/entityManager/components/form/types';
+import { User, Mail, Lock, Building2, Shield } from 'lucide-react';
 
 export const userFormLayout: FormLayout = 'tabs';
 
@@ -14,6 +15,7 @@ export const userFormSections: FieldSection[] = [
     label: 'Basic Information',
     description: 'Core user details and contact information',
     fields: ['email', 'username', 'first_name', 'last_name'],
+    icon: <User className="h-4 w-4" />,
     order: 1,
   },
   {
@@ -21,6 +23,7 @@ export const userFormSections: FieldSection[] = [
     label: 'Authentication',
     description: 'Password and security settings',
     fields: ['password', 'password2'],
+    icon: <Lock className="h-4 w-4" />,
     order: 2,
   },
   {
@@ -28,6 +31,7 @@ export const userFormSections: FieldSection[] = [
     label: 'Organization',
     description: 'Department and organizational details',
     fields: ['employee_id', 'department', 'job_title', 'phone_number', 'location'],
+    icon: <Building2 className="h-4 w-4" />,
     order: 3,
   },
   {
@@ -35,6 +39,7 @@ export const userFormSections: FieldSection[] = [
     label: 'Status & Permissions',
     description: 'Account status, role and access control',
     fields: ['role_name', 'is_active', 'is_approved', 'is_verified', 'is_staff', 'must_change_password'],
+    icon: <Shield className="h-4 w-4" />,
     order: 4,
   },
 ];
@@ -46,6 +51,6 @@ export const userFormMode: Record<string, Partial<{ layout: FormLayout; sections
   },
   edit: {
     layout: 'tabs',
-    sections: userFormSections,
+    sections: userFormSections.filter(s => s.id !== 'authentication'), // Don't show password fields in edit mode
   },
 };

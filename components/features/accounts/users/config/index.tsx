@@ -31,7 +31,6 @@ export const userConfig: EntityConfig<User> = {
   // ===========================
   // Form Configuration
   // ===========================
-  // @ts-expect-error - FormField<User> is compatible with FormField
   fields: userFields,
   formLayout: userFormLayout,
   formSections: userFormSections,

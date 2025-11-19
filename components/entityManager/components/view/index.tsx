@@ -8,6 +8,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { BaseEntity } from '../../primitives/types';
 import {
   EntityViewProps,
@@ -349,23 +350,19 @@ function FieldRow<T extends BaseEntity>({ field, entity, onCopy, copiedField }: 
         </div>
         {field.copyable && (
           <button
-            className={`flex-shrink-0 p-1 sm:p-1.5 text-xs rounded-md transition-colors ${
+            className={`flex-shrink-0 p-2 sm:p-2 rounded-md transition-all min-h-[40px] min-w-[40px] flex items-center justify-center ${
               copiedField === String(field.key)
-                ? 'bg-primary/10 text-primary'
-                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary'
             }`}
             onClick={() => onCopy?.(field.key, value)}
-            title="Copy to clipboard"
-            aria-label="Copy to clipboard"
+            title={copiedField === String(field.key) ? 'Copied!' : 'Copy to clipboard'}
+            aria-label={copiedField === String(field.key) ? 'Copied!' : 'Copy to clipboard'}
           >
             {copiedField === String(field.key) ? (
-              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <Check className="w-4 h-4" />
             ) : (
-              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
+              <Copy className="w-4 h-4" />
             )}
           </button>
         )}

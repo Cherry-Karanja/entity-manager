@@ -81,8 +81,7 @@ export type {
   FilterConfig,
   FilterOperator,
   SortConfig,
-  PaginationConfig,
-  ValidationError
+  PaginationConfig
 } from './primitives/types';
 
 // Hooks

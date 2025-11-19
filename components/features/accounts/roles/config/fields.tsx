@@ -1,0 +1,116 @@
+/**
+ * UserRole Field Configurations
+ * 
+ * Defines all form fields for role management.
+ */
+
+import { FormField } from '@/components/entityManager/components/form/types';
+import { UserRole } from '../types';
+
+export const roleFields: FormField<UserRole>[] = [
+  {
+    name: 'name',
+    label: 'Role Name',
+    type: 'text',
+    required: true,
+    placeholder: 'admin',
+    group: 'basic',
+    validation: [
+      {
+        type: 'required',
+        message: 'Role name is required',
+      },
+      {
+        type: 'pattern',
+        value: '^[a-z_]+$',
+        message: 'Role name must be lowercase letters and underscores only',
+      },
+      {
+        type: 'minLength',
+        value: 2,
+        message: 'Role name must be at least 2 characters',
+      },
+      {
+        type: 'maxLength',
+        value: 100,
+        message: 'Role name must be less than 100 characters',
+      },
+    ],
+    helpText: 'Unique identifier for the role (lowercase, underscores only)',
+    width: '50%',
+  },
+  {
+    name: 'display_name',
+    label: 'Display Name',
+    type: 'text',
+    required: true,
+    placeholder: 'Administrator',
+    group: 'basic',
+    validation: [
+      {
+        type: 'required',
+        message: 'Display name is required',
+      },
+      {
+        type: 'minLength',
+        value: 2,
+        message: 'Display name must be at least 2 characters',
+      },
+      {
+        type: 'maxLength',
+        value: 100,
+        message: 'Display name must be less than 100 characters',
+      },
+    ],
+    helpText: 'Human-readable name for the role',
+    width: '50%',
+  },
+  {
+    name: 'description',
+    label: 'Description',
+    type: 'textarea',
+    required: false,
+    placeholder: 'Describe the role and its responsibilities...',
+    group: 'basic',
+    rows: 4,
+    validation: [
+      {
+        type: 'maxLength',
+        value: 500,
+        message: 'Description must be less than 500 characters',
+      },
+    ],
+    helpText: 'Optional description of the role',
+    width: '100%',
+  },
+  {
+    name: 'is_active',
+    label: 'Active',
+    type: 'checkbox',
+    required: false,
+    defaultValue: true,
+    group: 'status',
+    helpText: 'Whether this role is active and can be assigned to users',
+    width: '50%',
+  },
+  {
+    name: 'permissions',
+    label: 'Permissions',
+    type: 'multiselect',
+    required: false,
+    group: 'permissions',
+    helpText: 'Select permissions for this role',
+    width: '100%',
+    // Options will be loaded dynamically from API
+    options: async () => {
+      // Placeholder - will be replaced with actual API call
+      return [
+        { value: 'view_user', label: 'View Users' },
+        { value: 'add_user', label: 'Add Users' },
+        { value: 'change_user', label: 'Change Users' },
+        { value: 'delete_user', label: 'Delete Users' },
+        { value: 'approve_user', label: 'Approve Users' },
+      ];
+    },
+  },
+];

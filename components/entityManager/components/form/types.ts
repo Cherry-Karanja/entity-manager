@@ -114,6 +114,9 @@ export interface FormField<T extends BaseEntity = BaseEntity> {
   /** Multiple (file/select) */
   multiple?: boolean;
   
+  /** Max file size in bytes (file) */
+  maxSize?: number;
+  
   /** Custom renderer */
   render?: (props: FieldRenderProps<T>) => React.ReactNode;
   
@@ -182,6 +185,7 @@ export interface FieldSection {
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   order?: number;
+  icon?: React.ReactNode;
 }
 
 /**

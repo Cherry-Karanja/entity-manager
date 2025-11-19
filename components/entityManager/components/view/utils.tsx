@@ -269,20 +269,20 @@ export function getEntityImage<T extends BaseEntity>(
 export function getMetadataFields<T extends BaseEntity>(entity: T): Array<{ label: string; value: unknown }> {
   const metadata: Array<{ label: string; value: unknown }> = [];
 
-  if (entity.createdAt) {
-    metadata.push({ label: 'Created', value: entity.createdAt });
+  if ((entity as any).created_at) {
+    metadata.push({ label: 'Created', value: (entity as any).created_at });
   }
 
-  if (entity.updatedAt) {
-    metadata.push({ label: 'Updated', value: entity.updatedAt });
+  if ((entity as any).updated_at) {
+    metadata.push({ label: 'Updated', value: (entity as any).updated_at });
   }
 
-  if (entity.createdBy) {
-    metadata.push({ label: 'Created By', value: entity.createdBy });
+  if ((entity as any).created_by) {
+    metadata.push({ label: 'Created By', value: (entity as any).created_by });
   }
 
-  if (entity.updatedBy) {
-    metadata.push({ label: 'Updated By', value: entity.updatedBy });
+  if ((entity as any).updated_by) {
+    metadata.push({ label: 'Updated By', value: (entity as any).updated_by });
   }
 
   return metadata;

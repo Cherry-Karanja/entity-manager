@@ -8,7 +8,8 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { ListDensity, getDensityClasses, ListView } from '../variants';
+import { ListDensity, getDensityClasses } from '../variants';
+import { ListView } from '../types';
 
 export interface SkeletonProps {
   /** Number of skeleton items to show */
