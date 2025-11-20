@@ -85,11 +85,12 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   } = props;
 
   // State
+  const validPageSizes = getDefaultPageSizes();
   const [state, setState] = useState<ListState>({
     view: viewProp,
     selectedIds: selectedIdsProp || new Set(),
     page: paginationConfig?.page || 1,
-    pageSize: paginationConfig?.pageSize || 10,
+    pageSize: paginationConfig?.pageSize && validPageSizes.includes(paginationConfig.pageSize) ? paginationConfig.pageSize : 10,
     sort: sortConfigProp,
     filters: filterConfigsProp || [],
     search: searchValueProp || '',

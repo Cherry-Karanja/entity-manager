@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { BaseEntity } from '../primitives/types';
 import { EntityManagerProps, EntityManagerView } from './types';
 import { EntityList } from '../components/list';
@@ -16,7 +16,7 @@ import { EntityView } from '../components/view';
 import { EntityActions } from '../components/actions';
 import { EntityStateProvider, useEntityState } from '../composition/exports';
 import { EntityApiProvider, useEntityMutations } from '../composition/exports';
-import { Action, ActionContext } from '../components/actions/types';
+import { ActionContext } from '../components/actions/types';
 import { FormMode } from '../components/form/types';
 import { toast } from 'sonner';
 
@@ -42,6 +42,14 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   
   const state = useEntityState<T>();
   const mutations = useEntityMutations<T>();
+
+  // Memoize pagination config to prevent unnecessary re-renders
+  const memoizedPaginationConfig = useMemo(() => ({
+    ...config.config.list.paginationConfig,
+    page: state.state.page,
+    pageSize: state.state.pageSize,
+    totalCount: state.state.total
+  }), [config.config.list.paginationConfig, state.state.page, state.state.pageSize, state.state.total]);
 
   // action context 
   const [actionContext, setActionContext] = useState< ActionContext<T> | undefined>(undefined);
@@ -329,11 +337,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           onRowClick={handleView}
           onRowDoubleClick={handleEdit}
           pagination={true}
-          paginationConfig={{...config.config.list.paginationConfig,
-            page: state.state.page,
-            pageSize: state.state.pageSize,
-            totalCount: state.state.total
-          }}
+          paginationConfig={memoizedPaginationConfig}
           onPaginationChange={async (paginationConfig) => {
             const newPage = paginationConfig.page || 1;
             const newPageSize = paginationConfig.pageSize || 10;
@@ -384,15 +388,21 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           sortable={config.config.list.sortable}
           sortConfig={state.state.sort}
           onSortChange={state.setSort}
-          searchable={config.config.list.searchable}
-          searchValue={state.state.search}
-          onSearchChange={state.setSearch}
           filterable={config.config.list.filterable}
           filterConfigs={state.state.filters}
           onFilterChange={state.setFilters}
+          searchable={config.config.list.searchable}
+          searchValue={state.state.search}
+          onSearchChange={state.setSearch}
+          searchPlaceholder={config.config.list.searchPlaceholder}
+          emptyMessage={config.config.list.emptyMessage}
           loading={state.state.loading}
           error={state.state.error}
           actions={undefined}
+          className={config.config.list.className}
+          hover={config.config.list.hover}
+          striped={config.config.list.striped}
+          bordered={config.config.list.bordered}
           titleField={config.config.list.titleField}
           subtitleField={config.config.list.subtitleField}
           imageField={config.config.list.imageField}
