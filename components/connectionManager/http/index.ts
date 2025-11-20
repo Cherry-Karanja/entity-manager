@@ -2,7 +2,7 @@
 // Combines all HTTP connection logic from v1 into a single, cohesive module
 
 // Core HTTP client and utilities
-export { HttpClient, httpClient, authApi, plainApi, handleApiError, pollTaskStatus } from './client';
+export { HttpClient, httpClient, authApi, plainApi, refreshApi, handleApiError, pollTaskStatus } from './client';
 
 // React Query hooks
 export { useApi } from './hooks';

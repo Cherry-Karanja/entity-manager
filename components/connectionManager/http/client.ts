@@ -27,6 +27,7 @@ export interface PollOptions<T = unknown> {
 export class HttpClient {
   private authApi: ReturnType<typeof axios.create>;
   private plainApi: ReturnType<typeof axios.create>;
+  private refreshApi: ReturnType<typeof axios.create>; // Special instance for refresh calls
   private isRefreshing = false;
   private refreshPromise: Promise<AuthTokens> | null = null;
 
@@ -54,6 +55,16 @@ export class HttpClient {
       }
     });
 
+    // Create refresh Axios instance (sends cookies but no interceptors)
+    this.refreshApi = axios.create({
+      baseURL: Endpoints.BaseUrl,
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
     this.setupInterceptors();
   }
 
@@ -69,6 +80,13 @@ export class HttpClient {
    */
   get plainInstance() {
     return this.plainApi;
+  }
+
+  /**
+   * Get the refresh API instance (sends cookies but no interceptors)
+   */
+  get refreshInstance() {
+    return this.refreshApi;
   }
 
   /**
@@ -241,7 +259,7 @@ export class HttpClient {
     if (!errorShown) {
       const responseText = JSON.stringify(data);
       const errorDetailPattern = /ErrorDetail\(string='([^']+)',\s*code='([^']+)'\)/g;
-      const matches = [...responseText.matchAll(errorDetailPattern)];
+      const matches = Array.from(responseText.matchAll(errorDetailPattern));
 
       if (matches.length > 0) {
         toast.error(matches[0][1]);
@@ -372,5 +390,6 @@ export const httpClient = new HttpClient();
 // Export convenience functions
 export const authApi = httpClient.instance;
 export const plainApi = httpClient.plainInstance;
+export const refreshApi = httpClient.refreshInstance;
 export const handleApiError = httpClient.handleApiError.bind(httpClient);
 export const pollTaskStatus = httpClient.pollTaskStatus.bind(httpClient);
