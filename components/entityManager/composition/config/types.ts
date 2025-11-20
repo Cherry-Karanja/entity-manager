@@ -4,12 +4,37 @@
  * Type definitions for configuration builders.
  */
 
-import { BaseEntity, FormMode } from '../../primitives/types';
-import { Column } from '../../components/list/types';
-import { FormField, FormLayout, FieldSection } from '../../components/form/types';
-import { Action } from '../../components/actions/types';
-import { ExportField } from '../../components/exporter/types';
-import { ViewField } from '../../components/view/types';
+import { BaseEntity} from '../../primitives/types';
+import { EntityActionsProps } from '../../components/actions/types';
+import { EntityExporterProps } from '../../components/exporter/types';
+import { EntityFormProps } from '../../components/form/types';
+import { EntityListProps } from '../../components/list/types';
+import { EntityViewProps } from '../../components/view/types';
+
+/**
+ * Entity actions configuration
+ */
+export type EntityActionsConfig<T extends BaseEntity = BaseEntity> = Omit<EntityActionsProps<T>, 'entity' | 'context' | 'onActionComplete' | 'onActionError'>;
+
+/**
+ * Entity exporter configuration
+ */
+export type EntityExporterConfig<T extends BaseEntity = BaseEntity> = Omit<EntityExporterProps<T>, 'data' | 'onExportStart' | 'onExportComplete' | 'onExportError'>;
+
+/**
+ * Entity form configuration
+ */
+export type EntityFormConfig<T extends BaseEntity = BaseEntity> = Omit<EntityFormProps<T>, 'initialValues' | 'entity' | 'onSubmit' | 'onCancel' | 'onChange' | 'onValidate'>;
+
+/**
+ * Entity list configuration
+ */
+export type EntityListConfig<T extends BaseEntity = BaseEntity> = Omit<EntityListProps<T>, 'data' | 'selectedIds' | 'onSelectionChange' | 'onRowClick' | 'onRowDoubleClick' | 'onPaginationChange' | 'onSortChange' | 'onFilterChange' | 'onSearchChange'>;
+
+/**
+ * Entity view configuration
+ */
+export type EntityViewConfig<T extends BaseEntity = BaseEntity> = Omit<EntityViewProps<T>, 'entity' | 'onCopy'>;
 
 /**
  * Entity configuration
@@ -30,59 +55,23 @@ export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   /** Entity description */
   description?: string;
   
-  /** List columns */
-  columns: Column<T>[];
+  /** List configuration */
+  list: EntityListConfig<T>;
   
-  /** Form fields */
-  fields: FormField<T>[];
+  /** Form configuration */
+  form: EntityFormConfig<T>;
   
-  /** Form layout */
-  formLayout?: FormLayout;
+  /** View configuration */
+  view: EntityViewConfig<T>;
   
-  /** Form sections */
-  formSections?: FieldSection[];
+  /** Actions configuration */
+  actions: EntityActionsConfig<T>;
   
-  /** Form mode configurations */
-  formMode?: Record<FormMode, Partial<{ layout?: FormLayout; sections?: FieldSection[]; fields?: FormField<T>[] }>>;
-  
-  /** View fields */
-  viewFields: ViewField<T>[];
-  
-  /** Actions */
-  actions: Action<T>[];
+  /** Exporter configuration */
+  exporter: EntityExporterConfig<T>;
   
   /** Custom validation function */
   onValidate?: (values: Partial<T>) => Record<string, string> | Promise<Record<string, string>>;
-  
-  /** Export fields */
-  exportFields: ExportField[];
-  
-  /** Default sort */
-  defaultSort?: { field: string; direction: 'asc' | 'desc' };
-  
-  /** Default page size */
-  defaultPageSize?: number;
-  
-  /** Searchable fields */
-  searchableFields?: string[];
-  
-  /** Filterable fields */
-  filterableFields?: string[];
-  
-  /** Title field */
-  titleField?: string;
-  
-  /** Subtitle field */
-  subtitleField?: string;
-  
-  /** Image field */
-  imageField?: string;
-  
-  /** Date field */
-  dateField?: string;
-  
-  /** Display field (for single field display) */
-  displayField?: string;
   
   /** API endpoint */
   apiEndpoint?: string;

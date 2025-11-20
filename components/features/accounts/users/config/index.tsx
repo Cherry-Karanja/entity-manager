@@ -6,11 +6,11 @@
 
 import { EntityConfig } from '@/components/entityManager/composition/config/types';
 import { User } from '../../types';
-import { userFields } from './fields';
-import { userColumns } from './list';
-import { userViewFields, userViewGroups } from './view';
-import { userActions } from './actions';
-import { userFormLayout, userFormSections } from './form';
+import { UserFormConfig } from './fields';
+import { UserListConfig } from './list';
+import { UserViewConfig } from './view';
+import { UserActionsConfig } from './actions';
+import { UserExporterConfig } from './export';
 
 /**
  * Complete user entity configuration for the Entity Manager
@@ -27,24 +27,28 @@ export const userConfig: EntityConfig<User> = {
   // ===========================
   // List View Configuration
   // ===========================
-  columns: userColumns,
+  list: UserListConfig,
   
   // ===========================
   // Form Configuration
   // ===========================
-  fields: userFields,
-  formLayout: userFormLayout,
-  formSections: userFormSections,
+  form: UserFormConfig,
+  
   
   // ===========================
   // Detail View Configuration
   // ===========================
-  viewFields: userViewFields,
+  view: UserViewConfig,
   
   // ===========================
   // Actions Configuration
   // ===========================
-  actions: userActions,
+  actions: UserActionsConfig,
+
+  // ===========================
+  // Export Configuration
+  // ===========================
+  exporter: UserExporterConfig,
   
   // ===========================
   // Validation
@@ -74,104 +78,13 @@ export const userConfig: EntityConfig<User> = {
     
     return errors;
   },
-  
-  // ===========================
-  // Export Configuration
-  // ===========================
-  exportFields: [
-    {
-      key: 'id',
-      label: 'ID',
-    },
-    {
-      key: 'email',
-      label: 'Email',
-    },
-    {
-      key: 'full_name',
-      label: 'Full Name',
-    },
-    {
-      key: 'first_name',
-      label: 'First Name',
-    },
-    {
-      key: 'last_name',
-      label: 'Last Name',
-    },
-    {
-      key: 'employee_id',
-      label: 'Employee ID',
-    },
-    {
-      key: 'role_display',
-      label: 'Role',
-    },
-    {
-      key: 'department',
-      label: 'Department',
-    },
-    {
-      key: 'phone_number',
-      label: 'Phone',
-    },
-    {
-      key: 'is_active',
-      label: 'Active',
-      formatter: (value: unknown) => (value as boolean) ? 'Yes' : 'No',
-    },
-    {
-      key: 'is_approved',
-      label: 'Approved',
-      formatter: (value: unknown) => (value as boolean) ? 'Yes' : 'No',
-    },
-    {
-      key: 'is_verified',
-      label: 'Verified',
-      formatter: (value: unknown) => (value as boolean) ? 'Yes' : 'No',
-    },
-    {
-      key: 'is_staff',
-      label: 'Staff',
-      formatter: (value: unknown) => (value as boolean) ? 'Yes' : 'No',
-    },
-    {
-      key: 'last_login',
-      label: 'Last Login',
-      formatter: (value: unknown) => value ? new Date(value as string).toLocaleString() : 'Never',
-    },
-    {
-      key: 'created_at',
-      label: 'Date Joined',
-      formatter: (value: unknown) => new Date(value as string).toLocaleString(),
-    },
-  ],
-  
-  // ===========================
-  // Default Settings
-  // ===========================
-  defaultSort: {
-    field: 'created_at',
-    direction: 'desc',
-  },
-  
-  defaultPageSize: 10,
-  
-  // ===========================
-  // Search & Filter
-  // ===========================
-  searchableFields: ['email', 'first_name', 'last_name', 'employee_id'],
-  
-  filterableFields: ['role_display', 'department', 'is_active', 'is_approved', 'is_verified', 'is_staff'],
-  
-  // ===========================
-  // Display Fields
-  // ===========================
-  titleField: 'full_name',
-  subtitleField: 'email',
-  imageField: 'profile_picture',
-  dateField: 'created_at',
-  
+
+  // Api endpoint
+  apiEndpoint: '/api/v1/accounts/users/',
+
+  // icon
+  icon: 'Users',
+
   // ===========================
   // Permissions
   // ===========================
@@ -187,14 +100,9 @@ export const userConfig: EntityConfig<User> = {
   // Additional Metadata
   // ===========================
   metadata: {
-    icon: 'Users',
     color: 'blue',
     category: 'accounts',
     tags: ['users', 'accounts', 'authentication'],
-    apiEndpoint: '/api/v1/accounts/users/',
-    formLayout: userFormLayout,
-    formSections: userFormSections,
-    viewGroups: userViewGroups,
   },
 };
 

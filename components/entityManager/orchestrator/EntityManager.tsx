@@ -16,6 +16,9 @@ import { EntityView } from '../components/view';
 import { EntityActions } from '../components/actions';
 import { EntityStateProvider, useEntityState } from '../composition/exports';
 import { EntityApiProvider, useEntityMutations } from '../composition/exports';
+import { Action, ActionContext } from '../components/actions/types';
+import { FormMode } from '../components/form/types';
+import { toast } from 'sonner';
 
 /**
  * Entity Manager Content (with hooks)
@@ -39,6 +42,19 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   
   const state = useEntityState<T>();
   const mutations = useEntityMutations<T>();
+
+  // action context 
+  const [actionContext, setActionContext] = useState< ActionContext<T> | undefined>(undefined);
+
+  // auto update action context
+  useEffect(() => {
+    setActionContext({
+      entities: state.state.entities,
+      selectedIds: state.state.selectedIds,
+    })
+  },[state.state])
+    
+
 
   // Watch for initialView and initialId changes from parent
   useEffect(() => {
@@ -303,17 +319,17 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         {renderBreadcrumbs()}
         <EntityList
           data={state.state.entities}
-          columns={config.config.columns}
+          columns={config.config.list.columns}
           view="table"
-          toolbar={{ search: true, viewSwitcher: true }}
-          selectable={true}
-          multiSelect={true}
+          toolbar={config.config.list.toolbar}
+          selectable={config.config.list.selectable}
+          multiSelect={config.config.list.multiSelect}
           selectedIds={state.state.selectedIds}
           onSelectionChange={state.setSelected}
           onRowClick={handleView}
           onRowDoubleClick={handleEdit}
           pagination={true}
-          paginationConfig={{
+          paginationConfig={{...config.config.list.paginationConfig,
             page: state.state.page,
             pageSize: state.state.pageSize,
             totalCount: state.state.total
@@ -365,31 +381,22 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
               }
             }
           }}
-          sortable={true}
+          sortable={config.config.list.sortable}
           sortConfig={state.state.sort}
           onSortChange={state.setSort}
-          searchable={true}
+          searchable={config.config.list.searchable}
           searchValue={state.state.search}
           onSearchChange={state.setSearch}
-          filterable={true}
+          filterable={config.config.list.filterable}
           filterConfigs={state.state.filters}
           onFilterChange={state.setFilters}
           loading={state.state.loading}
           error={state.state.error}
-          rowActions={({ entity }) => (
-            <EntityActions
-              actions={
-                (config.config.actions
-                  ?.filter((a: any) => a.position === 'row')
-                  .map((a: any) => ({ ...a, actionType: (a as any).actionType ?? 'button' })) as any) || []
-              }
-              entity={entity}
-            />
-          )}
-          titleField={config.config.titleField}
-          subtitleField={config.config.subtitleField}
-          imageField={config.config.imageField}
-          dateField={config.config.dateField}
+          actions={undefined}
+          titleField={config.config.list.titleField}
+          subtitleField={config.config.list.subtitleField}
+          imageField={config.config.list.imageField}
+          dateField={config.config.list.dateField}
         />
       </div>
     );
@@ -398,17 +405,16 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // Render form view (create/edit)
   if (view === 'create' || view === 'edit') {
     console.log('Rendering form view:', view);
-    console.log('Form fields:', config.config.fields);
-    console.log('Form layout:', config.config.formLayout);
-    console.log('Form sections:', config.config.formSections);
-    console.log('Form fields:', config.config.fields);
+    console.log('Form fields:', config.config.form.fields);
+    console.log('Form layout:', config.config.form.layout);
+    console.log('Form sections:', config.config.form.sections);
+    console.log('Form fields:', config.config.form.fields);
     
-    const currentMode = view === 'create' ? 'create' : 'edit';
-    const modeConfig = config.config.formMode?.[currentMode];
+    const currentMode: FormMode = view === 'create' ? 'create' : 'edit';
     
-    const formLayout = modeConfig?.layout || config.config.formLayout;
-    const formSections = modeConfig?.sections || config.config.formSections;
-    const formFields = modeConfig?.fields || config.config.fields;
+    const formLayout = config.config.form.layout;
+    const formSections = config.config.form.sections;
+    const formFields = config.config.form.fields;
     
     return (
       <div className="space-y-3 sm:space-y-4">
@@ -453,14 +459,31 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         {renderBreadcrumbs()}
         <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6">
         <EntityActions
-          actions={config.config.actions?.filter((a: any) => a.position === 'toolbar') || []}
+          actions={config.config.actions.actions}
           entity={selectedEntity}
+          context={actionContext}
+          mode={config.config.actions.mode || 'dropdown'}
+          position={config.config.actions.position || 'toolbar'}
+          className={config.config.actions.className}
         />
         
         <EntityView
           entity={selectedEntity}
-          fields={config.config.viewFields}
-          mode="detail"
+          fields={config.config.view.fields}
+          groups={config.config.view.groups}
+          mode= { config.config.view.mode ||"detail"}
+          showMetadata={config.config.view.showMetadata}
+          tabs={config.config.view.tabs}
+          titleField={config.config.view.titleField}
+          subtitleField={config.config.view.subtitleField}
+          imageField={config.config.view.imageField}
+          loading={state.state.loading}
+          error={state.state.error}
+          className={config.config.view.className}
+          onCopy={()=>{
+            toast.success('Successfully copied to clipboard')
+          }}
+          actions={undefined}
         />
         </div>
       </div>
@@ -488,8 +511,8 @@ export function EntityManager<T extends BaseEntity = BaseEntity>(
     <div className={`entity-manager ${className}`}>
       <EntityStateProvider 
         initialEntities={config.initialData}
-        initialPageSize={config.config.defaultPageSize}
-        initialSort={config.config.defaultSort}
+        initialPageSize={config.config.list.paginationConfig?.pageSize || 10}
+        initialSort={config.config.list.sortConfig}
       >
         {config.apiClient ? (
           <EntityApiProvider client={config.apiClient}>

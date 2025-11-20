@@ -115,7 +115,6 @@ import { EntityList } from '@/components/new/entityManager';
 | `selectedIds` | `Set<string>` | No | - | Controlled selected IDs |
 | `onSelectionChange` | `(ids: Set<string>) => void` | No | - | Selection change handler |
 | `onRowClick` | `(entity: T) => void` | No | - | Row click handler |
-| `rowActions` | `(context) => ReactNode` | No | - | Custom row actions render |
 | `emptyMessage` | `string` | No | - | Message when no data |
 | `loading` | `boolean` | No | `false` | Show loading state |
 | `className` | `string` | No | - | Additional CSS classes |

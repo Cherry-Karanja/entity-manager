@@ -115,15 +115,7 @@ function AdvancedUserList() {
       hover
       striped
       bordered
-      
-      // Custom rendering
-      rowActions={({ entity }) => (
-        <div>
-          <button onClick={() => handleEdit(entity)}>Edit</button>
-          <button onClick={() => handleDelete(entity)}>Delete</button>
-        </div>
-      )}
-      
+    
       bulkActions={
         <div>
           <button onClick={handleBulkDelete}>Delete Selected</button>
@@ -252,7 +244,6 @@ const columns = [
 | `loading` | `boolean` | `false` | Loading state |
 | `error` | `Error\|string` | - | Error state |
 | `rowHeight` | `number\|'auto'` | `'auto'` | Row height |
-| `rowActions` | `Component` | - | Row actions component |
 | `bulkActions` | `ReactNode` | - | Bulk actions component |
 | `className` | `string` | `''` | Custom CSS class |
 | `rowClassName` | `(entity, index) => string` | - | Row className function |

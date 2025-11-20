@@ -175,14 +175,11 @@ export interface EntityListProps<T extends BaseEntity = BaseEntity> {
   /** Row height */
   rowHeight?: number | 'auto';
   
-  /** Row actions */
-  rowActions?: React.ComponentType<{ entity: T; index: number }>;
-  
-  /** Actions (alternative to rowActions) */
-  actions?: import('../actions/types').Action<T>[];
+  /** Actions*/
+  actions?: import('../actions/types').EntityActionsProps<T>;
   
   /** Bulk actions */
-  bulkActions?: React.ReactNode;
+  bulkActions?: import('../actions/types').EntityActionsProps<T>;
   
   /** Custom className */
   className?: string;

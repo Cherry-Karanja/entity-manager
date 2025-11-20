@@ -71,7 +71,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     loading = false,
     error,
     rowHeight = 'auto',
-    rowActions: RowActions,
     actions,
     bulkActions,
     className = '',
@@ -336,6 +335,32 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               variant="dropdown"
             />
             
+            {actions && actions.actions && actions.actions.length > 0 && (
+              <EntityActions 
+                actions={actions.actions}
+                entity={actions.entity}
+                mode={actions?.mode || 'dropdown'}
+                position={actions?.position || 'toolbar'}
+                className={actions?.className || ''}
+                onActionStart={actions.onActionStart}
+                onActionComplete={actions.onActionComplete}
+                onActionError={actions.onActionError}
+               />
+            )}
+
+            {bulkActions && bulkActions.actions && state.selectedIds.size > 0 && (
+              <EntityActions 
+                actions={bulkActions.actions}
+                entity={bulkActions.entity}
+                mode={bulkActions?.mode || 'dropdown'}
+                position={bulkActions?.position || 'toolbar'}
+                className={bulkActions?.className || ''}
+                onActionStart={bulkActions.onActionStart}
+                onActionComplete={bulkActions.onActionComplete}
+                onActionError={bulkActions.onActionError}
+              />
+            )}
+            
             {toolbar.actions && (
               <div className="flex gap-2">
                 {toolbar.actions}
@@ -480,7 +505,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                     </div>
                   </th>
                 ))}
-                {(RowActions || actions) && (
+                {(actions) && (
                   <th scope="col" className="px-3 sm:px-4 py-3 text-right w-24">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -529,13 +554,20 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                         </td>
                       );
                     })}
-                    {(RowActions || actions) && (
+                    {(actions) && (
                       <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-right text-sm" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-1 sm:gap-2">
                           {actions ? (
-                            <EntityActions actions={actions} entity={entity} mode="buttons" />
-                          ) : RowActions ? (
-                            <RowActions entity={entity} index={index} />
+                            <EntityActions 
+                              actions={actions.actions}
+                              entity={actions.entity}
+                              mode={actions?.mode || 'dropdown'}
+                              position={actions?.position || 'toolbar'}
+                              className={actions?.className || ''}
+                              onActionStart={actions.onActionStart}
+                              onActionComplete={actions.onActionComplete}
+                              onActionError={actions.onActionError}
+                            />
                           ) : null}
                         </div>
                       </td>
@@ -607,12 +639,19 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 </div>
               </div>
               
-              {(RowActions || actions) && (
+              {(actions) && (actions.actions) && (
                 <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
-                  {actions ? (
-                    <EntityActions actions={actions} entity={entity} mode="buttons" />
-                  ) : RowActions ? (
-                    <RowActions entity={entity} index={index} />
+                  {actions.actions ? (
+                    <EntityActions 
+                      actions={actions.actions}
+                      entity={actions.entity}
+                      mode={actions?.mode || 'dropdown'}
+                      position={actions?.position || 'toolbar'}
+                      className={actions?.className || ''}
+                      onActionStart={actions.onActionStart}
+                      onActionComplete={actions.onActionComplete}
+                      onActionError={actions.onActionError}
+                    />
                   ) : null}
                 </div>
               )}
@@ -657,12 +696,19 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 {subtitle && <div className="text-xs text-muted-foreground truncate mt-0.5">{subtitle}</div>}
               </div>
               
-              {(RowActions || actions) && (
+              {(actions) && (actions.actions) && (
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                  {actions ? (
-                    <EntityActions actions={actions} entity={entity} mode="buttons" />
-                  ) : RowActions ? (
-                    <RowActions entity={entity} index={index} />
+                  {actions.actions ? (
+                    <EntityActions 
+                      actions={actions.actions}
+                      entity={actions.entity}
+                      mode={actions?.mode || 'dropdown'}
+                      position={actions?.position || 'toolbar'}
+                      className={actions?.className || ''}
+                      onActionStart={actions.onActionStart}
+                      onActionComplete={actions.onActionComplete}
+                      onActionError={actions.onActionError}
+                    />
                   ) : null}
                 </div>
               )}
@@ -788,12 +834,19 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 })}
               </div>
               
-              {(RowActions || actions) && (
+              {(actions) && (actions.actions) && (
                 <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
-                  {actions ? (
-                    <EntityActions actions={actions} entity={entity} mode="buttons" />
-                  ) : RowActions ? (
-                    <RowActions entity={entity} index={index} />
+                  {actions.actions ? (
+                    <EntityActions 
+                      actions={actions.actions}
+                      entity={actions.entity}
+                      mode={actions?.mode || 'dropdown'}
+                      position={actions?.position || 'toolbar'}
+                      className={actions?.className || ''}
+                      onActionStart={actions.onActionStart}
+                      onActionComplete={actions.onActionComplete}
+                      onActionError={actions.onActionError}
+                    />
                   ) : null}
                 </div>
               )}
@@ -933,11 +986,20 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
       {renderToolbar()}
       
-      {selectable && multiSelect && state.selectedIds.size > 0 && bulkActions && (
+      {selectable && multiSelect && state.selectedIds.size > 0 && bulkActions && bulkActions.actions && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 px-3 sm:px-4 py-2 sm:py-2 bg-primary/10 border-b">
           <span className="text-xs sm:text-sm font-medium text-center sm:text-left">{state.selectedIds.size} selected</span>
           <div className="flex gap-2 justify-center sm:justify-end flex-wrap">
-            {bulkActions}
+            <EntityActions 
+              actions={bulkActions.actions}
+              entity={bulkActions.entity}
+              mode={bulkActions?.mode || 'dropdown'}
+              position={bulkActions?.position || 'toolbar'}
+              className={bulkActions?.className || ''}
+              onActionStart={bulkActions.onActionStart}
+              onActionComplete={bulkActions.onActionComplete}
+              onActionError={bulkActions.onActionError}
+            />
           </div>
         </div>
       )}
