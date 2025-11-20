@@ -8,6 +8,7 @@ import { EntityListConfig } from '@/components/entityManager/composition/config/
 import { User } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock, Shield, Lock } from 'lucide-react';
+import { UserActionsConfig } from './actions';
 
 export const UserListConfig: EntityListConfig<User> = {
   /** Column definitions */
@@ -171,8 +172,13 @@ export const UserListConfig: EntityListConfig<User> = {
 
   emptyMessage: 'No users found.',
 
-  actions: undefined,
-  bulkActions: undefined,
+  actions: {
+    ...UserActionsConfig,
+    context: {
+      refresh: undefined, // Will be provided by EntityManager
+      customData: undefined,
+    },
+  },
 
   className: '',
 

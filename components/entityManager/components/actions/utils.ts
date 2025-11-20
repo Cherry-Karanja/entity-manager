@@ -65,12 +65,17 @@ export function canExecuteAction<T extends BaseEntity>(
     return false;
   }
   
-  // Check selection requirement
+  // Bulk actions should only check if there are selected entities
+  if (action.actionType === 'bulk') {
+    return (context?.selectedEntities?.length ?? 0) > 0;
+  }
+  
+  // For non-bulk actions: Check selection requirement
   if (action.requiresSelection && !entity && (!context?.selectedEntities?.length)) {
     return false;
   }
   
-  // Check multiple selection
+  // For non-bulk actions: Check multiple selection (should not allow multiple)
   if (!action.allowMultiple && context?.selectedEntities && context.selectedEntities.length > 1) {
     return false;
   }
@@ -87,9 +92,15 @@ export function filterActionsByPosition<T extends BaseEntity>(
 ): Action<T>[] {
   if (!position) return actions;
   
-  return actions.filter(action => 
-    !action.position || action.position === position
-  );
+  return actions.filter(action => {
+    // Bulk actions should never appear in row positions
+    if (action.actionType === 'bulk' && (position === 'row' || position === 'dropdown' || position === 'context-menu')) {
+      return false;
+    }
+    
+    // Check if action's position matches or is unspecified
+    return !action.position || action.position === position;
+  });
 }
 
 /**

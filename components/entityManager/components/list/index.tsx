@@ -103,7 +103,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     filters: filterConfigsProp || [],
     search: searchValueProp || '',
     visibleColumns: new Set(columns.map(c => String(c.key))),
-    columnWidths: new Map()
+    columnWidths: new Map(),
+    bulkActionsOpen: false
   });
 
   // Density state (separate from main state)
@@ -132,6 +133,14 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     return actions.actions.filter((action: Action<T>) => 
       action.actionType === 'bulk' && 
       (action.position === 'toolbar' || !action.position)
+    );
+  }, [actions?.actions]);
+
+  const toolbarNonBulkActions = useMemo(() => {
+    if (!actions?.actions) return [];
+    return actions.actions.filter((action: Action<T>) => 
+      action.actionType !== 'bulk' && 
+      action.position === 'toolbar'
     );
   }, [actions?.actions]);
 
@@ -650,13 +659,13 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               variant="dropdown"
             />
             
-            {/* Row Actions (non-bulk toolbar actions) */}
-            {rowActions.length > 0 && (
+            {/* Non-bulk toolbar actions (like Export) */}
+            {toolbarNonBulkActions.length > 0 && (
               <EntityActions 
-                actions={rowActions}
+                actions={toolbarNonBulkActions}
                 entity={undefined}
                 context={actionContext}
-                mode={actions?.mode || 'buttons'}
+                mode={'buttons'}
                 position={'toolbar'}
                 className={actions?.className || ''}
                 onActionStart={actions?.onActionStart}
@@ -665,19 +674,67 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               />
             )}
             
-            {/* Bulk Actions (when items are selected) */}
+            {/* Bulk Actions dropdown (when items are selected) */}
             {toolbarBulkActions.length > 0 && state.selectedIds.size > 0 && (
-              <EntityActions 
-                actions={toolbarBulkActions}
-                entity={undefined}
-                context={actionContext}
-                mode={actions?.mode || 'dropdown'}
-                position={'toolbar'}
-                className={actions?.className || ''} 
-                onActionStart={actions?.onActionStart}
-                onActionComplete={actions?.onActionComplete}
-                onActionError={actions?.onActionError}
-              />
+              <div className="relative inline-block">
+                <button 
+                  className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground bg-background border border-input rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+                  onClick={() => setState(prev => ({ ...prev, bulkActionsOpen: !prev.bulkActionsOpen }))}
+                >
+                  Bulk Actions ({state.selectedIds.size})
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {state.bulkActionsOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setState(prev => ({ ...prev, bulkActionsOpen: false }))}
+                    />
+                    <div className="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-md bg-card border shadow-lg">
+                      <div className="py-1">
+                        {toolbarBulkActions.map(action => (
+                          <button
+                            key={action.id}
+                            onClick={async () => {
+                              // Close dropdown immediately for better UX
+                              setState(prev => ({ ...prev, bulkActionsOpen: false }));
+                              
+                              if (actionContext && actions?.onActionStart) {
+                                actions.onActionStart(action.id);
+                              }
+                              try {
+                                if (action.actionType === 'bulk' && actionContext) {
+                                  await action.handler(actionContext.selectedEntities as T[], actionContext);
+                                }
+                                if (actions?.onActionComplete) {
+                                  actions.onActionComplete(action.id, { success: true });
+                                }
+                                // Trigger refresh if available
+                                if (actionContext?.refresh) {
+                                  await actionContext.refresh();
+                                }
+                              } catch (error) {
+                                if (actions?.onActionError) {
+                                  actions.onActionError(action.id, error instanceof Error ? error : new Error('Action failed'));
+                                }
+                              }
+                            }}
+                            className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors ${
+                              action.variant === 'destructive' ? 'text-destructive hover:bg-destructive/10' : 'text-foreground'
+                            }`}
+                          >
+                            {action.icon && <span className="flex-shrink-0">{action.icon}</span>}
+                            <span className="flex-1 text-left">{action.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
             
             {toolbar.actions && (
@@ -824,7 +881,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                     </div>
                   </th>
                 ))}
-                {(actions) && (
+                {rowActions.length > 0 && (
                   <th scope="col" className="px-3 sm:px-4 py-3 text-right w-24">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -1304,25 +1361,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   return (
     <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
       {renderToolbar()}
-      
-      {selectable && multiSelect && state.selectedIds.size > 0 && toolbarBulkActions.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 px-3 sm:px-4 py-2 sm:py-2 bg-primary/10 border-b">
-          <span className="text-xs sm:text-sm font-medium text-center sm:text-left">{state.selectedIds.size} selected</span>
-          <div className="flex gap-2 justify-center sm:justify-end flex-wrap">
-            <EntityActions 
-              actions={toolbarBulkActions}
-              entity={undefined}
-              context={actionContext}
-              mode={actions?.mode || 'dropdown'}
-              position={'toolbar'}
-              className={actions?.className || ''}
-              onActionStart={actions?.onActionStart}
-              onActionComplete={actions?.onActionComplete}
-              onActionError={actions?.onActionError}
-            />
-          </div>
-        </div>
-      )}
       
       {loading ? (
         <div className="p-4">

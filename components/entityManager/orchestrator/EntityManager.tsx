@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { BaseEntity } from '../primitives/types';
 import { EntityManagerProps, EntityManagerView } from './types';
 import { EntityList } from '../components/list';
@@ -83,12 +83,18 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
 
   // Auto-fetch data on mount if API client is available
   useEffect(() => {
-    if (!config.apiClient || fetchAttempted.current) return;
+    if (!config.apiClient || fetchAttempted.current) {
+      // If no API client or fetch already attempted, mark as completed to allow filter/sort changes
+      initialListFetchCompleted.current = true;
+      return;
+    }
 
     fetchAttempted.current = true;
     
     // If starting in edit/view mode with an ID, fetch that specific entity
     if ((initialViewToUse === 'edit' || initialViewToUse === 'view') && initialIdToUse) {
+      // Not in list mode, so mark list fetch as completed
+      initialListFetchCompleted.current = true;
       state.setLoading(true);
       config.apiClient.get(initialIdToUse)
         .then((response) => {
@@ -162,24 +168,35 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           initialListFetchCompleted.current = true;
         });
     }
+    else {
+      // No initial fetch needed (e.g., initialData provided), mark as completed
+      initialListFetchCompleted.current = true;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, state]);
 
   // Use ref to track previous filters and only update when content actually changes
   const prevFiltersRef = useRef<string>('');
+  const prevFiltersObjectRef = useRef<any[]>([]);
   const stableFilters = useMemo(() => {
     const filtersJson = JSON.stringify(state.state.filters);
     if (filtersJson !== prevFiltersRef.current) {
       prevFiltersRef.current = filtersJson;
+      prevFiltersObjectRef.current = state.state.filters;
       return state.state.filters;
     }
     // Return the same reference if content hasn't changed
-    return JSON.parse(prevFiltersRef.current);
+    return prevFiltersObjectRef.current;
   }, [state.state.filters]);
 
   // Refetch data when sorting, search, or filters change (but not pagination, handled directly)
   useEffect(() => {
-    if (!config.apiClient || view !== 'list' || !initialListFetchCompleted.current) return;
+    // Don't fetch if:
+    // - No API client
+    // - Not in list view
+    // - Initial list fetch is still in progress (loading and not yet completed)
+    if (!config.apiClient || view !== 'list') return;
+    if (!initialListFetchCompleted.current && state.state.loading) return;
 
     const { page, pageSize, sort, search } = state.state;
     
@@ -226,8 +243,67 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   useEffect(() => {
     onViewChangeToUse?.(view);
   }, [view, onViewChangeToUse]);
+  
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
+
+  // Refresh function for actions
+  const refreshData = useCallback(async () => {
+    if (!config.apiClient || view !== 'list') return;
+
+    const { page, pageSize, sort, search } = state.state;
+    
+    state.setLoading(true);
+    
+    const queryParams: Record<string, unknown> = {
+      page,
+      pageSize,
+    };
+    
+    if (sort) {
+      queryParams.sortField = sort.field;
+      queryParams.sortDirection = sort.direction;
+    }
+    
+    if (search) {
+      queryParams.search = search;
+    }
+    
+    if (stableFilters && stableFilters.length > 0) {
+      queryParams.filters = stableFilters;
+    }
+
+    try {
+      const response = await config.apiClient.list(queryParams as never);
+      const data = response.data || [];
+      state.setEntities(data);
+      if (response.meta?.total !== undefined) {
+        state.setTotal(response.meta.total);
+      }
+      state.setLoading(false);
+    } catch (error) {
+      console.error('Failed to refresh entities:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load data';
+      state.setError(errorMessage);
+      state.setLoading(false);
+    }
+  }, [config.apiClient, view, state, stableFilters]);
+
+  // Memoize actions with context to prevent re-renders
+  const actionsWithContext = useMemo(() => {
+    if (!config.config.list.actions) return undefined;
+    
+    return {
+      ...config.config.list.actions,
+      context: {
+        ...config.config.list.actions.context,
+        refresh: refreshData,
+        customData: {
+          allData: state.state.entities, // Pass all data for export
+        },
+      },
+    };
+  }, [config.config.list.actions, refreshData, state.state.entities]);
 
   // Note: These handlers are available for use in action handlers defined in config
   // They can be passed via context or bound to actions in the config
@@ -410,7 +486,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           emptyMessage={config.config.list.emptyMessage}
           loading={state.state.loading}
           error={state.state.error}
-          actions={config.config.list.actions}
+          actions={actionsWithContext}
           className={config.config.list.className}
           hover={config.config.list.hover}
           striped={config.config.list.striped}

@@ -7,7 +7,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useCallback, useMemo } from 'react';
-import { BaseEntity } from '../../primitives/types';
+import { BaseEntity, FilterConfig } from '../../primitives/types';
 import { 
   EntityState, 
   EntityStateAction, 
@@ -216,11 +216,11 @@ export function EntityStateProvider<T extends BaseEntity = BaseEntity>(
     dispatch({ type: 'SET_SORT', payload: sort });
   }, []);
 
-  const setFilters = useCallback((filters: any[]) => {
+  const setFilters = useCallback((filters: FilterConfig[]) => {
     dispatch({ type: 'SET_FILTERS', payload: filters });
   }, []);
 
-  const addFilter = useCallback((filter: any) => {
+  const addFilter = useCallback((filter: FilterConfig) => {
     dispatch({ type: 'ADD_FILTER', payload: filter });
   }, []);
 

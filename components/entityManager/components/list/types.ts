@@ -236,6 +236,9 @@ export interface ListState {
   
   /** Column widths */
   columnWidths: Map<string, number>;
+  
+  /** Bulk actions dropdown open */
+  bulkActionsOpen?: boolean;
 }
 
 /**

@@ -8,6 +8,8 @@
 import { EntityActionsConfig } from '@/components/entityManager/composition/config/types';
 import { User } from '../../types';
 import { userActions as apiActions } from '../api/client';
+import { entitiesToCSV, generateFilename, downloadFile } from '@/components/entityManager/components/exporter/utils';
+import { ExportField } from '@/components/entityManager/components/exporter/types';
 import { 
   CheckCircle, 
   XCircle, 
@@ -260,19 +262,70 @@ export const UserActionsConfig: EntityActionsConfig<User> = {
     // ===========================
     {
       id: 'exportUsers',
-      label: 'Export All',
+      label: 'Export',
       icon: <Download className="h-4 w-4" />,
       actionType: 'download',
       variant: 'secondary',
       position: 'toolbar',
-      handler: async () => {
-        // TODO: Implement export
-        console.log('Exporting users');
+      handler: async (entity?: User, context?) => {
+        try {
+          // Get data to export - either selected items or all data
+          const dataToExport: User[] = context?.selectedEntities && context.selectedEntities.length > 0
+            ? context.selectedEntities as User[]
+            : (context?.customData as any)?.allData || [];
+
+          if (dataToExport.length === 0) {
+            console.warn('No data to export');
+            return;
+          }
+
+          // Define export fields
+          const exportFields: ExportField<User>[] = [
+            { key: 'id', label: 'ID' },
+            { key: 'email', label: 'Email' },
+            { key: 'username', label: 'Username' },
+            { key: 'full_name', label: 'Full Name' },
+            { key: 'role_display', label: 'Role' },
+            { key: 'department', label: 'Department' },
+            { key: 'is_active', label: 'Active' },
+            { key: 'is_verified', label: 'Verified' },
+            { key: 'is_approved', label: 'Approved' },
+            { key: 'created_at', label: 'Created At' },
+            { key: 'last_login', label: 'Last Login' },
+          ];
+
+          // Export to CSV
+          const csvContent = entitiesToCSV(
+            dataToExport,
+            exportFields,
+            {
+              format: 'csv',
+              filename: 'users',
+              includeHeaders: true,
+              delimiter: ',',
+              dateFormat: 'YYYY-MM-DD HH:mm:ss',
+            }
+          );
+
+          // Generate filename with timestamp
+          const filename = generateFilename(
+            context?.selectedEntities && context.selectedEntities.length > 0
+              ? `users_selected_${context.selectedEntities.length}`
+              : 'users_all',
+            'csv'
+          );
+
+          // Download file
+          downloadFile(csvContent, filename, 'text/csv');
+
+          console.log(`Exported ${dataToExport.length} users to ${filename}`);
+        } catch (error) {
+          console.error('Failed to export users:', error);
+        }
       },
     },
   ],
-  mode: 'context-menu',
-  position: 'row',
+  mode: 'dropdown',
   className: '',
   onActionStart: undefined
 
