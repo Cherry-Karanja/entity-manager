@@ -121,7 +121,6 @@ export const userColumns: Column<User>[] = [
     sortable: true,
     width: '10%',
     type: 'date',
-    formatter: (value) => !value ? 'Never' : (value as string),
   },
   {
     key: 'created_at',
@@ -130,11 +129,5 @@ export const userColumns: Column<User>[] = [
     width: '10%',
     type: 'date',
   },
-  {
-    key: 'date_joined',
-    label: 'Joined',
-    sortable: true,
-    width: '10%',
-    type: 'date',
-  },
+
 ];

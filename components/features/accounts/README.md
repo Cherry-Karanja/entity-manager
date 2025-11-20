@@ -216,7 +216,7 @@ interface User extends BaseEntity {
   is_rejected: boolean;
   is_staff: boolean;
   is_superuser: boolean;
-  date_joined: string;
+  created_at: string;
   last_login: string | null;
   profile?: UserProfile;
   // ... and more

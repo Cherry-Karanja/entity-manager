@@ -100,7 +100,6 @@ export interface User extends BaseEntity {
   backup_codes_count?: number;
   
   // Timestamps
-  date_joined: string;
   last_login?: string | null;
   created_at: string;
   updated_at?: string;

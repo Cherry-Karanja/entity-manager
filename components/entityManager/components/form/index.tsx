@@ -668,16 +668,23 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const stepFields = groupedFields.get(currentStepData.id) || [];
 
     const goToNextStep = async () => {
+      // Validate fields in current step (including required fields)
+      const stepErrors = await validateForm(state.values, stepFields);
+      
+      // Run custom step validation if provided
+      let customErrors: Record<string, string> = {};
       if (currentStepData.validate) {
-        // reset error state to blank
-        setState(prev => ({ ...prev, errors: {} }));
-        const errors = await currentStepData.validate(state.values as Record<string, unknown>);
-        console.log('Wizard step validation errors:', errors);
-        if (hasErrors(errors)) {
-          console.log('Wizard step has validation errors:', errors);
-          setState(prev => ({ ...prev, errors: { ...prev.errors, ...errors } }));
-          return;
-        }
+        customErrors = await currentStepData.validate(state.values as Record<string, unknown>);
+      }
+      
+      // Combine all errors
+      const allErrors = { ...stepErrors, ...customErrors };
+      
+      console.log('Wizard step validation errors:', allErrors);
+      if (hasErrors(allErrors)) {
+        console.log('Wizard step has validation errors:', allErrors);
+        setState(prev => ({ ...prev, errors: { ...prev.errors, ...allErrors } }));
+        return;
       }
 
       if (currentStepIndex < sortedSteps.length - 1) {

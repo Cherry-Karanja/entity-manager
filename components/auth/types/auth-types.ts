@@ -8,7 +8,7 @@ export interface AuthUser {
   last_name: string
   username: string
   is_active: boolean
-  date_joined: string
+  created_at: string
   last_login: string
   role?: string
   profile?: {

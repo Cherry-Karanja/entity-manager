@@ -7,7 +7,7 @@
 import { ViewField } from '@/components/entityManager/components/view/types';
 import { User } from '../../types';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Shield, Lock } from 'lucide-react';
+import { CheckCircle, XCircle, Lock } from 'lucide-react';
 
 export const userViewFields: ViewField<User>[] = [
   // ===========================
@@ -162,7 +162,7 @@ export const userViewFields: ViewField<User>[] = [
     formatter: (value) => (value as string) || '-',
   },
   {
-    key: 'date_joined',
+    key: 'created_at',
     label: 'Date Joined',
     type: 'date',
   },
@@ -204,7 +204,7 @@ export const userViewGroups = [
     id: 'activity',
     label: 'Activity',
     description: 'Login and activity history',
-    fields: ['last_login', 'last_login_ip', 'date_joined', 'password_changed_at'],
+    fields: ['last_login', 'last_login_ip', 'created_at', 'password_changed_at'],
     collapsible: true,
     order: 4,
   },

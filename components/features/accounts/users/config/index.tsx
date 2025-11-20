@@ -141,7 +141,7 @@ export const userConfig: EntityConfig<User> = {
       formatter: (value: unknown) => value ? new Date(value as string).toLocaleString() : 'Never',
     },
     {
-      key: 'date_joined',
+      key: 'created_at',
       label: 'Date Joined',
       formatter: (value: unknown) => new Date(value as string).toLocaleString(),
     },
@@ -151,7 +151,7 @@ export const userConfig: EntityConfig<User> = {
   // Default Settings
   // ===========================
   defaultSort: {
-    field: 'date_joined',
+    field: 'created_at',
     direction: 'desc',
   },
   
@@ -170,7 +170,7 @@ export const userConfig: EntityConfig<User> = {
   titleField: 'full_name',
   subtitleField: 'email',
   imageField: 'profile_picture',
-  dateField: 'date_joined',
+  dateField: 'created_at',
   
   // ===========================
   // Permissions
