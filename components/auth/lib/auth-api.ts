@@ -41,7 +41,8 @@ export class AuthAPI {
 
   static async refreshToken(): Promise<AuthTokens> {
     // cookies already contain the refresh token
-    const response: AxiosResponse<AuthTokens> = await axios.post(Endpoints.Auth.TokenRefresh)
+    const { authApi } = await import('@/components/connectionManager/http')
+    const response: AxiosResponse<AuthTokens> = await authApi.post(Endpoints.Auth.TokenRefresh)
     return response.data
   }
 

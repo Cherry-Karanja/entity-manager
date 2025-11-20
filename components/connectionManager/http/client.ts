@@ -5,6 +5,7 @@ import { Endpoints } from '../apiConfig';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 import { AuthAPI } from '@/components/auth/lib/auth-api';
+import { AuthTokens } from '@/components/auth/types/auth-types';
 
 interface ApiErrorResponse {
     detail?: string;
@@ -26,6 +27,8 @@ export interface PollOptions<T = unknown> {
 export class HttpClient {
   private authApi: ReturnType<typeof axios.create>;
   private plainApi: ReturnType<typeof axios.create>;
+  private isRefreshing = false;
+  private refreshPromise: Promise<AuthTokens> | null = null;
 
   constructor() {
     // Create Axios instance
@@ -103,8 +106,8 @@ export class HttpClient {
         // if response status is 401, handle token refresh logic here
         if (error.response?.status === 401) {
           try {
-            // Attempt to refresh token
-            await AuthAPI.refreshToken();
+            // Attempt to refresh token (with queue management)
+            await this.refreshTokenWithQueue();
 
             // Retry the original request if config exists
             const originalConfig = error.config as AxiosRequestConfig | undefined;
@@ -138,6 +141,29 @@ export class HttpClient {
   }
 
   /**
+   * Refresh token with queue management to prevent concurrent refresh calls
+   */
+  private async refreshTokenWithQueue(): Promise<AuthTokens> {
+    // If a refresh is already in progress, wait for it
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    // Start the refresh process
+    this.isRefreshing = true;
+    this.refreshPromise = AuthAPI.refreshToken();
+
+    try {
+      const tokens = await this.refreshPromise;
+      return tokens;
+    } finally {
+      // Reset the refresh state
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+    }
+  }
+
+  /**
    * Function to fetch CSRF token
    */
   private async fetchCsrfToken() {
@@ -147,10 +173,6 @@ export class HttpClient {
       console.error('Failed to fetch CSRF token:', error);
     }
   }
-
-  /**
-   * Poll task status utility
-   */
   async pollTaskStatus<T = unknown>(
     taskId: string,
     statusUrl: string,

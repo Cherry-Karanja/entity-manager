@@ -669,8 +669,12 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
     const goToNextStep = async () => {
       if (currentStepData.validate) {
+        // reset error state to blank
+        setState(prev => ({ ...prev, errors: {} }));
         const errors = await currentStepData.validate(state.values as Record<string, unknown>);
+        console.log('Wizard step validation errors:', errors);
         if (hasErrors(errors)) {
+          console.log('Wizard step has validation errors:', errors);
           setState(prev => ({ ...prev, errors: { ...prev.errors, ...errors } }));
           return;
         }
