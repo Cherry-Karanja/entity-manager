@@ -165,11 +165,23 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, state]);
 
+  // Use ref to track previous filters and only update when content actually changes
+  const prevFiltersRef = useRef<string>('');
+  const stableFilters = useMemo(() => {
+    const filtersJson = JSON.stringify(state.state.filters);
+    if (filtersJson !== prevFiltersRef.current) {
+      prevFiltersRef.current = filtersJson;
+      return state.state.filters;
+    }
+    // Return the same reference if content hasn't changed
+    return JSON.parse(prevFiltersRef.current);
+  }, [state.state.filters]);
+
   // Refetch data when sorting, search, or filters change (but not pagination, handled directly)
   useEffect(() => {
     if (!config.apiClient || view !== 'list' || !initialListFetchCompleted.current) return;
 
-    const { page, pageSize, sort, search, filters } = state.state;
+    const { page, pageSize, sort, search } = state.state;
     
     state.setLoading(true);
     
@@ -188,8 +200,8 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       queryParams.search = search;
     }
     
-    if (filters && filters.length > 0) {
-      queryParams.filters = filters;
+    if (stableFilters && stableFilters.length > 0) {
+      queryParams.filters = stableFilters;
     }
 
     config.apiClient.list(queryParams as never)
@@ -208,7 +220,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         state.setLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.state.sort, state.state.search, state.state.filters, view]);
+  }, [state.state.sort, state.state.search, stableFilters, view]);
 
   // listen for view change and call onviewchange callback
   useEffect(() => {
@@ -398,7 +410,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           emptyMessage={config.config.list.emptyMessage}
           loading={state.state.loading}
           error={state.state.error}
-          actions={undefined}
+          actions={config.config.list.actions}
           className={config.config.list.className}
           hover={config.config.list.hover}
           striped={config.config.list.striped}
@@ -493,7 +505,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           onCopy={()=>{
             toast.success('Successfully copied to clipboard')
           }}
-          actions={undefined}
+          actions={config.config.view.actions}
         />
         </div>
       </div>

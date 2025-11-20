@@ -175,11 +175,8 @@ export interface EntityListProps<T extends BaseEntity = BaseEntity> {
   /** Row height */
   rowHeight?: number | 'auto';
   
-  /** Actions*/
+  /** Actions (includes both row-level and bulk actions - filtered internally by actionType and position) */
   actions?: import('../actions/types').EntityActionsProps<T>;
-  
-  /** Bulk actions */
-  bulkActions?: import('../actions/types').EntityActionsProps<T>;
   
   /** Custom className */
   className?: string;

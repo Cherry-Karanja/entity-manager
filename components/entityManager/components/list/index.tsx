@@ -8,8 +8,9 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { BaseEntity } from '../../primitives/types';
+import { BaseEntity, FilterConfig } from '../../primitives/types';
 import { EntityActions } from '../actions';
+import { Action, ActionContext } from '../actions/types';
 import { 
   EntityListProps, 
   ListView, 
@@ -36,6 +37,14 @@ import { CreateEmptyState, SearchEmptyState, FilterEmptyState } from './componen
 import { ErrorState } from './components/ErrorState';
 import { DensitySelector } from './components/DensitySelector';
 import { ListDensity } from './variants';
+import { Filter, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 /**
  * EntityList component
@@ -72,7 +81,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     error,
     rowHeight = 'auto',
     actions,
-    bulkActions,
     className = '',
     rowClassName,
     hover = true,
@@ -101,6 +109,56 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Density state (separate from main state)
   const [density, setDensity] = useState<ListDensity>('comfortable');
 
+  // Refs to track internal updates and prevent circular syncing
+  const isInternalFilterUpdate = React.useRef(false);
+  const isInternalSortUpdate = React.useRef(false);
+  const isInternalSearchUpdate = React.useRef(false);
+
+  // Filter dropdown state
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
+
+  // Filter dialog state
+  type FilterOperator = 'equals' | 'notEquals' | 'contains' | 'notContains' | 'startsWith' | 'endsWith' | 'greaterThan' | 'greaterThanOrEqual' | 'lessThan' | 'lessThanOrEqual' | 'in' | 'notIn' | 'between' | 'isNull' | 'isNotNull';
+  
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [selectedFilterField, setSelectedFilterField] = useState<string | null>(null);
+  const [filterOperator, setFilterOperator] = useState<FilterOperator>('equals');
+  const [filterValue, setFilterValue] = useState('');
+  const [filterValue2, setFilterValue2] = useState(''); // For 'between' operator
+
+  // Filter actions by type and position
+  const toolbarBulkActions = useMemo(() => {
+    if (!actions?.actions) return [];
+    return actions.actions.filter((action: Action<T>) => 
+      action.actionType === 'bulk' && 
+      (action.position === 'toolbar' || !action.position)
+    );
+  }, [actions?.actions]);
+
+  const rowActions = useMemo(() => {
+    if (!actions?.actions) return [];
+    return actions.actions.filter((action: Action<T>) => 
+      action.actionType !== 'bulk' && 
+      (action.position === 'row' || action.position === 'dropdown' || action.position === 'context-menu' || !action.position)
+    );
+  }, [actions?.actions]);
+
+  // Get selected entities for bulk actions
+  const selectedEntities = useMemo(() => {
+    return data.filter(entity => state.selectedIds.has(entity.id));
+  }, [data, state.selectedIds]);
+
+  // Create action context
+  const actionContext = useMemo<ActionContext<T> | undefined>(() => {
+    if (!actions) return undefined;
+    return {
+      selectedEntities,
+      selectedIds: state.selectedIds,
+      refresh: actions.context?.refresh,
+      customData: actions.context?.customData,
+    };
+  }, [actions, selectedEntities, state.selectedIds]);
+
   // Click handling state
   const [clickTimeoutRef, setClickTimeoutRef] = useState<NodeJS.Timeout | null>(null);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
@@ -114,25 +172,57 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   }, [selectedIdsProp]);
 
   React.useEffect(() => {
-    if (sortConfigProp) {
+    if (sortConfigProp && !isInternalSortUpdate.current) {
       setState(prev => ({ ...prev, sort: sortConfigProp }));
     }
+    isInternalSortUpdate.current = false;
   }, [sortConfigProp]);
 
   React.useEffect(() => {
-    if (filterConfigsProp) {
-      setState(prev => ({ ...prev, filters: filterConfigsProp }));
+    if (filterConfigsProp && !isInternalFilterUpdate.current) {
+      // Deduplicate filters before setting
+      const uniqueFilters = filterConfigsProp.filter(
+        (filter, index, self) => 
+          index === self.findIndex(f => 
+            f.field === filter.field && f.operator === filter.operator
+          )
+      );
+      setState(prev => ({ ...prev, filters: uniqueFilters }));
     }
+    isInternalFilterUpdate.current = false;
   }, [filterConfigsProp]);
 
   React.useEffect(() => {
-    if (searchValueProp !== undefined) {
+    if (searchValueProp !== undefined && !isInternalSearchUpdate.current) {
       setState(prev => ({ ...prev, search: searchValueProp }));
     }
+    isInternalSearchUpdate.current = false;
   }, [searchValueProp]);
+
+  // Sync pagination config changes
+  React.useEffect(() => {
+    if (paginationConfig?.page !== undefined && paginationConfig.page !== state.page) {
+      setState(prev => ({ ...prev, page: paginationConfig.page || 1 }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginationConfig?.page]);
+
+  React.useEffect(() => {
+    if (paginationConfig?.pageSize !== undefined && paginationConfig.pageSize !== state.pageSize) {
+      const validPageSizes = getDefaultPageSizes();
+      const validPageSize = validPageSizes.includes(paginationConfig.pageSize) ? paginationConfig.pageSize : 10;
+      setState(prev => ({ ...prev, pageSize: validPageSize, page: 1 }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginationConfig?.pageSize]);
 
   // Process data
   const processedData = useMemo(() => {
+    // If using server-side pagination, data is already filtered, sorted, and paginated
+    if (paginationConfig) {
+      return data;
+    }
+
     let result = [...data];
     
     // Search
@@ -151,7 +241,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     }
     
     return result;
-  }, [data, state.search, state.filters, state.sort, columns]);
+  }, [data, state.search, state.filters, state.sort, columns, paginationConfig]);
 
   // Pagination
   const totalItems = paginationConfig?.totalCount ?? processedData.length;
@@ -197,6 +287,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
 
   // Search handler
   const handleSearchChange = useCallback((value: string) => {
+    isInternalSearchUpdate.current = true;
     setState(prev => ({ ...prev, search: value, page: 1 }));
     onSearchChange?.(value);
   }, [onSearchChange]);
@@ -207,6 +298,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
       const newSort = prev.sort?.field === field && prev.sort.direction === 'asc'
         ? { field, direction: 'desc' as const }
         : { field, direction: 'asc' as const };
+      isInternalSortUpdate.current = true;
       onSortChange?.(newSort);
       return { ...prev, sort: newSort };
     });
@@ -228,6 +320,106 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   const handleViewChange = useCallback((view: ListView) => {
     setState(prev => ({ ...prev, view }));
   }, []);
+
+  // Filter handlers
+  const handleOpenFilterDialog = useCallback((field: string) => {
+    setSelectedFilterField(field);
+    setFilterOperator('contains');
+    setFilterValue('');
+    setFilterValue2('');
+    setFilterDialogOpen(true);
+    // Close the dropdown menu to prevent double requests
+    setFilterDropdownOpen(false);
+  }, []);
+
+  const handleCloseFilterDialog = useCallback(() => {
+    setFilterDialogOpen(false);
+    setSelectedFilterField(null);
+    setFilterOperator('equals');
+    setFilterValue('');
+    setFilterValue2('');
+  }, []);
+
+  const handleSaveFilter = useCallback(() => {
+    if (!selectedFilterField) {
+      return;
+    }
+
+    // For isNull and isNotNull operators, no value is needed
+    if (filterOperator !== 'isNull' && filterOperator !== 'isNotNull' && !filterValue.trim()) {
+      return;
+    }
+
+    const newFilter: FilterConfig = {
+      field: selectedFilterField,
+      operator: filterOperator,
+      value: filterOperator === 'between' && filterValue2 ? [filterValue, filterValue2] : filterValue,
+    };
+
+    // Set ref BEFORE setState to ensure useEffect sees it
+    isInternalFilterUpdate.current = true;
+    
+    setState(prev => {
+      // Check for duplicate filters (same field and operator)
+      const isDuplicate = prev.filters.some(
+        f => f.field === newFilter.field && f.operator === newFilter.operator
+      );
+      
+      if (isDuplicate) {
+        console.warn('Filter already exists:', newFilter);
+        return prev;
+      }
+      
+      const newFilters = [...prev.filters, newFilter];
+      onFilterChange?.(newFilters);
+      return { ...prev, filters: newFilters, page: 1 };
+    });
+
+    handleCloseFilterDialog();
+  }, [selectedFilterField, filterOperator, filterValue, filterValue2, onFilterChange, handleCloseFilterDialog]);
+
+  const handleEditFilter = useCallback((index: number) => {
+    const filter = state.filters[index];
+    setSelectedFilterField(filter.field);
+    setFilterOperator(filter.operator as FilterOperator);
+    
+    if (Array.isArray(filter.value)) {
+      setFilterValue(String(filter.value[0] || ''));
+      setFilterValue2(String(filter.value[1] || ''));
+    } else {
+      setFilterValue(String(filter.value || ''));
+      setFilterValue2('');
+    }
+    
+    // Set ref BEFORE setState
+    isInternalFilterUpdate.current = true;
+    
+    // Remove the old filter and notify parent
+    setState(prev => {
+      const newFilters = prev.filters.filter((_, i) => i !== index);
+      onFilterChange?.(newFilters);
+      return { ...prev, filters: newFilters };
+    });
+    
+    setFilterDialogOpen(true);
+  }, [state.filters, onFilterChange]);
+
+  const handleRemoveFilter = useCallback((index: number) => {
+    // Set ref BEFORE setState
+    isInternalFilterUpdate.current = true;
+    
+    setState(prev => {
+      const newFilters = prev.filters.filter((_, i) => i !== index);
+      onFilterChange?.(newFilters);
+      return { ...prev, filters: newFilters, page: 1 };
+    });
+  }, [onFilterChange]);
+
+  const handleClearFilters = useCallback(() => {
+    isInternalFilterUpdate.current = true;
+    setState(prev => ({ ...prev, filters: [], page: 1 }));
+    onFilterChange?.([]);
+  }, [onFilterChange]);
 
   // Click/Double-click handler with manual timing
   const handleRowClick = useCallback((entity: T, index: number) => {
@@ -270,6 +462,33 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Get visible columns
   const visibleColumns = getVisibleColumns(columns);
 
+  // Helper function to get user-friendly operator label
+  const getOperatorLabel = (operator: string): string => {
+    const labels: Record<string, string> = {
+      'contains': 'contains',
+      'equals': 'is',
+      'notEquals': 'is not',
+      'startsWith': 'starts with',
+      'endsWith': 'ends with',
+      'greaterThan': '>',
+      'greaterThanOrEqual': '≥',
+      'lessThan': '<',
+      'lessThanOrEqual': '≤',
+      'in': 'in',
+      'notIn': 'not in',
+      'between': 'between',
+      'isNull': 'is empty',
+      'isNotNull': 'is not empty',
+    };
+    return labels[operator] || operator;
+  };
+
+  // Helper function to get column label
+  const getColumnLabel = (field: string): string => {
+    const column = columns.find(col => String(col.key) === field);
+    return column?.label || field;
+  };
+
   // Render toolbar
   const renderToolbar = () => {
     const hasToolbar = (toolbar && Object.keys(toolbar).length > 0) || searchable;
@@ -279,7 +498,57 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
 
     return (
       <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 bg-card border-b">
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
+        {/* Active Filters Display */}
+        {state.filters.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters:</span>
+            <div className="flex items-center gap-2 flex-wrap flex-1">
+              {state.filters.map((filter, index) => {
+                const columnLabel = getColumnLabel(filter.field);
+                const operatorLabel = getOperatorLabel(filter.operator);
+                const displayValue = filter.operator === 'isNull' || filter.operator === 'isNotNull' 
+                  ? '' 
+                  : Array.isArray(filter.value) 
+                    ? filter.value.join(' - ') 
+                    : String(filter.value);
+                
+                return (
+                  <Badge 
+                    key={index} 
+                    variant="secondary" 
+                    className="gap-2 pr-1 py-1.5 text-xs hover:bg-secondary/80 cursor-pointer group"
+                    onClick={() => handleEditFilter(index)}
+                  >
+                    <span className="font-medium">{columnLabel}</span>
+                    <span className="text-muted-foreground">{operatorLabel}</span>
+                    {displayValue && <span className="font-semibold text-foreground">&apos;{displayValue}&apos;</span>}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFilter(index);
+                      }}
+                      className="ml-1 hover:bg-destructive/20 rounded-full p-1 transition-colors group-hover:bg-muted"
+                      aria-label="Remove filter"
+                      title="Remove filter"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                );
+              })}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-7 text-xs text-muted-foreground hover:text-destructive px-2"
+              >
+                Clear all
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="flex-1 w-full sm:max-w-md">
             {(toolbar?.search || searchable) && (
               <div className="relative">
@@ -309,9 +578,9 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
             )}
           </div>
           
-          <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex gap-2 items-center flex-wrap justify-end w-full sm:w-auto">
             {toolbar.viewSwitcher && (
-              <div className="inline-flex rounded-md shadow-sm overflow-x-auto" role="group" aria-label="View switcher">
+              <div className="inline-flex rounded-md shadow-sm" role="group" aria-label="View switcher">
                 {(['table', 'card', 'list', 'grid'] as ListView[]).map(v => (
                   <button
                     key={v}
@@ -329,6 +598,51 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
             )}
 
+            {/* Filter Button */}
+            {(toolbar.filters || filterable) && (
+              <DropdownMenu open={filterDropdownOpen} onOpenChange={setFilterDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="min-h-[44px] w-full sm:w-auto">
+                    <Filter className="h-4 w-4" />
+                    <span className="ml-2">Filter</span>
+                    {state.filters.length > 0 && (
+                      <Badge variant="default" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                        {state.filters.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 max-w-md">
+                  <DropdownMenuLabel>Add Filter</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="p-3 space-y-3">
+                    {columns.filter(col => col.filterable !== false).length > 0 ? (
+                      <>
+                        <div className="text-sm text-muted-foreground">
+                          What would you like to filter by?
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+                          {columns.filter(col => col.filterable !== false).map((column) => (
+                            <button
+                              key={String(column.key)}
+                              onClick={() => handleOpenFilterDialog(String(column.key))}
+                              className="w-full text-left px-4 py-3 text-sm rounded-md hover:bg-muted transition-colors border border-transparent hover:border-muted-foreground/20"
+                            >
+                              {column.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-sm text-muted-foreground text-center py-4">
+                        No filterable columns available
+                      </div>
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {/* Density Selector */}
             <DensitySelector 
               value={density} 
@@ -336,29 +650,33 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               variant="dropdown"
             />
             
-            {actions && actions.actions && actions.actions.length > 0 && (
+            {/* Row Actions (non-bulk toolbar actions) */}
+            {rowActions.length > 0 && (
               <EntityActions 
-                actions={actions.actions}
-                entity={actions.entity}
-                mode={actions?.mode || 'dropdown'}
-                position={actions?.position || 'toolbar'}
+                actions={rowActions}
+                entity={undefined}
+                context={actionContext}
+                mode={actions?.mode || 'buttons'}
+                position={'toolbar'}
                 className={actions?.className || ''}
-                onActionStart={actions.onActionStart}
-                onActionComplete={actions.onActionComplete}
-                onActionError={actions.onActionError}
-               />
+                onActionStart={actions?.onActionStart}
+                onActionComplete={actions?.onActionComplete}
+                onActionError={actions?.onActionError}
+              />
             )}
-
-            {bulkActions && bulkActions.actions && state.selectedIds.size > 0 && (
+            
+            {/* Bulk Actions (when items are selected) */}
+            {toolbarBulkActions.length > 0 && state.selectedIds.size > 0 && (
               <EntityActions 
-                actions={bulkActions.actions}
-                entity={bulkActions.entity}
-                mode={bulkActions?.mode || 'dropdown'}
-                position={bulkActions?.position || 'toolbar'}
-                className={bulkActions?.className || ''}
-                onActionStart={bulkActions.onActionStart}
-                onActionComplete={bulkActions.onActionComplete}
-                onActionError={bulkActions.onActionError}
+                actions={toolbarBulkActions}
+                entity={undefined}
+                context={actionContext}
+                mode={actions?.mode || 'dropdown'}
+                position={'toolbar'}
+                className={actions?.className || ''} 
+                onActionStart={actions?.onActionStart}
+                onActionComplete={actions?.onActionComplete}
+                onActionError={actions?.onActionError}
               />
             )}
             
@@ -390,7 +708,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
         <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
           Showing <span className="font-medium text-foreground">{startItem}</span> to{' '}
           <span className="font-medium text-foreground">{endItem}</span> of{' '}
-          <span className="font-medium text-foreground">{processedData.length}</span> results
+          <span className="font-medium text-foreground">{totalItems}</span> results
         </div>
         
         {/* Pagination controls */}
@@ -517,6 +835,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               {paginatedData.map((entity, index) => {
                 const isSelected = state.selectedIds.has(entity.id);
                 const rowClass = rowClassName ? rowClassName(entity, index) : '';
+                const densityPadding = density === 'compact' ? 'py-2' : density === 'comfortable' ? 'py-3' : 'py-4';
                 
                 return (
                   <tr
@@ -530,7 +849,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                     onDoubleClick={() => handleRowClick(entity, index)}
                   >
                     {selectable && (
-                      <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                      <td className={`px-3 sm:px-4 ${densityPadding} whitespace-nowrap`}>
                         <input
                           title="Select row"
                           type="checkbox"
@@ -546,7 +865,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                       return (
                         <td
                           key={String(column.key)}
-                          className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm"
+                          className={`px-3 sm:px-4 ${densityPadding} whitespace-nowrap text-sm`}
                           style={{ textAlign: column.align }}
                         >
                           <div className="truncate max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl">
@@ -555,21 +874,20 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                         </td>
                       );
                     })}
-                    {(actions) && (
-                      <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-right text-sm" onClick={(e) => e.stopPropagation()}>
+                    {rowActions.length > 0 && (
+                      <td className={`px-3 sm:px-4 ${densityPadding} whitespace-nowrap text-right text-sm`} onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-1 sm:gap-2">
-                          {actions ? (
-                            <EntityActions 
-                              actions={actions.actions}
-                              entity={actions.entity}
-                              mode={actions?.mode || 'dropdown'}
-                              position={actions?.position || 'toolbar'}
-                              className={actions?.className || ''}
-                              onActionStart={actions.onActionStart}
-                              onActionComplete={actions.onActionComplete}
-                              onActionError={actions.onActionError}
-                            />
-                          ) : null}
+                          <EntityActions 
+                            actions={rowActions}
+                            entity={entity}
+                            context={actionContext}
+                            mode={actions?.mode || 'dropdown'}
+                            position={'row'}
+                            className={actions?.className || ''}
+                            onActionStart={actions?.onActionStart}
+                            onActionComplete={actions?.onActionComplete}
+                            onActionError={actions?.onActionError}
+                          />
                         </div>
                       </td>
                     )}
@@ -640,20 +958,19 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 </div>
               </div>
               
-              {(actions) && (actions.actions) && (
+              {rowActions.length > 0 && (
                 <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
-                  {actions.actions ? (
-                    <EntityActions 
-                      actions={actions.actions}
-                      entity={actions.entity}
-                      mode={actions?.mode || 'dropdown'}
-                      position={actions?.position || 'toolbar'}
-                      className={actions?.className || ''}
-                      onActionStart={actions.onActionStart}
-                      onActionComplete={actions.onActionComplete}
-                      onActionError={actions.onActionError}
-                    />
-                  ) : null}
+                  <EntityActions 
+                    actions={rowActions}
+                    entity={entity}
+                    context={actionContext}
+                    mode={actions?.mode || 'dropdown'}
+                    position={'row'}
+                    className={actions?.className || ''}
+                    onActionStart={actions?.onActionStart}
+                    onActionComplete={actions?.onActionComplete}
+                    onActionError={actions?.onActionError}
+                  />
                 </div>
               )}
             </div>
@@ -697,20 +1014,19 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 {subtitle && <div className="text-xs text-muted-foreground truncate mt-0.5">{subtitle}</div>}
               </div>
               
-              {(actions) && (actions.actions) && (
+              {rowActions.length > 0 && (
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                  {actions.actions ? (
-                    <EntityActions 
-                      actions={actions.actions}
-                      entity={actions.entity}
-                      mode={actions?.mode || 'dropdown'}
-                      position={actions?.position || 'toolbar'}
-                      className={actions?.className || ''}
-                      onActionStart={actions.onActionStart}
-                      onActionComplete={actions.onActionComplete}
-                      onActionError={actions.onActionError}
-                    />
-                  ) : null}
+                  <EntityActions 
+                    actions={rowActions}
+                    entity={entity}
+                    context={actionContext}
+                    mode={actions?.mode || 'dropdown'}
+                    position={'row'}
+                    className={actions?.className || ''}
+                    onActionStart={actions?.onActionStart}
+                    onActionComplete={actions?.onActionComplete}
+                    onActionError={actions?.onActionError}
+                  />
                 </div>
               )}
             </div>
@@ -835,20 +1151,19 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                 })}
               </div>
               
-              {(actions) && (actions.actions) && (
+              {rowActions.length > 0 && (
                 <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
-                  {actions.actions ? (
-                    <EntityActions 
-                      actions={actions.actions}
-                      entity={actions.entity}
-                      mode={actions?.mode || 'dropdown'}
-                      position={actions?.position || 'toolbar'}
-                      className={actions?.className || ''}
-                      onActionStart={actions.onActionStart}
-                      onActionComplete={actions.onActionComplete}
-                      onActionError={actions.onActionError}
-                    />
-                  ) : null}
+                  <EntityActions 
+                    actions={rowActions}
+                    entity={entity}
+                    context={actionContext}
+                    mode={actions?.mode || 'dropdown'}
+                    position={'row'}
+                    className={actions?.className || ''}
+                    onActionStart={actions?.onActionStart}
+                    onActionComplete={actions?.onActionComplete}
+                    onActionError={actions?.onActionError}
+                  />
                 </div>
               )}
             </div>
@@ -941,7 +1256,10 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
         <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
           {renderToolbar()}
           <FilterEmptyState
-            onClear={() => setState(prev => ({ ...prev, filters: [] }))}
+            onClear={() => {
+              setState(prev => ({ ...prev, filters: [] }));
+              onFilterChange?.([]);
+            }}
             onCreate={createAction}
           />
         </div>
@@ -987,19 +1305,20 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
       {renderToolbar()}
       
-      {selectable && multiSelect && state.selectedIds.size > 0 && bulkActions && bulkActions.actions && (
+      {selectable && multiSelect && state.selectedIds.size > 0 && toolbarBulkActions.length > 0 && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 px-3 sm:px-4 py-2 sm:py-2 bg-primary/10 border-b">
           <span className="text-xs sm:text-sm font-medium text-center sm:text-left">{state.selectedIds.size} selected</span>
           <div className="flex gap-2 justify-center sm:justify-end flex-wrap">
             <EntityActions 
-              actions={bulkActions.actions}
-              entity={bulkActions.entity}
-              mode={bulkActions?.mode || 'dropdown'}
-              position={bulkActions?.position || 'toolbar'}
-              className={bulkActions?.className || ''}
-              onActionStart={bulkActions.onActionStart}
-              onActionComplete={bulkActions.onActionComplete}
-              onActionError={bulkActions.onActionError}
+              actions={toolbarBulkActions}
+              entity={undefined}
+              context={actionContext}
+              mode={actions?.mode || 'dropdown'}
+              position={'toolbar'}
+              className={actions?.className || ''}
+              onActionStart={actions?.onActionStart}
+              onActionComplete={actions?.onActionComplete}
+              onActionError={actions?.onActionError}
             />
           </div>
         </div>
@@ -1022,6 +1341,71 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
       )}
       
       {renderPagination()}
+
+      {/* Filter Configuration Dialog */}
+      <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Filter</DialogTitle>
+            <DialogDescription>
+              Filter by {selectedFilterField && columns.find(c => String(c.key) === selectedFilterField)?.label}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="filter-operator">How to filter</Label>
+              <Select value={filterOperator} onValueChange={(value) => setFilterOperator(value as FilterOperator)}>
+                <SelectTrigger id="filter-operator">
+                  <SelectValue placeholder="Choose how to filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="contains">Contains text</SelectItem>
+                  <SelectItem value="equals">Exactly matches</SelectItem>
+                  <SelectItem value="startsWith">Starts with</SelectItem>
+                  <SelectItem value="endsWith">Ends with</SelectItem>
+                  <SelectItem value="greaterThan">Greater than</SelectItem>
+                  <SelectItem value="lessThan">Less than</SelectItem>
+                  <SelectItem value="isNull">Is empty</SelectItem>
+                  <SelectItem value="isNotNull">Is not empty</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {filterOperator !== 'isNull' && filterOperator !== 'isNotNull' && (
+              <div className="grid gap-2">
+                <Label htmlFor="filter-value">Search for</Label>
+                <Input
+                  id="filter-value"
+                  value={filterValue}
+                  onChange={(e) => setFilterValue(e.target.value)}
+                  placeholder="Type what you're looking for..."
+                  autoFocus
+                />
+              </div>
+            )}
+
+            {filterOperator === 'between' && (
+              <div className="grid gap-2">
+                <Label htmlFor="filter-value2">To Value</Label>
+                <Input
+                  id="filter-value2"
+                  value={filterValue2}
+                  onChange={(e) => setFilterValue2(e.target.value)}
+                  placeholder="Enter end value"
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleCloseFilterDialog}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSaveFilter}>
+              Add Filter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

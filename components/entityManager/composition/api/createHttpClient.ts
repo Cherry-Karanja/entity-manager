@@ -33,13 +33,68 @@ function buildQueryParams(params?: ListQueryParams): Record<string, unknown> {
   }
   if (params.search) queryParams.search = params.search;
   
-  // Add filters
+  // Add filters with Django field lookup syntax
   if (params.filters) {
     params.filters.forEach(filter => {
-      const key = filter.field;
-      const value = filter.value;
+      const { field, operator, value } = filter;
       if (value !== undefined && value !== null) {
-        queryParams[key] = value;
+        // Map filter operators to Django field lookups
+        let filterKey = field;
+        
+        switch (operator) {
+          case 'equals':
+            filterKey = field; // exact match (default)
+            break;
+          case 'notEquals':
+            filterKey = field; // will need to handle this differently
+            break;
+          case 'contains':
+            filterKey = `${field}__icontains`; // case-insensitive contains
+            break;
+          case 'startsWith':
+            filterKey = `${field}__istartswith`; // case-insensitive starts with
+            break;
+          case 'endsWith':
+            filterKey = `${field}__iendswith`; // case-insensitive ends with
+            break;
+          case 'greaterThan':
+            filterKey = `${field}__gt`;
+            break;
+          case 'greaterThanOrEqual':
+            filterKey = `${field}__gte`;
+            break;
+          case 'lessThan':
+            filterKey = `${field}__lt`;
+            break;
+          case 'lessThanOrEqual':
+            filterKey = `${field}__lte`;
+            break;
+          case 'in':
+            filterKey = `${field}__in`;
+            break;
+          case 'notIn':
+            filterKey = field; // will need to handle this differently
+            break;
+          case 'isNull':
+            filterKey = `${field}__isnull`;
+            queryParams[filterKey] = true;
+            return; // Skip setting value below
+          case 'isNotNull':
+            filterKey = `${field}__isnull`;
+            queryParams[filterKey] = false;
+            return; // Skip setting value below
+          case 'between':
+            // For between, we need two parameters
+            if (Array.isArray(value) && value.length === 2) {
+              queryParams[`${field}__gte`] = value[0];
+              queryParams[`${field}__lte`] = value[1];
+            }
+            return;
+          default:
+            filterKey = field; // fallback to exact match
+        }
+        
+        queryParams[filterKey] = value;
       }
     });
   }

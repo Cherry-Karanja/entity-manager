@@ -271,7 +271,6 @@ export const UserActionsConfig: EntityActionsConfig<User> = {
       },
     },
   ],
-
   mode: 'context-menu',
   position: 'row',
   className: '',

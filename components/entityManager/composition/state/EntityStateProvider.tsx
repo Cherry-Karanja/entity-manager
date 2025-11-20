@@ -109,8 +109,16 @@ function entityStateReducer<T extends BaseEntity>(
     case 'SET_SORT':
       return { ...state, sort: action.payload };
     
-    case 'SET_FILTERS':
-      return { ...state, filters: action.payload, page: 1 };
+    case 'SET_FILTERS': {
+      // Deduplicate filters before setting
+      const uniqueFilters = action.payload.filter(
+        (filter: any, index: number, self: any[]) => 
+          index === self.findIndex((f: any) => 
+            f.field === filter.field && f.operator === filter.operator
+          )
+      );
+      return { ...state, filters: uniqueFilters, page: 1 };
+    }
     
     case 'ADD_FILTER': {
       const filters = [...state.filters, action.payload];
