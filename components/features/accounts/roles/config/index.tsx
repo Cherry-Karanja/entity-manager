@@ -10,7 +10,6 @@ import { roleFields } from './fields';
 import { roleColumns, roleListConfig } from './list';
 import { roleFormLayout, roleFormSections, roleFormMode } from './form';
 import { roleViewFields, roleViewGroups } from './view';
-import { roleActions, roleBulkActions } from './actions';
 
 export const userRoleConfig: EntityConfig<UserRole> = {
   // Entity metadata

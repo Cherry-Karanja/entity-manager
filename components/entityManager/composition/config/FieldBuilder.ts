@@ -4,6 +4,7 @@
  * Fluent API for building form/view fields.
  */
 
+import { BaseEntity } from '../../primitives/types';
 import { FormField, FieldType, ValidationRule } from '../../components/form/types';
 import { ViewField } from '../../components/view/types';
 import { BuilderCallback } from './types';
@@ -11,8 +12,8 @@ import { BuilderCallback } from './types';
 /**
  * Field builder class
  */
-export class FieldBuilder {
-  private field: Partial<FormField>;
+export class FieldBuilder<T extends BaseEntity = BaseEntity> {
+  private field: Partial<FormField<T>>;
 
   constructor(name: string, label: string) {
     this.field = { name, label };
@@ -230,7 +231,7 @@ export class FieldBuilder {
   /**
    * Set custom renderer
    */
-  render(render: FormField['render']): this {
+  render(render: FormField<T>['render']): this {
     this.field.render = render;
     return this;
   }
@@ -246,14 +247,14 @@ export class FieldBuilder {
   /**
    * Build the field
    */
-  build(): FormField {
-    return this.field as FormField;
+  build(): FormField<T> {
+    return this.field as FormField<T>;
   }
 
   /**
    * Build as view field
    */
-  buildViewField(): ViewField {
+  buildViewField(): ViewField<T> {
     // Map select type to text for view (select isn't a valid ViewField type)
     const viewType = this.field.type === 'select' ? 'text' : this.field.type;
     

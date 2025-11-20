@@ -80,7 +80,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Add a field
    */
-  addField(field: FormField): this {
+  addField(field: FormField<T>): this {
     this.config.fields!.push(field);
     return this;
   }
@@ -88,7 +88,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Set fields
    */
-  fields(fields: FormField[]): this {
+  fields(fields: FormField<T>[]): this {
     this.config.fields = fields;
     return this;
   }
@@ -99,9 +99,9 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   field(
     name: string,
     label: string,
-    callback?: BuilderCallback<FormField, FieldBuilder>
+    callback?: BuilderCallback<FormField<T>, FieldBuilder<T>>
   ): this {
-    const builder = new FieldBuilder(name, label);
+    const builder = new FieldBuilder<T>(name, label);
     const field = callback ? (callback(builder) || builder.build()) : builder.build();
     return this.addField(field);
   }
@@ -109,7 +109,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Add a view field
    */
-  addViewField(field: ViewField): this {
+  addViewField(field: ViewField<T>): this {
     this.config.viewFields!.push(field);
     return this;
   }
@@ -117,7 +117,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Set view fields
    */
-  viewFields(fields: ViewField[]): this {
+  viewFields(fields: ViewField<T>[]): this {
     this.config.viewFields = fields;
     return this;
   }
@@ -128,9 +128,9 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   viewField(
     name: string,
     label: string,
-    callback?: BuilderCallback<ViewField, FieldBuilder>
+    callback?: BuilderCallback<ViewField<T>, FieldBuilder<T>>
   ): this {
-    const builder = new FieldBuilder(name, label);
+    const builder = new FieldBuilder<T>(name, label);
     const field = callback ? (callback(builder) || builder.buildViewField()) : builder.buildViewField();
     return this.addViewField(field);
   }
@@ -138,7 +138,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Add an action
    */
-  addAction(action: Action): this {
+  addAction(action: Action<T>): this {
     this.config.actions!.push(action);
     return this;
   }
@@ -146,7 +146,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Set actions
    */
-  actions(actions: Action[]): this {
+  actions(actions: Action<T>[]): this {
     this.config.actions = actions;
     return this;
   }
@@ -157,9 +157,9 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   action(
     id: string,
     label: string,
-    callback?: BuilderCallback<Action, ActionBuilder>
+    callback?: BuilderCallback<Action<T>, ActionBuilder<T>>
   ): this {
-    const builder = new ActionBuilder(id, label);
+    const builder = new ActionBuilder<T>(id, label);
     const action = callback ? (callback(builder) || builder.build()) : builder.build();
     return this.addAction(action);
   }

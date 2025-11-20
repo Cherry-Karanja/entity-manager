@@ -4,7 +4,7 @@
  * Defines fields for the profile detail view.
  */
 
-import { ViewField } from '@/components/entityManager/components/view/types';
+import { ViewField } from '@/components/entityManager/primitives/types';
 import { UserProfile } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock, Ban, Check, X } from 'lucide-react';
@@ -14,7 +14,6 @@ export const profileViewFields: ViewField<UserProfile>[] = [
   {
     key: 'avatar_url',
     label: 'Profile Picture',
-    group: 'basic',
     render: (profile) => {
       const p = profile as UserProfile;
       return (
@@ -30,46 +29,39 @@ export const profileViewFields: ViewField<UserProfile>[] = [
   {
     key: 'user_name',
     label: 'User',
-    group: 'basic',
     type: 'text',
     copyable: true,
   },
   {
     key: 'user_email',
     label: 'Email',
-    group: 'basic',
     type: 'text',
     copyable: true,
   },
   {
     key: 'bio',
     label: 'Biography',
-    group: 'basic',
     type: 'text',
   },
   {
     key: 'phone_number',
     label: 'Phone Number',
-    group: 'contact',
     type: 'text',
     copyable: true,
   },
   {
     key: 'department',
     label: 'Department',
-    group: 'organization',
     type: 'text',
   },
   {
     key: 'job_title',
     label: 'Job Title',
-    group: 'organization',
     type: 'text',
   },
   {
     key: 'status',
     label: 'Status',
-    group: 'approval',
     render: (profile) => {
       const p = profile as UserProfile;
       const statusConfig = {
@@ -91,31 +83,26 @@ export const profileViewFields: ViewField<UserProfile>[] = [
   {
     key: 'approved_by_name',
     label: 'Approved By',
-    group: 'approval',
     type: 'text',
   },
   {
     key: 'approved_at',
     label: 'Approved At',
-    group: 'approval',
     type: 'date',
   },
   {
     key: 'preferred_language',
     label: 'Preferred Language',
-    group: 'preferences',
     type: 'text',
   },
   {
     key: 'interface_theme',
     label: 'Interface Theme',
-    group: 'preferences',
     type: 'text',
   },
   {
     key: 'allow_notifications',
     label: 'Email Notifications',
-    group: 'preferences',
     render: (profile) => {
       const p = profile as UserProfile;
       return p.allow_notifications ? (
@@ -134,25 +121,21 @@ export const profileViewFields: ViewField<UserProfile>[] = [
   {
     key: 'show_email',
     label: 'Show Email Publicly',
-    group: 'privacy',
     type: 'boolean',
   },
   {
     key: 'show_phone',
     label: 'Show Phone Publicly',
-    group: 'privacy',
     type: 'boolean',
   },
   {
     key: 'created_at',
     label: 'Created At',
-    group: 'metadata',
     type: 'date',
   },
   {
     key: 'updated_at',
     label: 'Updated At',
-    group: 'metadata',
     type: 'date',
   },
 ];

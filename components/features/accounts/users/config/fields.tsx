@@ -110,15 +110,11 @@ export const userFields: FormField<User>[] = [
     name: 'password',
     label: 'Password',
     type: 'password',
-    required: true,
+    required: (values) => !values.id,
     placeholder: '••••••••',
     group: 'authentication',
-    visible: (values) => !values.id, // Only show on create
+    visible: true,
     validation: [
-      {
-        type: 'required',
-        message: 'Password is required',
-      },
       {
         type: 'minLength',
         value: 8,
@@ -131,15 +127,11 @@ export const userFields: FormField<User>[] = [
     name: 'password2',
     label: 'Confirm Password',
     type: 'password',
-    required: true,
+    required: (values) => !values.id,
     placeholder: '••••••••',
     group: 'authentication',
-    visible: (values) => !values.id, // Only show on create
+    visible: (values) => !values.id,
     validation: [
-      {
-        type: 'required',
-        message: 'Password confirmation is required',
-      },
       {
         type: 'custom',
         validator: (value: unknown, formValues: Record<string, unknown>) => {
@@ -196,6 +188,10 @@ export const userFields: FormField<User>[] = [
     placeholder: 'EMP-001',
     group: 'organization',
     validation: [
+      {
+        type: 'required',
+        message: 'Employee ID is required',
+      },
       {
         type: 'maxLength',
         value: 50,

@@ -67,7 +67,7 @@ export interface FormField<T extends BaseEntity = BaseEntity> {
   defaultValue?: unknown;
   
   /** Required field */
-  required?: boolean;
+  required?: boolean | ((values: Partial<T>) => boolean);
   
   /** Disabled state */
   disabled?: boolean | ((values: Partial<T>) => boolean);
@@ -312,6 +312,9 @@ export interface FormState<T extends BaseEntity = BaseEntity> {
   
   /** Current tab */
   currentTab?: string;
+  
+  /** Current tab index */
+  currentTabIndex?: number;
   
   /** Collapsed sections */
   collapsedSections: Set<string>;

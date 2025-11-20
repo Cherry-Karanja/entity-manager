@@ -5,6 +5,7 @@
  */
 
 import { ViewField } from '@/components/entityManager/components/view/types';
+import { ViewGroup } from '@/components/entityManager/primitives/types';
 import { UserRole } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle } from 'lucide-react';
@@ -69,37 +70,33 @@ export const roleViewFields: ViewField<UserRole>[] = [
   },
 ];
 
-export const roleViewGroups = [
+export const roleViewGroups: ViewGroup<UserRole>[] = [
   {
     id: 'basic',
     label: 'Basic Information',
     description: 'Core role details',
-    fields: ['display_name', 'name', 'description'],
+    fields: ['display_name', 'name', 'description'] as (keyof UserRole)[],
     collapsible: false,
-    order: 1,
   },
   {
     id: 'status',
     label: 'Status',
     description: 'Role activation status',
-    fields: ['is_active'],
+    fields: ['is_active'] as (keyof UserRole)[],
     collapsible: false,
-    order: 2,
   },
   {
     id: 'statistics',
     label: 'Statistics',
     description: 'Usage statistics',
-    fields: ['users_count'],
+    fields: ['users_count'] as (keyof UserRole)[],
     collapsible: true,
-    order: 3,
   },
   {
     id: 'metadata',
     label: 'Metadata',
     description: 'Creation and modification information',
-    fields: ['created_at', 'updated_at'],
+    fields: ['created_at', 'updated_at'] as (keyof UserRole)[],
     collapsible: true,
-    order: 4,
   },
 ];

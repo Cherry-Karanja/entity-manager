@@ -52,7 +52,7 @@ export const userActions: Action<User>[] = [
     actionType: 'confirm',
     variant: 'destructive',
     position: 'row',
-    visible: (user?: User) => !user?.is_rejected,
+    visible: (user?: User) => user?.is_approved === true,
     confirmMessage: (user?: User) => 
       `Are you sure you want to reject ${user?.email}?`,
     confirmText: 'Reject',

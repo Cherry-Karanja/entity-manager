@@ -6,7 +6,6 @@
 
 import { BaseEntity } from '../../primitives/types';
 import { 
-  validateRule as primitiveValidateRule,
   isValidEmail,
   isValidUrl,
 } from '../../primitives/utils';
@@ -42,6 +41,22 @@ export function isFieldDisabled<T extends BaseEntity>(
   }
   
   return field.disabled(values);
+}
+
+/**
+ * Check if field is required
+ */
+export function isFieldRequired<T extends BaseEntity>(
+  field: FormField<T>,
+  values: Partial<T>
+): boolean {
+  if (field.required === undefined) return false;
+  
+  if (typeof field.required === 'boolean') {
+    return field.required;
+  }
+  
+  return field.required(values);
 }
 
 /**

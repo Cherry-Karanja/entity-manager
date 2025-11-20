@@ -63,13 +63,13 @@ export class JsonSchemaAdapter implements ConfigAdapter<any> {
     return config;
   }
 
-  private mapType(jsonType: string): 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom' | undefined {
-    const typeMap: Record<string, 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom'> = {
+  private mapType(jsonType: string): 'number' | 'boolean' | 'text' | 'email' | 'url' | 'date' | 'file' | 'image' | 'json' | 'custom' | undefined {
+    const typeMap: Record<string, 'number' | 'boolean' | 'text' | 'email' | 'url' | 'date' | 'file' | 'image' | 'json' | 'custom'> = {
       'string': 'text',
       'number': 'number',
       'integer': 'number',
       'boolean': 'boolean',
-      'array': 'custom',
+      'array': 'json',
       'object': 'json'
     };
     return typeMap[jsonType] || 'text';

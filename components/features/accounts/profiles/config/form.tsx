@@ -61,11 +61,11 @@ export const profileFormSections: FieldSection[] = [
 
 export const profileFormMode: Record<string, Partial<{ layout: FormLayout; sections: FieldSection[] }>> = {
   create: {
-    layout: 'sections',
+    layout: 'tabs',
     sections: profileFormSections,
   },
   edit: {
-    layout: 'sections',
+    layout: 'tabs',
     sections: profileFormSections,
   },
 };

@@ -9,14 +9,13 @@ import { User } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Shield, Lock } from 'lucide-react';
 
-export const userViewFields: ViewField[] = [
+export const userViewFields: ViewField<User>[] = [
   // ===========================
   // Personal Information
   // ===========================
   {
     key: 'email',
     label: 'Email Address',
-    group: 'personal',
     // Keep custom render: composite display (email + verified badge)
     render: (user) => {
       const u = user as User;
@@ -31,7 +30,6 @@ export const userViewFields: ViewField[] = [
   {
     key: 'full_name',
     label: 'Full Name',
-    group: 'personal',
     // Keep custom render: composite display (name + role badges)
     render: (user) => {
       const u = user as User;
@@ -47,14 +45,12 @@ export const userViewFields: ViewField[] = [
   {
     key: 'phone_number',
     label: 'Phone Number',
-    group: 'personal',
     type: 'text',
     formatter: (value) => (value as string) || '-',
   },
   {
     key: 'employee_id',
     label: 'Employee ID',
-    group: 'personal',
     type: 'text',
     formatter: (value) => (value as string) || '-',
   },
@@ -65,14 +61,12 @@ export const userViewFields: ViewField[] = [
   {
     key: 'role_display',
     label: 'Role',
-    group: 'organization',
     type: 'text',
     formatter: (value) => (value as string) || 'No Role Assigned',
   },
   {
     key: 'department',
     label: 'Department',
-    group: 'organization',
     type: 'text',
     formatter: (value) => (value as string) || '-',
   },
@@ -83,7 +77,6 @@ export const userViewFields: ViewField[] = [
   {
     key: 'is_active',
     label: 'Account Status',
-    group: 'status',
     // Keep custom render: complex multi-badge status display
     render: (user) => {
       const u = user as User;
@@ -119,7 +112,6 @@ export const userViewFields: ViewField[] = [
   {
     key: 'account_locked_until',
     label: 'Account Lock',
-    group: 'status',
     // Keep custom render: complex conditional date logic
     render: (user) => {
       const u = user as User;
@@ -141,19 +133,16 @@ export const userViewFields: ViewField[] = [
   {
     key: 'failed_login_attempts',
     label: 'Failed Login Attempts',
-    group: 'status',
     type: 'number',
   },
   {
     key: 'must_change_password',
     label: 'Password Change Required',
-    group: 'status',
     type: 'boolean',
   },
   {
     key: 'otp_enabled',
     label: 'Two-Factor Authentication',
-    group: 'status',
     type: 'boolean',
   },
   
@@ -163,27 +152,23 @@ export const userViewFields: ViewField[] = [
   {
     key: 'last_login',
     label: 'Last Login',
-    group: 'activity',
     type: 'date',
     formatter: (value) => !value ? 'Never' : (value as string),
   },
   {
     key: 'last_login_ip',
     label: 'Last Login IP',
-    group: 'activity',
     type: 'text',
     formatter: (value) => (value as string) || '-',
   },
   {
     key: 'date_joined',
     label: 'Date Joined',
-    group: 'activity',
     type: 'date',
   },
   {
     key: 'password_changed_at',
     label: 'Password Last Changed',
-    group: 'activity',
     type: 'date',
     formatter: (value) => !value ? 'Never' : (value as string),
   },

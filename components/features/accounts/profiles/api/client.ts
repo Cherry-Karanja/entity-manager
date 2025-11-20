@@ -4,7 +4,7 @@
  * API client for profile management operations.
  */
 
-import { apiClient } from '@/lib/api-client';
+import { authApi as apiClient } from '@/components/connectionManager/http/client';
 import { UserProfile, CreateUserProfileRequest, UpdateUserProfileRequest, UserProfileListResponse } from '../types';
 
 const BASE_URL = '/api/accounts/profiles';

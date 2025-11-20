@@ -6,6 +6,10 @@
 
 import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
+import { FormField } from '../components/form/types';
+import { Column } from '../components/list/types';
+import { FormLayout as FormLayoutType } from '../components/form/types';
+import { FieldSection } from '../components/form/types';
 
 // Re-export from types/entity.ts
 export type { FilterConfig, SortConfig, PaginationConfig, FilterOperator } from './types/entity';
@@ -71,7 +75,7 @@ export interface FormSection<T = any> {
 }
 
 // Form Layout
-export interface FormLayout {
+export interface FormLayoutConfig {
   mode: 'tabs' | 'sections';
   columns?: 1 | 2 | 3;
 }
@@ -81,9 +85,9 @@ export type FormMode = 'create' | 'edit' | 'view';
 
 // View Field
 export interface ViewField<T = any> {
-  name: keyof T;
+  key: keyof T | string;
   label: string;
-  type?: 'text' | 'email' | 'url' | 'date' | 'datetime' | 'boolean' | 'badge' | 'image' | 'json';
+  type?: 'text' | 'number' | 'date' | 'boolean' | 'email' | 'url' | 'image' | 'file' | 'json' | 'custom';
   format?: (value: any, entity: T) => ReactNode;
   render?: (entity: T) => ReactNode;
   copyable?: boolean;
@@ -130,16 +134,16 @@ export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   description?: string;
   
   // Fields
-  fields: FieldConfig<T>[];
+  fields: FormField<T>[];
   
   // List
-  columns: ColumnConfig<T>[];
+  columns: Column<T>[];
   listConfig?: ListConfig;
   
   // Form
-  formLayout?: FormLayout;
-  formSections?: FormSection<T>[];
-  formMode?: Record<FormMode, Partial<FieldConfig<T>>[]>;
+  formLayout?: FormLayoutType;
+  formSections?: FieldSection[];
+  formMode?: Record<FormMode, Partial<{ layout?: FormLayoutType; sections?: FieldSection[]; fields?: FormField<T>[] }>>;
   
   // View
   viewFields?: ViewField<T>[];

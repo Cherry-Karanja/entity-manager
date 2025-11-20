@@ -117,7 +117,7 @@ export const profileColumns: Column<UserProfile>[] = [
 ];
 
 export const profileListConfig = {
-  defaultView: 'card' as const,
+  defaultView: 'grid' as const,
   defaultPageSize: 20,
   enableSearch: true,
   enableFilters: true,

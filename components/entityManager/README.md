@@ -139,7 +139,7 @@ function UsersPage() {
 ### With API Integration
 
 ```typescript
-import { EntityManager, ApiClient } from '@/components/new/entityManager';
+import { EntityManager, ApiClient } from '@/components/entityManager';
 
 // Create API client
 const userApiClient: ApiClient<User> = {

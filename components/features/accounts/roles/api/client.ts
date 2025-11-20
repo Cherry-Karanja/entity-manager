@@ -4,7 +4,7 @@
  * API client for role management operations.
  */
 
-import { apiClient } from '@/lib/api-client';
+import { authApi as apiClient } from '@/components/connectionManager/http/client';
 import { UserRole, CreateUserRoleRequest, UpdateUserRoleRequest, UserRoleListResponse } from '../types';
 
 const BASE_URL = '/api/accounts/roles';

@@ -42,11 +42,11 @@ export const roleFormSections: FieldSection[] = [
 
 export const roleFormMode: Record<string, Partial<{ layout: FormLayout; sections: FieldSection[] }>> = {
   create: {
-    layout: 'sections',
+    layout: 'tabs',
     sections: roleFormSections,
   },
   edit: {
-    layout: 'sections',
+    layout: 'tabs',
     sections: roleFormSections,
   },
 };

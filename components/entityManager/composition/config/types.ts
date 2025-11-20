@@ -4,12 +4,12 @@
  * Type definitions for configuration builders.
  */
 
-import { BaseEntity } from '../../primitives/types';
+import { BaseEntity, FormMode } from '../../primitives/types';
 import { Column } from '../../components/list/types';
 import { FormField, FormLayout, FieldSection } from '../../components/form/types';
-import { ViewField } from '../../components/view/types';
 import { Action } from '../../components/actions/types';
 import { ExportField } from '../../components/exporter/types';
+import { ViewField } from '../../components/view/types';
 
 /**
  * Entity configuration
@@ -21,6 +21,12 @@ export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   /** Entity display name (plural) */
   pluralName?: string;
   
+  /** Entity label (alias for name) */
+  label: string;
+  
+  /** Entity label plural (alias for pluralName) */
+  labelPlural: string;
+  
   /** Entity description */
   description?: string;
   
@@ -28,7 +34,7 @@ export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   columns: Column<T>[];
   
   /** Form fields */
-  fields: FormField[];
+  fields: FormField<T>[];
   
   /** Form layout */
   formLayout?: FormLayout;
@@ -36,11 +42,17 @@ export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   /** Form sections */
   formSections?: FieldSection[];
   
+  /** Form mode configurations */
+  formMode?: Record<FormMode, Partial<{ layout?: FormLayout; sections?: FieldSection[]; fields?: FormField<T>[] }>>;
+  
   /** View fields */
-  viewFields: ViewField[];
+  viewFields: ViewField<T>[];
   
   /** Actions */
-  actions: Action[];
+  actions: Action<T>[];
+  
+  /** Custom validation function */
+  onValidate?: (values: Partial<T>) => Record<string, string> | Promise<Record<string, string>>;
   
   /** Export fields */
   exportFields: ExportField[];
@@ -68,6 +80,15 @@ export interface EntityConfig<T extends BaseEntity = BaseEntity> {
   
   /** Date field */
   dateField?: string;
+  
+  /** Display field (for single field display) */
+  displayField?: string;
+  
+  /** API endpoint */
+  apiEndpoint?: string;
+  
+  /** Icon */
+  icon?: string;
   
   /** Permissions */
   permissions?: {

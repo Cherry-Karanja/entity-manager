@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, AlertTriangle } from 'lucide-react';
 import { BaseEntity } from '../../primitives/types';
 import {
   EntityFormProps,
@@ -23,6 +23,7 @@ import {
   validateForm,
   isFieldVisible,
   isFieldDisabled,
+  isFieldRequired,
   sortFields,
   groupFieldsBySections,
   groupFieldsByTabs,
@@ -95,6 +96,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       submitError: undefined,
       currentStep: 0,
       currentTab: tabs?.[0]?.id || sections?.[0]?.id,
+      currentTabIndex: 0,
       collapsedSections: new Set<string>(),
     };
   });
@@ -190,7 +192,29 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
     // Validate form
     const isValid = await validateFormAsync();
-    if (!isValid) return;
+    if (!isValid) {
+      console.log('Form is invalid, checking for tab switch');
+      // For tabs layout, switch to the tab with errors
+      if (layout === 'tabs' && sections && onValidate) {
+        console.log('Layout is tabs, sections and onValidate present');
+        const allErrors = await onValidate(state.values);
+        console.log('allErrors:', allErrors);
+        if (allErrors && Object.keys(allErrors).length > 0) {
+          console.log('There are errors');
+          const sortedSections = sortSections(sections);
+          console.log('sortedSections:', sortedSections.map(s => ({ id: s.id, fields: s.fields })));
+          const tabWithErrors = sortedSections.findIndex(section =>
+            section.fields.some(fieldName => allErrors[fieldName])
+          );
+          console.log('tabWithErrors:', tabWithErrors);
+          if (tabWithErrors !== -1) {
+            console.log('Setting currentTabIndex to:', tabWithErrors);
+            setState(prev => ({ ...prev, currentTabIndex: tabWithErrors }));
+          }
+        }
+      }
+      return;
+    }
 
     try {
       setState(prev => ({ ...prev, submitting: true }));
@@ -223,7 +247,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
         submitError: error instanceof Error ? error.message : 'An error occurred during submission'
       }));
     }
-  }, [fields, state.values, validateFormAsync, onSubmit, resetOnSubmit, initialValues]);
+  }, [fields, state.values, validateFormAsync, onSubmit, resetOnSubmit, initialValues, layout, sections, onValidate]);
 
   /**
    * Handle reset
@@ -320,8 +344,6 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 onClick={() => section.collapsible && toggleSection(section.id)}
                 onKeyDown={(e) => section.collapsible && (e.key === 'Enter' || e.key === ' ') && toggleSection(section.id)}
                 tabIndex={section.collapsible ? 0 : undefined}
-                role={section.collapsible ? 'button' : undefined}
-                aria-expanded={section.collapsible ? !isCollapsed : undefined}
               >
                 <div className="flex items-center gap-2 flex-1">
                   {section.icon && <span className="text-muted-foreground">{section.icon}</span>}
@@ -458,7 +480,6 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: tab.id }))}
                 role="tab"
-                aria-selected={state.currentTab === tab.id}
               >
                 {tab.icon && <span className="text-base">{tab.icon}</span>}
                 {tab.label}
@@ -519,33 +540,60 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       groupedFields.delete(null);
     }
     
-    const currentSection = state.currentTab || sortedSections[0]?.id;
+    const currentTabIndex = state.currentTabIndex || 0;
+
+    const goToNextTab = async () => {
+      // clear error state
+      setState(prev => ({ ...prev, errors: {} }));
+      // Validate fields in current tab
+      const currentSection = sortedSections[currentTabIndex];
+      const tabFields = groupedFields.get(currentSection.id) || [];
+      const tabErrors = await validateForm(state.values, tabFields);
+      
+      if (hasErrors(tabErrors)) {
+        setState(prev => ({ ...prev, errors: { ...prev.errors, ...tabErrors } }));
+        return;
+      }
+
+      if (currentTabIndex < sortedSections.length - 1) {
+        setState(prev => ({ ...prev, currentTabIndex: currentTabIndex + 1 }));
+      }
+    };
+
+    const goToPreviousTab = () => {
+      if (currentTabIndex > 0) {
+        setState(prev => ({ ...prev, currentTabIndex: currentTabIndex - 1 }));
+      }
+    };
 
     return (
       <div className="space-y-4">
         <div className="border-b border-border overflow-x-auto" role="tablist">
           <div className="flex space-x-1 min-w-max px-1">
-            {sortedSections.map(section => (
-              <button
-                key={section.id}
-                type="button"
-                className={`px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${
-                  currentSection === section.id 
-                    ? 'border-primary text-primary bg-primary/5' 
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
-                }`}
-                onClick={() => setState(prev => ({ ...prev, currentTab: section.id }))}
-                role="tab"
-                aria-selected={currentSection === section.id}
-              >
-                {section.label}
-              </button>
-            ))}
+            {sortedSections.map((section, index) => {
+              const hasErrors = section.fields.some(fieldName => state.errors[fieldName]);
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  className={`px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${
+                    index === currentTabIndex 
+                      ? 'border-primary text-primary bg-primary/5' 
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                  }`}
+                  onClick={() => setState(prev => ({ ...prev, currentTabIndex: index }))}
+                  role="tab"
+                >
+                  {hasErrors && <AlertTriangle className="w-4 h-4 text-destructive mr-1" />}
+                  {section.label}
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="min-h-[300px]">
-          {sortedSections.map(section => {
-            if (section.id !== currentSection) return null;
+          {sortedSections.map((section, index) => {
+            if (index !== currentTabIndex) return null;
             
             const sectionFields = groupedFields.get(section.id) || [];
             return (
@@ -574,6 +622,34 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
               </div>
             );
           })}
+        </div>
+
+        {/* Navigation buttons */}
+        <div className="flex items-center justify-between pt-4 border-t">
+          <button 
+            type="button" 
+            onClick={goToPreviousTab}
+            disabled={currentTabIndex === 0}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          {currentTabIndex < sortedSections.length - 1 ? (
+            <button 
+              type="button" 
+              onClick={goToNextTab}
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Next
+            </button>
+          ) : (
+            <button 
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
+            >
+              {submitText}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -706,25 +782,28 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
   /**
    * Form Field Component
    */
-  const FormFieldComponent = ({ field }: { field: FormField<T> }) => {
+  const FormFieldComponent = React.memo(({ field }: { field: FormField<T> }) => {
     const fieldName = String(field.name);
     const value = state.values[field.name as keyof T];
     const error = state.errors[fieldName];
     const touched = state.touched.has(fieldName);
     const fieldDisabled = disabled || loading || state.submitting || isFieldDisabled(field, state.values);
 
-    const fieldProps: FieldRenderProps<T> = {
-      field,
+    const fieldProps: FieldRenderProps<T> = useMemo(() => ({
+      field: {
+        ...field,
+        name: fieldName, // Ensure name is string
+      } as FormField<T> & { name: string },
       value,
       error,
       touched,
-      onChange: (newValue) => setFieldValue(fieldName, newValue),
+      onChange: (newValue: unknown) => setFieldValue(fieldName, newValue),
       onBlur: () => setFieldTouched(fieldName),
       disabled: fieldDisabled,
       mode,
       validateOnChange,
       formValues: state.values,
-    };
+    }), [field, value, error, touched, fieldDisabled, fieldName]);
 
     // Custom renderer
     if (field.render) {
@@ -741,8 +820,11 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       );
     }
 
-    return <DefaultFieldRenderer {...fieldProps} />;
-  };
+    // Cast to a permissive generic to avoid incompatible 'field.name' key-type mismatch between generics
+    return <DefaultFieldRenderer {...(fieldProps as unknown as FieldRenderProps<BaseEntity>)} />;
+  });
+
+FormFieldComponent.displayName = 'FormFieldComponent';
 
   /**
    * Render
@@ -758,40 +840,42 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       )}
       {renderLayout()}
 
-      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t">
-        {showCancel && (
-          <button 
-            type="button" 
-            onClick={onCancel} 
-            disabled={state.submitting}
-            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {cancelText}
-          </button>
-        )}
-        
-        {showReset && (
-          <button 
-            type="button" 
-            onClick={handleReset} 
-            disabled={state.submitting}
-            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Reset
-          </button>
-        )}
-        
-        <button 
-          type="submit" 
-          disabled={isSubmitDisabled}
-          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          {state.submitting && (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      {layout !== 'tabs' && (
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t">
+          {showCancel && (
+            <button 
+              type="button" 
+              onClick={onCancel} 
+              disabled={state.submitting}
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {cancelText}
+            </button>
           )}
-          {state.submitting ? 'Submitting...' : submitText}
-        </button>
-      </div>
+          
+          {showReset && (
+            <button 
+              type="button" 
+              onClick={handleReset} 
+              disabled={state.submitting}
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Reset
+            </button>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={isSubmitDisabled}
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            {state.submitting && (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            )}
+            {state.submitting ? 'Submitting...' : submitText}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
@@ -799,7 +883,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 /**
  * Default Field Renderer
  */
-function DefaultFieldRenderer<T extends BaseEntity>({
+const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
   field,
   value,
   error,
@@ -809,7 +893,7 @@ function DefaultFieldRenderer<T extends BaseEntity>({
   disabled,
   validateOnChange,
   formValues,
-}: FieldRenderProps<T>) {
+}: FieldRenderProps<T>) => {
   const [options, setOptions] = useState<Array<{ label: string; value: string | number | boolean; disabled?: boolean }>>([]);
 
   useEffect(() => {
@@ -818,17 +902,60 @@ function DefaultFieldRenderer<T extends BaseEntity>({
     }
   }, [field]);
 
+  // State for searchable select
+  const isSearchableSelect = field.type === 'select' && field.searchable;
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [searchOptions, setSearchOptions] = useState<FieldOption[]>([]);
+  const loadedInitialRef = useRef(false);
+
+  // Debounce search query for searchable select
+  useEffect(() => {
+    if (isSearchableSelect) {
+      const timer = setTimeout(() => {
+        setDebouncedQuery(searchQuery);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isSearchableSelect, searchQuery]);
+
+  // Load options for searchable select
+  useEffect(() => {
+    if (isSearchableSelect && ((open && !loadedInitialRef.current) || debouncedQuery)) {
+      const loadOptions = async () => {
+        try {
+          const opts = await getFieldOptions(field, formValues, debouncedQuery);
+          // Filter options based on search query
+          const filtered = debouncedQuery 
+            ? opts.filter(opt => 
+                opt.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+                String(opt.value).toLowerCase().includes(debouncedQuery.toLowerCase())
+              )
+            : opts;
+          setSearchOptions(filtered);
+          if (!loadedInitialRef.current) loadedInitialRef.current = true;
+        } catch (error) {
+          console.error('Failed to load options:', error);
+          setSearchOptions([]);
+        }
+      };
+      loadOptions();
+    }
+  }, [isSearchableSelect, open, debouncedQuery, field, formValues]);
+
   // Show errors immediately if validateOnChange is true, otherwise wait for touch
   const showError = validateOnChange ? !!error : (touched && !!error);
   const errorId = `${String(field.name)}-error`;
 
   const commonProps = {
     id: String(field.name),
+    name: String(field.name),
     disabled,
-    onBlur,
-    required: field.required,
+    required: isFieldRequired(field, formValues),
     'aria-invalid': showError ? ('true' as const) : undefined,
     'aria-describedby': showError ? errorId : undefined,
+    autoComplete: field.type === 'email' ? 'email' : field.type === 'password' ? 'current-password' : 'off',
   };
 
   const renderInput = () => {
@@ -874,8 +1001,11 @@ function DefaultFieldRenderer<T extends BaseEntity>({
       case 'textarea':
         return (
           <textarea
-            value={String(value || '')}
-            onChange={(e) => onChange(e.target.value)}
+            defaultValue={String(value || '')}
+            onBlur={(e) => {
+              onChange(e.target.value);
+              onBlur();
+            }}
             placeholder={field.placeholder}
             rows={field.rows || 3}
             className={`${inputClasses} ${errorClasses}`}
@@ -886,45 +1016,7 @@ function DefaultFieldRenderer<T extends BaseEntity>({
       case 'select':
         if (field.searchable) {
           // Searchable combobox
-          const [open, setOpen] = useState(false);
-          const [searchQuery, setSearchQuery] = useState('');
-          const [debouncedQuery, setDebouncedQuery] = useState('');
-          const [searchOptions, setSearchOptions] = useState<FieldOption[]>([]);
-          const loadedInitialRef = useRef(false);
-
-          // Debounce search query
-          useEffect(() => {
-            const timer = setTimeout(() => {
-              setDebouncedQuery(searchQuery);
-            }, 300);
-            return () => clearTimeout(timer);
-          }, [searchQuery]);
-
-          // Load options when opened or search changes
-          useEffect(() => {
-            if ((open && !loadedInitialRef.current) || debouncedQuery) {
-              const loadOptions = async () => {
-                try {
-                  const opts = await getFieldOptions(field, formValues, debouncedQuery);
-                  // Filter options based on search query
-                  const filtered = debouncedQuery 
-                    ? opts.filter(opt => 
-                        opt.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-                        String(opt.value).toLowerCase().includes(debouncedQuery.toLowerCase())
-                      )
-                    : opts;
-                  setSearchOptions(filtered);
-                  if (!loadedInitialRef.current) loadedInitialRef.current = true;
-                } catch (error) {
-                  console.error('Failed to load options:', error);
-                  setSearchOptions([]);
-                }
-              };
-              loadOptions();
-            }
-          }, [open, debouncedQuery, field, formValues]);
-
-          const selectedOption = options.find(opt => String(opt.value) === String(value));
+          const selectedOption = searchOptions.find(opt => String(opt.value) === String(value));
 
           return (
             <Popover open={open} onOpenChange={setOpen}>
@@ -932,7 +1024,6 @@ function DefaultFieldRenderer<T extends BaseEntity>({
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={open}
                   className={`${inputClasses} ${errorClasses} justify-between`}
                   disabled={disabled}
                 >
@@ -980,6 +1071,7 @@ function DefaultFieldRenderer<T extends BaseEntity>({
             <select 
               value={String(value || '')} 
               onChange={(e) => onChange(e.target.value)}
+              onBlur={onBlur}
               className={`${inputClasses} ${errorClasses}`}
               {...commonProps}
             >
@@ -1058,17 +1150,31 @@ function DefaultFieldRenderer<T extends BaseEntity>({
 
       default:
         return (
-          <input
-            type={field.type}
-            value={String(value || '')}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={field.placeholder}
-            min={field.min}
-            max={field.max}
-            step={field.step}
-            className={`${inputClasses} ${errorClasses}`}
-            {...commonProps}
-          />
+          <>
+            <input
+              type={field.type}
+              defaultValue={String(value || '')}
+              onBlur={(e) => {
+                onChange(e.target.value);
+                onBlur();
+              }}
+              placeholder={field.placeholder}
+              min={field.min}
+              max={field.max}
+              step={field.step}
+              className={`${inputClasses} ${errorClasses}`}
+              {...commonProps}
+            />
+            {field.type === 'password' && (
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                style={{ display: 'none' }}
+                aria-hidden="true"
+              />
+            )}
+          </>
         );
     }
   };
@@ -1080,20 +1186,22 @@ function DefaultFieldRenderer<T extends BaseEntity>({
         className="block text-sm font-medium text-foreground"
       >
         {field.label}
-        {field.required && <span className="text-destructive ml-1" aria-label="required" title="Required field">*</span>}
+        {isFieldRequired(field, formValues) && <span className="text-destructive ml-1" aria-label="required" title="Required field">*</span>}
       </label>
       {renderInput()}
       {field.helpText && !showError && (
         <p className="text-xs text-muted-foreground">{field.helpText}</p>
       )}
       {showError && (
-        <p className="text-xs text-destructive flex items-center gap-1" id={errorId} role="alert">
+        <p className="text-xs text-destructive flex items-center gap-1" id={errorId} >
           <span aria-hidden="true">⚠</span>
           {error}
         </p>
       )}
     </div>
   );
-}
+});
+
+DefaultFieldRenderer.displayName = 'DefaultFieldRenderer';
 
 export default EntityForm;

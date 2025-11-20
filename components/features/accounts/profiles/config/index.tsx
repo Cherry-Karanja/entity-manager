@@ -4,12 +4,12 @@
  * Central configuration for the UserProfile entity.
  */
 
-import { EntityConfig } from '@/components/entityManager/primitives/types';
+import { EntityConfig } from '@/components/entityManager/composition/config/types';
 import { UserProfile } from '../types';
 import { profileFields } from './fields';
-import { profileColumns, profileListConfig } from './list';
+import { profileColumns } from './list';
 import { profileFormLayout, profileFormSections, profileFormMode } from './form';
-import { profileViewFields, profileViewGroups } from './view';
+import { profileViewFields } from './view';
 import { profileActions, profileBulkActions } from './actions';
 
 export const userProfileConfig: EntityConfig<UserProfile> = {
@@ -24,7 +24,6 @@ export const userProfileConfig: EntityConfig<UserProfile> = {
   
   // List Configuration
   columns: profileColumns,
-  listConfig: profileListConfig,
   
   // Form Configuration
   formLayout: profileFormLayout,
@@ -33,18 +32,21 @@ export const userProfileConfig: EntityConfig<UserProfile> = {
   
   // View Configuration
   viewFields: profileViewFields,
-  viewGroups: profileViewGroups,
   
   // Actions - Temporarily disabled due to type mismatch
+  actions: [],
   // actions: profileActions,
   // bulkActions: profileBulkActions,
+  
+  // Export Configuration
+  exportFields: [],
   
   // API Configuration
   apiEndpoint: '/api/accounts/profiles',
   
   // Display Configuration
   displayField: 'user_name',
-  searchFields: ['user_name', 'user_email', 'bio', 'job_title', 'department'],
+  searchableFields: ['user_name', 'user_email', 'bio', 'job_title', 'department'],
   defaultSort: { field: 'created_at', direction: 'desc' },
 };
 

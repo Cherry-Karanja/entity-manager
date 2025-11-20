@@ -378,7 +378,11 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           error={state.state.error}
           rowActions={({ entity }) => (
             <EntityActions
-              actions={config.config.actions?.filter(a => a.position === 'row') || []}
+              actions={
+                (config.config.actions
+                  ?.filter((a: any) => a.position === 'row')
+                  .map((a: any) => ({ ...a, actionType: (a as any).actionType ?? 'button' })) as any) || []
+              }
               entity={entity}
             />
           )}
@@ -399,18 +403,26 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     console.log('Form sections:', config.config.formSections);
     console.log('Form fields:', config.config.fields);
     
+    const currentMode = view === 'create' ? 'create' : 'edit';
+    const modeConfig = config.config.formMode?.[currentMode];
+    
+    const formLayout = modeConfig?.layout || config.config.formLayout;
+    const formSections = modeConfig?.sections || config.config.formSections;
+    const formFields = modeConfig?.fields || config.config.fields;
+    
     return (
       <div className="space-y-3 sm:space-y-4">
         {renderBreadcrumbs()}
         <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6">
           <EntityForm
-            fields={config.config.fields as never}
+            fields={formFields as never}
             entity={view === 'edit' ? selectedEntity : undefined}
-            mode={view === 'create' ? 'create' : 'edit'}
-            layout={config.config.formLayout}
-            sections={config.config.formSections as never}
+            mode={currentMode}
+            layout={formLayout}
+            sections={formSections as never}
             onSubmit={handleSubmit}
             onCancel={handleBack}
+            onValidate={config.config.onValidate}
           />
         </div>
       </div>
@@ -441,7 +453,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         {renderBreadcrumbs()}
         <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6">
         <EntityActions
-          actions={config.config.actions.filter(a => a.position === 'toolbar')}
+          actions={config.config.actions?.filter((a: any) => a.position === 'toolbar') || []}
           entity={selectedEntity}
         />
         
