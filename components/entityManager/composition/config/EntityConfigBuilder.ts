@@ -5,7 +5,7 @@
  */
 
 import { BaseEntity } from '../../primitives/types';
-import { EntityConfig, BuilderCallback } from './types';
+import { EntityConfig, BuilderCallback, EntityListConfig, EntityFormConfig, EntityViewConfig, EntityActionsConfig, EntityExporterConfig } from './types';
 import { FieldBuilder } from './FieldBuilder';
 import { ColumnBuilder } from './ColumnBuilder';
 import { ActionBuilder } from './ActionBuilder';
@@ -16,19 +16,41 @@ import { Action } from '../../components/actions/types';
 import { ExportField } from '../../components/exporter/types';
 
 /**
+ * Internal builder state that maps to EntityConfig structure
+ */
+interface BuilderState<T extends BaseEntity> {
+  name: string;
+  pluralName?: string;
+  label: string;
+  labelPlural: string;
+  description?: string;
+  list: Partial<EntityListConfig<T>> & { columns: Column<T>[] };
+  form: Partial<EntityFormConfig<T>> & { fields: FormField<T>[] };
+  view: Partial<EntityViewConfig<T>> & { fields: ViewField<T>[] };
+  actions: { actions: Action<T>[] };
+  exporter: { fields: ExportField[] };
+  permissions?: EntityConfig['permissions'];
+  metadata?: Record<string, unknown>;
+  apiEndpoint?: string;
+  icon?: string;
+}
+
+/**
  * Entity config builder class
  */
 export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
-  private config: Partial<EntityConfig<T>>;
+  private state: BuilderState<T>;
 
   constructor(name: string) {
-    this.config = {
+    this.state = {
       name,
-      columns: [],
-      fields: [],
-      viewFields: [],
-      actions: [],
-      exportFields: []
+      label: name,
+      labelPlural: name + 's',
+      list: { columns: [] },
+      form: { fields: [] },
+      view: { fields: [] },
+      actions: { actions: [] },
+      exporter: { fields: [] }
     };
   }
 
@@ -36,7 +58,8 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set plural name
    */
   pluralName(pluralName: string): this {
-    this.config.pluralName = pluralName;
+    this.state.pluralName = pluralName;
+    this.state.labelPlural = pluralName;
     return this;
   }
 
@@ -44,7 +67,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set description
    */
   description(description: string): this {
-    this.config.description = description;
+    this.state.description = description;
     return this;
   }
 
@@ -52,15 +75,15 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Add a column
    */
   addColumn(column: Column<T>): this {
-    this.config.columns!.push(column);
+    this.state.list.columns.push(column);
     return this;
   }
 
   /**
-   * Add columns
+   * Set columns
    */
   columns(columns: Column<T>[]): this {
-    this.config.columns = columns;
+    this.state.list.columns = columns;
     return this;
   }
 
@@ -81,7 +104,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Add a field
    */
   addField(field: FormField<T>): this {
-    this.config.fields!.push(field);
+    this.state.form.fields.push(field);
     return this;
   }
 
@@ -89,7 +112,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set fields
    */
   fields(fields: FormField<T>[]): this {
-    this.config.fields = fields;
+    this.state.form.fields = fields;
     return this;
   }
 
@@ -110,7 +133,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Add a view field
    */
   addViewField(field: ViewField<T>): this {
-    this.config.viewFields!.push(field);
+    this.state.view.fields.push(field);
     return this;
   }
 
@@ -118,7 +141,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set view fields
    */
   viewFields(fields: ViewField<T>[]): this {
-    this.config.viewFields = fields;
+    this.state.view.fields = fields;
     return this;
   }
 
@@ -139,7 +162,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Add an action
    */
   addAction(action: Action<T>): this {
-    this.config.actions!.push(action);
+    this.state.actions.actions.push(action);
     return this;
   }
 
@@ -147,7 +170,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set actions
    */
   actions(actions: Action<T>[]): this {
-    this.config.actions = actions;
+    this.state.actions.actions = actions;
     return this;
   }
 
@@ -168,7 +191,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Add export field
    */
   addExportField(field: ExportField): this {
-    this.config.exportFields!.push(field);
+    this.state.exporter.fields.push(field);
     return this;
   }
 
@@ -176,7 +199,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set export fields
    */
   exportFields(fields: ExportField[]): this {
-    this.config.exportFields = fields;
+    this.state.exporter.fields = fields;
     return this;
   }
 
@@ -184,7 +207,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set default sort
    */
   defaultSort(field: string, direction: 'asc' | 'desc' = 'asc'): this {
-    this.config.defaultSort = { field, direction };
+    this.state.list.sortConfig = { field, direction };
     return this;
   }
 
@@ -192,55 +215,62 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set default page size
    */
   defaultPageSize(size: number): this {
-    this.config.defaultPageSize = size;
+    this.state.list.paginationConfig = {
+      ...this.state.list.paginationConfig,
+      page: 1,
+      pageSize: size
+    };
     return this;
   }
 
   /**
-   * Set searchable fields
+   * Enable searchable list
    */
-  searchable(...fields: string[]): this {
-    this.config.searchableFields = fields;
+  searchable(placeholder?: string): this {
+    this.state.list.searchable = true;
+    if (placeholder) {
+      this.state.list.searchPlaceholder = placeholder;
+    }
     return this;
   }
 
   /**
-   * Set filterable fields
+   * Enable filterable list
    */
-  filterable(...fields: string[]): this {
-    this.config.filterableFields = fields;
+  filterable(): this {
+    this.state.list.filterable = true;
     return this;
   }
 
   /**
-   * Set title field
+   * Set title field (for card/list views)
    */
   titleField(field: string): this {
-    this.config.titleField = field;
+    this.state.list.titleField = field as keyof T | string;
     return this;
   }
 
   /**
-   * Set subtitle field
+   * Set subtitle field (for card/list views)
    */
   subtitleField(field: string): this {
-    this.config.subtitleField = field;
+    this.state.list.subtitleField = field as keyof T | string;
     return this;
   }
 
   /**
-   * Set image field
+   * Set image field (for gallery view)
    */
   imageField(field: string): this {
-    this.config.imageField = field;
+    this.state.list.imageField = field as keyof T | string;
     return this;
   }
 
   /**
-   * Set date field
+   * Set date field (for timeline view)
    */
   dateField(field: string): this {
-    this.config.dateField = field;
+    this.state.list.dateField = field as keyof T | string;
     return this;
   }
 
@@ -248,7 +278,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set permissions
    */
   permissions(permissions: EntityConfig['permissions']): this {
-    this.config.permissions = permissions;
+    this.state.permissions = permissions;
     return this;
   }
 
@@ -282,7 +312,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set metadata
    */
   metadata(metadata: Record<string, unknown>): this {
-    this.config.metadata = metadata;
+    this.state.metadata = metadata;
     return this;
   }
 
@@ -290,10 +320,10 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Set metadata value
    */
   meta(key: string, value: unknown): this {
-    if (!this.config.metadata) {
-      this.config.metadata = {};
+    if (!this.state.metadata) {
+      this.state.metadata = {};
     }
-    this.config.metadata[key] = value;
+    this.state.metadata[key] = value;
     return this;
   }
 
@@ -301,10 +331,10 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Auto-generate export fields from columns
    */
   autoExportFields(): this {
-    this.config.exportFields = this.config.columns!.map(col => ({
+    this.state.exporter.fields = this.state.list.columns.map(col => ({
       key: String(col.key),
       label: col.label,
-      formatter: col.formatter as any
+      formatter: col.formatter as ((value: unknown) => string) | undefined
     }));
     return this;
   }
@@ -313,13 +343,13 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Auto-generate view fields from columns
    */
   autoViewFields(): this {
-    this.config.viewFields = this.config.columns!.map(col => {
+    this.state.view.fields = this.state.list.columns.map(col => {
       // Map select type to text for view fields
       const viewType = col.type === 'select' ? 'text' : col.type;
       return {
         key: String(col.key),
         label: col.label,
-        type: viewType as any,
+        type: viewType as ViewField<T>['type'],
         visible: col.visible,
         order: col.order
       };
@@ -331,7 +361,22 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    * Build the configuration
    */
   build(): EntityConfig<T> {
-    return this.config as EntityConfig<T>;
+    return {
+      name: this.state.name,
+      pluralName: this.state.pluralName,
+      label: this.state.label,
+      labelPlural: this.state.labelPlural,
+      description: this.state.description,
+      list: this.state.list as EntityListConfig<T>,
+      form: this.state.form as EntityFormConfig<T>,
+      view: this.state.view as EntityViewConfig<T>,
+      actions: this.state.actions as EntityActionsConfig<T>,
+      exporter: this.state.exporter as EntityExporterConfig<T>,
+      permissions: this.state.permissions,
+      metadata: this.state.metadata,
+      apiEndpoint: this.state.apiEndpoint,
+      icon: this.state.icon
+    };
   }
 
   /**
@@ -358,7 +403,16 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
    */
   static from<T extends BaseEntity = BaseEntity>(config: Partial<EntityConfig<T>>): EntityConfigBuilder<T> {
     const builder = new EntityConfigBuilder<T>(config.name || 'Entity');
-    builder.config = { ...config };
+    // Copy over existing config
+    if (config.pluralName) builder.pluralName(config.pluralName);
+    if (config.description) builder.description(config.description);
+    if (config.list?.columns) builder.columns(config.list.columns);
+    if (config.form?.fields) builder.fields(config.form.fields);
+    if (config.view?.fields) builder.viewFields(config.view.fields);
+    if (config.actions?.actions) builder.actions(config.actions.actions);
+    if (config.exporter?.fields) builder.exportFields(config.exporter.fields as ExportField[]);
+    if (config.permissions) builder.permissions(config.permissions);
+    if (config.metadata) builder.metadata(config.metadata);
     return builder;
   }
 }

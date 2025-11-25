@@ -369,3 +369,6 @@ export const UserFormConfig: EntityFormConfig<User> =
 };
  
 
+
+// Export individual parts for backward compatibility
+export const userFields = UserFormConfig.fields;

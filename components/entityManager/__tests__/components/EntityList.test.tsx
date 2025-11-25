@@ -461,7 +461,7 @@ describe('EntityList', () => {
         <EntityList
           data={mockData}
           columns={mockColumns}
-          actions={mockActions}
+          actions={{ actions: mockActions }}
         />
       );
 
@@ -486,7 +486,7 @@ describe('EntityList', () => {
         <EntityList
           data={mockData}
           columns={mockColumns}
-          actions={actions}
+          actions={{ actions }}
         />
       );
 
@@ -514,7 +514,7 @@ describe('EntityList', () => {
         <EntityList
           data={mockData}
           columns={mockColumns}
-          actions={actions}
+          actions={{ actions }}
         />
       );
 
