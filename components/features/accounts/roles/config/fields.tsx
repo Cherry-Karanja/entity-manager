@@ -96,21 +96,33 @@ export const roleFields: FormField<UserRole>[] = [
   {
     name: 'permissions',
     label: 'Permissions',
-    type: 'multiselect',
+    type: 'custom',
     required: false,
     group: 'permissions',
-    helpText: 'Select permissions for this role',
+    helpText: 'Select permissions for this role (grouped by app for easy management)',
     width: '100%',
-    // Options will be loaded dynamically from API
-    options: async () => {
-      // Placeholder - will be replaced with actual API call
-      return [
-        { value: 'view_user', label: 'View Users' },
-        { value: 'add_user', label: 'Add Users' },
-        { value: 'change_user', label: 'Change Users' },
-        { value: 'delete_user', label: 'Delete Users' },
-        { value: 'approve_user', label: 'Approve Users' },
-      ];
-    },
+    // Custom render function will use PermissionSelector component
+    render: 'PermissionSelector',
   },
 ];
+
+export const PermissionFormConfig = {
+  fields: roleFields,
+  groups: [
+    {
+      name: 'basic',
+      label: 'Basic Information',
+      description: 'Role name and description',
+    },
+    {
+      name: 'permissions',
+      label: 'Permissions',
+      description: 'Assign permissions to this role',
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      description: 'Role activation status',
+    },
+  ],
+};
