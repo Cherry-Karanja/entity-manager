@@ -4,6 +4,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { ClassGroup } from '../../types';
+import { programmesApiClient } from '../../programmes/api/client';
+import { intakesApiClient } from '../../intakes/api/client';
 
 export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
   fields: [
@@ -24,22 +26,26 @@ export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
     {
       name: 'programme',
       label: 'Programme',
-      type: 'relationship',
+      type: 'relation',
       required: true,
       placeholder: 'Select programme',
       group: 'basic',
-      relationshipConfig: {
-        endpoint: '/api/v1/institution/programmes/',
-        labelField: 'name',
+      relationConfig: {
+        entity: 'Programme',
+        displayField: 'name',
         valueField: 'id',
-        searchField: 'search',
+        searchFields: ['name', 'code'],
+        fetchOptions: async (search?: string) => {
+          const response = await programmesApiClient.list({ search, pageSize: 50 });
+          return response.data;
+        },
       },
       width: '50%',
     },
     {
       name: 'auto_fill_fields',
       label: 'Auto-fill from Name',
-      type: 'boolean',
+      type: 'switch',
       required: false,
       group: 'basic',
       helpText: 'If enabled, intake, year, term, and suffix will be derived from the class name',
@@ -59,15 +65,19 @@ export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
     {
       name: 'intake',
       label: 'Intake',
-      type: 'relationship',
+      type: 'relation',
       required: false,
       placeholder: 'Select intake',
       group: 'details',
-      relationshipConfig: {
-        endpoint: '/api/v1/institution/intakes/',
-        labelField: 'name',
+      relationConfig: {
+        entity: 'Intake',
+        displayField: 'name',
         valueField: 'id',
-        searchField: 'search',
+        searchFields: ['name'],
+        fetchOptions: async (search?: string) => {
+          const response = await intakesApiClient.list({ search, pageSize: 50 });
+          return response.data;
+        },
       },
       helpText: 'Academic intake (auto-filled if auto-fill is enabled)',
       width: '25%',
@@ -104,8 +114,8 @@ export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
       group: 'details',
       options: [
         { value: '', label: 'None' },
-        { value: 'M', label: 'M - Morning' },
-        { value: 'H', label: 'H - Half-day' },
+        { value: 'M', label: 'M - Modular' },
+        { value: 'H', label: 'H - Harmonized' },
         { value: 'O', label: 'O - Other' },
       ],
       width: '25%',
@@ -113,19 +123,49 @@ export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
     {
       name: 'is_active',
       label: 'Active',
-      type: 'boolean',
+      type: 'switch',
       required: false,
       group: 'status',
       defaultValue: true,
-      width: '100%',
+      width: '25%',
     },
   ],
 
-  fieldGroups: [
-    { id: 'basic', title: 'Basic Information', collapsible: false },
-    { id: 'details', title: 'Class Details', description: 'These are auto-filled if auto-fill is enabled', collapsible: true },
-    { id: 'status', title: 'Status', collapsible: false },
+  layout: 'tabs',
+
+  sections: [
+    {
+      id: 'basic',
+      label: 'Basic Information',
+      description: 'Core class details',
+      fields: ['name', 'programme', 'auto_fill_fields'],
+      order: 1,
+    },
+    {
+      id: 'details',
+      label: 'Class Details',
+      description: 'These are auto-filled if auto-fill is enabled',
+      fields: ['cirriculum_code', 'intake', 'year', 'term_number', 'suffix'],
+      order: 2,
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      description: 'Class status',
+      fields: ['is_active'],
+      order: 3,
+    },
   ],
 
-  layout: 'standard',
+  submitText: 'Save Class Group',
+  cancelText: 'Cancel',
+  showCancel: true,
+  showReset: true,
+
+  disabled: false,
+  className: 'class-group-form',
+  validateOnChange: true,
+  validateOnBlur: true,
+  resetOnSubmit: false,
+
 };

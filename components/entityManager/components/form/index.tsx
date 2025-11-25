@@ -119,7 +119,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
           validateField(value, field, newValues as Record<string, unknown>).then(error => {
             setState(s => ({
               ...s,
-              errors: error 
+              errors: error
                 ? { ...s.errors, [fieldName]: error }
                 : Object.fromEntries(Object.entries(s.errors).filter(([k]) => k !== fieldName)),
             }));
@@ -151,7 +151,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
           validateField(value, field, prev.values as Record<string, unknown>).then(error => {
             setState(s => ({
               ...s,
-              errors: error 
+              errors: error
                 ? { ...s.errors, [fieldName]: error }
                 : Object.fromEntries(Object.entries(s.errors).filter(([k]) => k !== fieldName)),
             }));
@@ -211,12 +211,12 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
     try {
       setState(prev => ({ ...prev, submitting: true }));
-      
+
       // Transform values
       const transformedValues = transformValues(state.values, fields);
-      
+
       await onSubmit(transformedValues);
-      
+
       // Reset form if resetOnSubmit is true
       if (resetOnSubmit) {
         const resetValues = getInitialValues(fields, undefined, initialValues);
@@ -233,8 +233,8 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
         setState(prev => ({ ...prev, submitting: false }));
       }
     } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         submitting: false,
         submitError: error instanceof Error ? error.message : 'An error occurred during submission'
       }));
@@ -276,16 +276,16 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       case 'tabs':
         // Use tabs if provided, otherwise convert sections to tabs
         return tabs ? <TabsLayout /> : sections ? <SectionsAsTabsLayout /> : <VerticalLayout />;
-      
+
       case 'wizard':
         return steps ? <WizardLayout /> : <VerticalLayout />;
-      
+
       case 'grid':
         return <GridLayout />;
-      
+
       case 'horizontal':
         return <HorizontalLayout />;
-      
+
       case 'vertical':
       default:
         return <VerticalLayout />;
@@ -331,7 +331,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
           return (
             <div key={section.id} className="border rounded-lg overflow-hidden bg-card shadow-sm">
-              <div 
+              <div
                 className={`flex items-center justify-between px-4 py-3 bg-muted/30 border-b ${section.collapsible ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
                 onClick={() => section.collapsible && toggleSection(section.id)}
                 onKeyDown={(e) => section.collapsible && (e.key === 'Enter' || e.key === ' ') && toggleSection(section.id)}
@@ -437,7 +437,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
               colSpan = `md:col-span-${Math.min(numWidth, 2)} lg:col-span-${Math.min(numWidth, 4)}`;
             }
           }
-          
+
           return (
             <div key={String(field.name)} className={colSpan}>
               <FormFieldComponent field={field} />
@@ -465,11 +465,10 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
               <button
                 key={tab.id}
                 type="button"
-                className={`flex items-center gap-2 px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${
-                  state.currentTab === tab.id
+                className={`flex items-center gap-2 px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${state.currentTab === tab.id
                     ? 'border-primary text-primary bg-primary/5'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
-                }`}
+                  }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: tab.id }))}
                 role="tab"
               >
@@ -482,7 +481,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
         <div className="min-h-[300px]">
           {sortedTabs.map(tab => {
             if (tab.id !== state.currentTab) return null;
-            
+
             const tabFields = groupedFields.get(tab.id) || [];
             return (
               <div key={tab.id} role="tabpanel">
@@ -522,7 +521,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const sortedSections = sortSections(sections);
     const visibleFields = fields.filter(f => isFieldVisible(f, state.values));
     const groupedFields = groupFieldsBySections(visibleFields, sections);
-    
+
     // If there are ungrouped fields, add them to the first section
     const ungroupedFields = groupedFields.get(null) || [];
     if (ungroupedFields.length > 0 && sortedSections.length > 0) {
@@ -531,7 +530,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       groupedFields.set(firstSectionId, [...firstSectionFields, ...ungroupedFields]);
       groupedFields.delete(null);
     }
-    
+
     const currentTabIndex = state.currentTabIndex || 0;
 
     const goToNextTab = async () => {
@@ -541,7 +540,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       const currentSection = sortedSections[currentTabIndex];
       const tabFields = groupedFields.get(currentSection.id) || [];
       const tabErrors = await validateForm(state.values, tabFields);
-      
+
       if (hasErrors(tabErrors)) {
         setState(prev => ({ ...prev, errors: { ...prev.errors, ...tabErrors } }));
         return;
@@ -568,11 +567,10 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 <button
                   key={section.id}
                   type="button"
-                  className={`px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${
-                    index === currentTabIndex 
-                      ? 'border-primary text-primary bg-primary/5' 
+                  className={`px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${index === currentTabIndex
+                      ? 'border-primary text-primary bg-primary/5'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
-                  }`}
+                    }`}
                   onClick={() => setState(prev => ({ ...prev, currentTabIndex: index }))}
                   role="tab"
                 >
@@ -586,7 +584,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
         <div className="min-h-[300px]">
           {sortedSections.map((section, index) => {
             if (index !== currentTabIndex) return null;
-            
+
             const sectionFields = groupedFields.get(section.id) || [];
             return (
               <div key={section.id} className="space-y-4" role="tabpanel">
@@ -618,8 +616,8 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
         {/* Navigation buttons */}
         <div className="flex items-center justify-between pt-4 border-t">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={goToPreviousTab}
             disabled={currentTabIndex === 0}
             className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -627,15 +625,15 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
             Previous
           </button>
           {currentTabIndex < sortedSections.length - 1 ? (
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={goToNextTab}
               className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
             >
               Next
             </button>
           ) : (
-            <button 
+            <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
             >
@@ -662,16 +660,16 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     const goToNextStep = async () => {
       // Validate fields in current step (including required fields)
       const stepErrors = await validateForm(state.values, stepFields);
-      
+
       // Run custom step validation if provided
       let customErrors: Record<string, string> = {};
       if (currentStepData.validate) {
         customErrors = await currentStepData.validate(state.values as Record<string, unknown>);
       }
-      
+
       // Combine all errors
       const allErrors = { ...stepErrors, ...customErrors };
-      
+
       if (hasErrors(allErrors)) {
         setState(prev => ({ ...prev, errors: { ...prev.errors, ...allErrors } }));
         return;
@@ -696,25 +694,22 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
             {sortedSteps.map((step, index) => (
               <div key={step.id} className="flex items-center flex-1 min-w-0">
                 <div className={`flex flex-col items-center flex-1 ${index > 0 ? 'ml-2' : ''}`}>
-                  <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${
-                    index === currentStepIndex 
-                      ? 'border-primary bg-primary text-primary-foreground' 
+                  <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${index === currentStepIndex
+                      ? 'border-primary bg-primary text-primary-foreground'
                       : index < currentStepIndex
-                      ? 'border-primary bg-primary/20 text-primary'
-                      : 'border-muted-foreground/30 bg-background text-muted-foreground'
-                  }`}>
+                        ? 'border-primary bg-primary/20 text-primary'
+                        : 'border-muted-foreground/30 bg-background text-muted-foreground'
+                    }`}>
                     <span className="text-sm font-semibold">{index + 1}</span>
                   </div>
-                  <span className={`mt-2 text-xs sm:text-sm font-medium text-center line-clamp-2 ${
-                    index === currentStepIndex ? 'text-primary' : 'text-muted-foreground'
-                  }`}>
+                  <span className={`mt-2 text-xs sm:text-sm font-medium text-center line-clamp-2 ${index === currentStepIndex ? 'text-primary' : 'text-muted-foreground'
+                    }`}>
                     {step.label}
                   </span>
                 </div>
                 {index < sortedSteps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-1 sm:mx-2 ${
-                    index < currentStepIndex ? 'bg-primary' : 'bg-muted-foreground/30'
-                  }`} />
+                  <div className={`flex-1 h-0.5 mx-1 sm:mx-2 ${index < currentStepIndex ? 'bg-primary' : 'bg-muted-foreground/30'
+                    }`} />
                 )}
               </div>
             ))}
@@ -751,8 +746,8 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
 
         {/* Navigation buttons */}
         <div className="flex items-center justify-between pt-4 border-t">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={goToPreviousStep}
             disabled={currentStepIndex === 0}
             className="px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -760,15 +755,15 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
             Previous
           </button>
           {currentStepIndex < sortedSteps.length - 1 ? (
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={goToNextStep}
               className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
             >
               Next
             </button>
           ) : (
-            <button 
+            <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors"
             >
@@ -825,7 +820,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     return <DefaultFieldRenderer {...(fieldProps as unknown as FieldRenderProps<BaseEntity>)} />;
   });
 
-FormFieldComponent.displayName = 'FormFieldComponent';
+  FormFieldComponent.displayName = 'FormFieldComponent';
 
   /**
    * Render
@@ -844,20 +839,20 @@ FormFieldComponent.displayName = 'FormFieldComponent';
       {layout !== 'tabs' && (
         <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t">
           {showCancel && (
-            <button 
-              type="button" 
-              onClick={onCancel} 
+            <button
+              type="button"
+              onClick={onCancel}
               disabled={state.submitting}
               className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {cancelText}
             </button>
           )}
-          
+
           {showReset && (
-            <button 
-              type="button" 
-              onClick={handleReset} 
+            <button
+              type="button"
+              onClick={handleReset}
               disabled={state.submitting}
               className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground bg-background border border-input rounded-md hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -865,8 +860,8 @@ FormFieldComponent.displayName = 'FormFieldComponent';
             </button>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isSubmitDisabled}
             className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
@@ -928,11 +923,11 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
         try {
           const opts = await getFieldOptions(field, formValues, debouncedQuery);
           // Filter options based on search query
-          const filtered = debouncedQuery 
-            ? opts.filter(opt => 
-                opt.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-                String(opt.value).toLowerCase().includes(debouncedQuery.toLowerCase())
-              )
+          const filtered = debouncedQuery
+            ? opts.filter(opt =>
+              opt.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+              String(opt.value).toLowerCase().includes(debouncedQuery.toLowerCase())
+            )
             : opts;
           setSearchOptions(filtered);
           if (!loadedInitialRef.current) loadedInitialRef.current = true;
@@ -961,7 +956,7 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
   const renderInput = () => {
     const inputClasses = "w-full px-3 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed";
     const errorClasses = showError ? "border-destructive focus:ring-destructive" : "";
-    
+
     // Format date values for input fields
     const getDateValue = (val: unknown): string => {
       if (!val) return '';
@@ -996,7 +991,7 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
       }
       return String(val);
     };
-    
+
     switch (field.type) {
       case 'textarea':
         return (
@@ -1033,8 +1028,8 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                 <Command>
-                  <CommandInput 
-                    placeholder="Search..." 
+                  <CommandInput
+                    placeholder="Search..."
                     value={searchQuery}
                     onValueChange={setSearchQuery}
                   />
@@ -1052,9 +1047,8 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
                           }}
                         >
                           <Check
-                            className={`mr-2 h-4 w-4 ${
-                              String(value) === String(option.value) ? "opacity-100" : "opacity-0"
-                            }`}
+                            className={`mr-2 h-4 w-4 ${String(value) === String(option.value) ? "opacity-100" : "opacity-0"
+                              }`}
                           />
                           {option.label}
                         </CommandItem>
@@ -1068,8 +1062,8 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
         } else {
           // Regular select
           return (
-            <select 
-              value={String(value || '')} 
+            <select
+              value={String(value || '')}
               onChange={(e) => onChange(e.target.value)}
               onBlur={onBlur}
               className={`${inputClasses} ${errorClasses}`}
@@ -1083,7 +1077,7 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
               ))}
             </select>
           );
-        }      case 'checkbox':
+        } case 'checkbox':
       case 'switch':
         return (
           <input
@@ -1148,6 +1142,293 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
           />
         );
 
+      case 'relation': {
+        // Single relation field - select one related entity
+        if (!field.relationConfig) {
+          return <div className="text-destructive text-sm">Relation config is required</div>;
+        }
+
+        const relationConfig = field.relationConfig;
+        const [relationOpen, setRelationOpen] = useState(false);
+        const [relationSearch, setRelationSearch] = useState('');
+        const [relationOptions, setRelationOptions] = useState<any[]>([]);
+        const [relationLoading, setRelationLoading] = useState(false);
+        const [relationError, setRelationError] = useState<string | null>(null);
+        const relationLoadedRef = useRef(false);
+
+        // Debounce search
+        const [debouncedRelationSearch, setDebouncedRelationSearch] = useState('');
+        useEffect(() => {
+          const timer = setTimeout(() => {
+            setDebouncedRelationSearch(relationSearch);
+          }, 300);
+          return () => clearTimeout(timer);
+        }, [relationSearch]);
+
+        // Load relation options
+        useEffect(() => {
+          if ((relationOpen && !relationLoadedRef.current) || debouncedRelationSearch) {
+            const loadRelationOptions = async () => {
+              setRelationLoading(true);
+              setRelationError(null);
+              try {
+                const entities = await relationConfig.fetchOptions(debouncedRelationSearch);
+                setRelationOptions(entities);
+                if (!relationLoadedRef.current) relationLoadedRef.current = true;
+              } catch (err) {
+                setRelationError(err instanceof Error ? err.message : 'Failed to load options');
+                setRelationOptions([]);
+              } finally {
+                setRelationLoading(false);
+              }
+            };
+            loadRelationOptions();
+          }
+        }, [relationOpen, debouncedRelationSearch, relationConfig]);
+
+        // Find selected option
+        const selectedEntity = relationOptions.find(
+          (entity) => String(entity[relationConfig.valueField]) === String(value)
+        );
+
+        return (
+          <Popover open={relationOpen} onOpenChange={setRelationOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                className={`${inputClasses} ${errorClasses} justify-between`}
+                disabled={disabled}
+              >
+                {selectedEntity
+                  ? String(selectedEntity[relationConfig.displayField])
+                  : field.placeholder || "Select..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+              <Command>
+                <CommandInput
+                  placeholder={`Search ${relationConfig.entity}...`}
+                  value={relationSearch}
+                  onValueChange={setRelationSearch}
+                />
+                <CommandList>
+                  {relationLoading && (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      Loading...
+                    </div>
+                  )}
+                  {relationError && (
+                    <div className="py-6 text-center text-sm text-destructive">
+                      {relationError}
+                    </div>
+                  )}
+                  {!relationLoading && !relationError && relationOptions.length === 0 && (
+                    <CommandEmpty>No results found.</CommandEmpty>
+                  )}
+                  {!relationLoading && !relationError && relationOptions.length > 0 && (
+                    <CommandGroup>
+                      {relationOptions.map((entity) => {
+                        const entityValue = String(entity[relationConfig.valueField]);
+                        const entityLabel = String(entity[relationConfig.displayField]);
+                        return (
+                          <CommandItem
+                            key={entityValue}
+                            value={entityValue}
+                            onSelect={() => {
+                              onChange(entity[relationConfig.valueField]);
+                              setRelationOpen(false);
+                              setRelationSearch('');
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${String(value) === entityValue ? "opacity-100" : "opacity-0"
+                                }`}
+                            />
+                            {entityLabel}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        );
+      }
+
+      case 'multirelation': {
+        // Multi-relation field - select multiple related entities
+        if (!field.relationConfig) {
+          return <div className="text-destructive text-sm">Relation config is required</div>;
+        }
+
+        const relationConfig = field.relationConfig;
+        const [multiRelationOpen, setMultiRelationOpen] = useState(false);
+        const [multiRelationSearch, setMultiRelationSearch] = useState('');
+        const [multiRelationOptions, setMultiRelationOptions] = useState<any[]>([]);
+        const [multiRelationLoading, setMultiRelationLoading] = useState(false);
+        const [multiRelationError, setMultiRelationError] = useState<string | null>(null);
+        const multiRelationLoadedRef = useRef(false);
+
+        // Ensure value is an array
+        const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
+
+        // Debounce search
+        const [debouncedMultiRelationSearch, setDebouncedMultiRelationSearch] = useState('');
+        useEffect(() => {
+          const timer = setTimeout(() => {
+            setDebouncedMultiRelationSearch(multiRelationSearch);
+          }, 300);
+          return () => clearTimeout(timer);
+        }, [multiRelationSearch]);
+
+        // Load relation options
+        useEffect(() => {
+          if ((multiRelationOpen && !multiRelationLoadedRef.current) || debouncedMultiRelationSearch) {
+            const loadMultiRelationOptions = async () => {
+              setMultiRelationLoading(true);
+              setMultiRelationError(null);
+              try {
+                const entities = await relationConfig.fetchOptions(debouncedMultiRelationSearch);
+                setMultiRelationOptions(entities);
+                if (!multiRelationLoadedRef.current) multiRelationLoadedRef.current = true;
+              } catch (err) {
+                setMultiRelationError(err instanceof Error ? err.message : 'Failed to load options');
+                setMultiRelationOptions([]);
+              } finally {
+                setMultiRelationLoading(false);
+              }
+            };
+            loadMultiRelationOptions();
+          }
+        }, [multiRelationOpen, debouncedMultiRelationSearch, relationConfig]);
+
+        // Find selected entities
+        const selectedEntities = multiRelationOptions.filter((entity) =>
+          selectedValues.includes(entity[relationConfig.valueField])
+        );
+
+        // Handle selection toggle
+        const toggleSelection = (entityValue: any) => {
+          const newValues = selectedValues.includes(entityValue)
+            ? selectedValues.filter((v) => v !== entityValue)
+            : [...selectedValues, entityValue];
+
+          // Check max selections
+          if (relationConfig.maxSelections && newValues.length > relationConfig.maxSelections) {
+            return;
+          }
+
+          onChange(newValues);
+        };
+
+        // Handle remove
+        const removeSelection = (entityValue: any) => {
+          onChange(selectedValues.filter((v) => v !== entityValue));
+        };
+
+        return (
+          <div className="space-y-2">
+            {/* Selected items as chips */}
+            {selectedEntities.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedEntities.map((entity) => {
+                  const entityValue = entity[relationConfig.valueField];
+                  const entityLabel = String(entity[relationConfig.displayField]);
+                  return (
+                    <span
+                      key={String(entityValue)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+                    >
+                      {entityLabel}
+                      <button
+                        type="button"
+                        onClick={() => removeSelection(entityValue)}
+                        disabled={disabled}
+                        className="hover:text-destructive disabled:opacity-50"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Combobox for adding more */}
+            <Popover open={multiRelationOpen} onOpenChange={setMultiRelationOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className={`${inputClasses} ${errorClasses} justify-between`}
+                  disabled={disabled || (relationConfig.maxSelections ? selectedValues.length >= relationConfig.maxSelections : false)}
+                >
+                  {field.placeholder || "Select..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                  <CommandInput
+                    placeholder={`Search ${relationConfig.entity}...`}
+                    value={multiRelationSearch}
+                    onValueChange={setMultiRelationSearch}
+                  />
+                  <CommandList>
+                    {multiRelationLoading && (
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        Loading...
+                      </div>
+                    )}
+                    {multiRelationError && (
+                      <div className="py-6 text-center text-sm text-destructive">
+                        {multiRelationError}
+                      </div>
+                    )}
+                    {!multiRelationLoading && !multiRelationError && multiRelationOptions.length === 0 && (
+                      <CommandEmpty>No results found.</CommandEmpty>
+                    )}
+                    {!multiRelationLoading && !multiRelationError && multiRelationOptions.length > 0 && (
+                      <CommandGroup>
+                        {multiRelationOptions.map((entity) => {
+                          const entityValue = entity[relationConfig.valueField];
+                          const entityLabel = String(entity[relationConfig.displayField]);
+                          const isSelected = selectedValues.includes(entityValue);
+                          return (
+                            <CommandItem
+                              key={String(entityValue)}
+                              value={String(entityValue)}
+                              onSelect={() => toggleSelection(entityValue)}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${isSelected ? "opacity-100" : "opacity-0"
+                                  }`}
+                              />
+                              {entityLabel}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            {/* Max selections hint */}
+            {relationConfig.maxSelections && (
+              <p className="text-xs text-muted-foreground">
+                {selectedValues.length} / {relationConfig.maxSelections} selected
+              </p>
+            )}
+          </div>
+        );
+      }
+
       default:
         return (
           <>
@@ -1181,7 +1462,7 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
 
   return (
     <div className="space-y-1.5">
-      <label 
+      <label
         htmlFor={String(field.name)}
         className="block text-sm font-medium text-foreground"
       >

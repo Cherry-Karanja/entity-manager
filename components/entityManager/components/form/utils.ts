@@ -5,7 +5,7 @@
  */
 
 import { BaseEntity } from '../../primitives/types';
-import { 
+import {
   isValidEmail,
   isValidUrl,
 } from '../../primitives/utils';
@@ -19,11 +19,11 @@ export function isFieldVisible<T extends BaseEntity>(
   values: Partial<T>
 ): boolean {
   if (field.visible === undefined) return true;
-  
+
   if (typeof field.visible === 'boolean') {
     return field.visible;
   }
-  
+
   return field.visible(values);
 }
 
@@ -35,11 +35,11 @@ export function isFieldDisabled<T extends BaseEntity>(
   values: Partial<T>
 ): boolean {
   if (field.disabled === undefined) return false;
-  
+
   if (typeof field.disabled === 'boolean') {
     return field.disabled;
   }
-  
+
   return field.disabled(values);
 }
 
@@ -51,11 +51,11 @@ export function isFieldRequired<T extends BaseEntity>(
   values: Partial<T>
 ): boolean {
   if (field.required === undefined) return false;
-  
+
   if (typeof field.required === 'boolean') {
     return field.required;
   }
-  
+
   return field.required(values);
 }
 
@@ -286,7 +286,7 @@ export async function validateForm<T extends BaseEntity>(
     const fieldName = String(field.name);
     const value = values[field.name as keyof T];
     const error = await validateField<T>(value, field, values as Record<string, unknown>);
-    
+
     if (error) {
       errors[fieldName] = error;
     }
@@ -505,6 +505,30 @@ export function formatFieldValue<T extends BaseEntity>(value: unknown, field: Fo
         return value.join(', ');
       }
       return String(value);
+
+    case 'relation':
+      // For relation fields, the value might be an object with the display field
+      // or just the ID. If it's an object, extract the display field value.
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        // Try to find a common display field
+        const displayValue = (value as any).name || (value as any).label || (value as any).title;
+        if (displayValue) return String(displayValue);
+      }
+      return value ? String(value) : '';
+
+    case 'multirelation':
+      // For multirelation, value should be an array
+      if (Array.isArray(value)) {
+        return value.map(item => {
+          if (item && typeof item === 'object') {
+            // Try to find a common display field
+            const displayValue = (item as any).name || (item as any).label || (item as any).title;
+            if (displayValue) return String(displayValue);
+          }
+          return String(item);
+        }).join(', ');
+      }
+      return value ? String(value) : '';
 
     default:
       return String(value);

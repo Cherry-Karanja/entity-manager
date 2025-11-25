@@ -42,6 +42,7 @@ export type FieldType =
   | 'range'
   | 'json'
   | 'relation'
+  | 'multirelation'
   | 'custom';
 
 /**
@@ -50,82 +51,82 @@ export type FieldType =
 export interface FormField<T extends BaseEntity = BaseEntity> {
   /** Field name (entity property key) */
   name: keyof T | string;
-  
+
   /** Field label */
   label: string;
-  
+
   /** Field type */
   type: FieldType;
-  
+
   /** Placeholder text */
   placeholder?: string;
-  
+
   /** Help text */
   helpText?: string;
-  
+
   /** Default value */
   defaultValue?: unknown;
-  
+
   /** Required field */
   required?: boolean | ((values: Partial<T>) => boolean);
-  
+
   /** Disabled state */
   disabled?: boolean | ((values: Partial<T>) => boolean);
-  
+
   /** Visibility condition */
   visible?: boolean | ((values: Partial<T>) => boolean);
-  
+
   /** Validation rules */
   validation?: ValidationRule[];
-  
+
   /** Field width (for grid layout) */
   width?: number | string;
-  
+
   /** Field group/section */
   group?: string;
-  
+
   /** Field order */
   order?: number;
-  
+
   /** Options for select/radio/multiselect */
   options?: FieldOption[] | ((values: Partial<T>, query?: string) => FieldOption[] | Promise<FieldOption[]>);
-  
+
   /** Whether the select field is searchable */
   searchable?: boolean;
-  
+
   /** Min value (number/range) */
   min?: number;
-  
+
   /** Max value (number/range) */
   max?: number;
-  
+
   /** Step (number/range) */
   step?: number;
-  
+
   /** Min length (text) */
   minLength?: number;
-  
+
   /** Max length (text) */
   maxLength?: number;
-  
+
   /** Rows (textarea) */
   rows?: number;
-  
+
   /** Accept (file) */
   accept?: string;
-  
+
   /** Multiple (file/select) */
   multiple?: boolean;
-  
+
   /** Max file size in bytes (file) */
   maxSize?: number;
-  
+
   /** Custom renderer */
   render?: (props: FieldRenderProps<T>) => React.ReactNode;
-  
+
   /** Transform value before save */
   transform?: (value: unknown) => unknown;
-  
+
   /** Relation config (for relation fields) */
   relationConfig?: RelationConfig;
 }
@@ -147,24 +148,27 @@ export interface FieldOption {
 export interface RelationConfig<R extends BaseEntity = BaseEntity> {
   /** Entity name */
   entity: string;
-  
+
   /** Display field */
   displayField: keyof R | string;
-  
+
   /** Value field */
   valueField: keyof R | string;
-  
+
   /** Search fields */
   searchFields?: Array<keyof R | string>;
-  
+
   /** Fetch function */
   fetchOptions: (search?: string) => Promise<R[]>;
-  
+
   /** Create new option */
   onCreate?: (value: string) => Promise<R>;
-  
+
   /** Multiple selection */
   multiple?: boolean;
+
+  /** Maximum selections (for multirelation) */
+  maxSelections?: number;
 }
 
 /**
@@ -220,67 +224,67 @@ export interface WizardStep {
 export interface EntityFormProps<T extends BaseEntity = BaseEntity> {
   /** Form fields */
   fields: FormField<T>[];
-  
+
   /** Form mode */
   mode?: FormMode;
-  
+
   /** Form layout */
   layout?: FormLayout;
-  
+
   /** Initial values */
   initialValues?: Partial<T>;
-  
+
   /** Entity being edited */
   entity?: T;
-  
+
   /** Field sections (for grouped layout) */
   sections?: FieldSection[];
-  
+
   /** Tabs (for tabbed layout) */
   tabs?: FormTab[];
-  
+
   /** Wizard steps (for wizard layout) */
   steps?: WizardStep[];
-  
+
   /** Submit handler */
   onSubmit: (values: Partial<T>) => void | Promise<void>;
-  
+
   /** Cancel handler */
   onCancel?: () => void;
-  
+
   /** Change handler */
   onChange?: (values: Partial<T>) => void;
-  
+
   /** Validation handler */
   onValidate?: (values: Partial<T>) => Record<string, string> | Promise<Record<string, string>>;
-  
+
   /** Submit button text */
   submitText?: string;
-  
+
   /** Cancel button text */
   cancelText?: string;
-  
+
   /** Show cancel button */
   showCancel?: boolean;
-  
+
   /** Show reset button */
   showReset?: boolean;
-  
+
   /** Loading state */
   loading?: boolean;
-  
+
   /** Disabled state */
   disabled?: boolean;
-  
+
   /** Custom className */
   className?: string;
-  
+
   /** Validate on change */
   validateOnChange?: boolean;
-  
+
   /** Validate on blur */
   validateOnBlur?: boolean;
-  
+
   /** Reset form after successful submission */
   resetOnSubmit?: boolean;
 }
@@ -291,31 +295,31 @@ export interface EntityFormProps<T extends BaseEntity = BaseEntity> {
 export interface FormState<T extends BaseEntity = BaseEntity> {
   /** Form values */
   values: Partial<T>;
-  
+
   /** Validation errors */
   errors: Record<string, string>;
-  
+
   /** Touched fields */
   touched: Set<string>;
-  
+
   /** Dirty fields */
   dirty: Set<string>;
-  
+
   /** Submitting state */
   submitting: boolean;
-  
+
   /** Submission error */
   submitError?: string;
-  
+
   /** Current wizard step */
   currentStep?: number;
-  
+
   /** Current tab */
   currentTab?: string;
-  
+
   /** Current tab index */
   currentTabIndex?: number;
-  
+
   /** Collapsed sections */
   collapsedSections: Set<string>;
 }
