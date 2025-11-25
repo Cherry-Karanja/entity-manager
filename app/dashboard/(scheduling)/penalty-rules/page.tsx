@@ -6,9 +6,8 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { penaltyRuleListConfig, penaltyRuleViewConfig, penaltyRuleActionsConfig, penaltyRuleExportConfig } from '@/components/features/logx/penalty-rules/config';
-import { penaltyRuleFields } from '@/components/features/logx/penalty-rules/config/fields';
-import { default as penaltyRuleClient } from '@/components/features/logx/penalty-rules/api/client';
+import { penaltyRuleListConfig, penaltyRuleViewConfig, penaltyRuleActionsConfig, penaltyRuleExportConfig, penaltyRuleFields } from '@/components/features/logx/penalty-rules/config';
+import penaltyRuleClient from '@/components/features/logx/penalty-rules/api/client';
 import { Scale } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';

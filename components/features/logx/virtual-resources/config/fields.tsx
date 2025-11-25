@@ -1,5 +1,5 @@
 import { FieldConfig } from "@/components/entityManager";
-import { RESOURCE_TYPE_LABELS } from "../../types";
+import { VIRTUAL_VIRTUAL_RESOURCE_TYPE_LABELS } from "../../types";
 
 export const virtualResourceFields: FieldConfig[] = [
   {
@@ -36,7 +36,7 @@ export const virtualResourceFields: FieldConfig[] = [
     required: true,
     placeholder: "Select resource type",
     helpText: "The category of this virtual resource",
-    options: Object.entries(RESOURCE_TYPE_LABELS).map(([value, label]) => ({
+    options: Object.entries(VIRTUAL_RESOURCE_TYPE_LABELS).map(([value, label]) => ({
       value,
       label,
     })),

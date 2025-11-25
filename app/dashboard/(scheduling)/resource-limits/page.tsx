@@ -6,9 +6,8 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { resourceLimitListConfig, resourceLimitViewConfig, resourceLimitActionsConfig, resourceLimitExportConfig } from '@/components/features/logx/resource-limits/config';
-import { resourceLimitFields } from '@/components/features/logx/resource-limits/config/fields';
-import { default as resourceLimitClient } from '@/components/features/logx/resource-limits/api/client';
+import { resourceLimitListConfig, resourceLimitViewConfig, resourceLimitActionsConfig, resourceLimitExportConfig, resourceLimitFields } from '@/components/features/logx/resource-limits/config';
+import resourceLimitClient from '@/components/features/logx/resource-limits/api/client';
 import { Gauge } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';

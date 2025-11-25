@@ -6,9 +6,8 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { virtualResourceListConfig, virtualResourceViewConfig, virtualResourceActionsConfig, virtualResourceExportConfig } from '@/components/features/logx/virtual-resources/config';
-import { virtualResourceFields } from '@/components/features/logx/virtual-resources/config/fields';
-import { default as virtualResourceClient } from '@/components/features/logx/virtual-resources/api/client';
+import { virtualResourceListConfig, virtualResourceViewConfig, virtualResourceActionsConfig, virtualResourceExportConfig, virtualResourceFields } from '@/components/features/logx/virtual-resources/config';
+import virtualResourceClient from '@/components/features/logx/virtual-resources/api/client';
 import { Cloud } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';

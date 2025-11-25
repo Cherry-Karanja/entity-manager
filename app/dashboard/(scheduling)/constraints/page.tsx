@@ -6,9 +6,8 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { timetableConstraintListConfig, timetableConstraintViewConfig, timetableConstraintActionsConfig, timetableConstraintExportConfig } from '@/components/features/logx/timetable-constraints/config';
-import { timetableConstraintFields } from '@/components/features/logx/timetable-constraints/config/fields';
-import { default as timetableConstraintClient } from '@/components/features/logx/timetable-constraints/api/client';
+import { timetableConstraintListConfig, timetableConstraintViewConfig, timetableConstraintActionsConfig, timetableConstraintExportConfig, timetableConstraintFields } from '@/components/features/logx/timetable-constraints/config';
+import timetableConstraintClient from '@/components/features/logx/timetable-constraints/api/client';
 import { Lock } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';

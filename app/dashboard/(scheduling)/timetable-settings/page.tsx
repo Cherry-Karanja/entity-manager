@@ -6,9 +6,8 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { timetableSettingListConfig, timetableSettingViewConfig, timetableSettingActionsConfig, timetableSettingExportConfig } from '@/components/features/logx/timetable-settings/config';
-import { timetableSettingFields } from '@/components/features/logx/timetable-settings/config/fields';
-import { default as timetableSettingClient } from '@/components/features/logx/timetable-settings/api/client';
+import { timetableSettingListConfig, timetableSettingViewConfig, timetableSettingActionsConfig, timetableSettingExportConfig, timetableSettingFields } from '@/components/features/logx/timetable-settings/config';
+import timetableSettingClient from '@/components/features/logx/timetable-settings/api/client';
 import { Settings } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';

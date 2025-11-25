@@ -4,7 +4,7 @@
  */
 
 export { timetableFields } from './fields';
-export { timetableColumns } from './list';
+export { timetableColumns, timetableColumns as timetableListConfig } from './list';
 export { timetableViewConfig } from './view';
 export { timetableActionsConfig } from './actions';
 export { timetableExportConfig } from './export';
@@ -18,7 +18,7 @@ import { timetableExportConfig } from './export';
 // Combined config object for EntityManager
 export const timetableConfig = {
   fields: timetableFields,
-  columns: timetableColumns,
+  list: timetableColumns,
   view: timetableViewConfig,
   actions: timetableActionsConfig,
   export: timetableExportConfig,

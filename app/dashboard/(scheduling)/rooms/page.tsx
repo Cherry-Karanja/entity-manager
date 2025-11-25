@@ -6,9 +6,8 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { roomListConfig, roomViewConfig, roomActionsConfig, roomExportConfig } from '@/components/features/logx/rooms/config';
-import { roomFields } from '@/components/features/logx/rooms/config/fields';
-import { default as roomClient } from '@/components/features/logx/rooms/api/client';
+import { roomListConfig, roomViewConfig, roomActionsConfig, roomExportConfig, roomFields } from '@/components/features/logx/rooms/config';
+import roomClient from '@/components/features/logx/rooms/api/client';
 import { DoorOpen } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';

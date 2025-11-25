@@ -6,8 +6,7 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { timetableListConfig, timetableViewConfig, timetableActionsConfig, timetableExportConfig } from '@/components/features/logx/timetables/config';
-import { timetableFields } from '@/components/features/logx/timetables/config/fields';
+import { timetableListConfig, timetableViewConfig, timetableActionsConfig, timetableExportConfig, timetableFields } from '@/components/features/logx/timetables/config';
 import { timetablesClient } from '@/components/features/logx/timetables/api/client';
 import { Calendar } from 'lucide-react';
 import { usePageActions } from '../../layout';

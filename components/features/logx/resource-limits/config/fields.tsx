@@ -1,7 +1,7 @@
 import type { FieldConfig } from "@/components/entityManager";
 import { 
   ENTITY_TYPE_LABELS, 
-  LIMIT_RESOURCE_TYPE_LABELS, 
+  RESOURCE_TYPE_LABELS, 
   PERIOD_TYPE_LABELS 
 } from "../../types";
 import type { ResourceLimit } from "../../types";
@@ -39,7 +39,7 @@ export const resourceLimitFields: FieldConfig<ResourceLimit>[] = [
     required: true,
     placeholder: "Select resource type",
     description: "The type of resource being limited",
-    options: Object.entries(LIMIT_RESOURCE_TYPE_LABELS).map(([value, label]) => ({
+    options: Object.entries(RESOURCE_TYPE_LABELS).map(([value, label]) => ({
       value,
       label,
     })),

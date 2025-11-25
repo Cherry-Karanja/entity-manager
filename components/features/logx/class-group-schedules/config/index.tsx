@@ -1,7 +1,7 @@
 export { classGroupScheduleFields } from "./fields";
-export { classGroupScheduleColumns } from "./list";
+export { classGroupScheduleColumns, classGroupScheduleColumns as classGroupScheduleListConfig } from "./list";
 export { classGroupScheduleViewConfig } from "./view";
-export { classGroupScheduleActions } from "./actions";
+export { classGroupScheduleActions, classGroupScheduleActions as classGroupScheduleActionsConfig } from "./actions";
 export { classGroupScheduleExportConfig } from "./export";
 
 import { classGroupScheduleFields } from "./fields";
@@ -12,7 +12,7 @@ import { classGroupScheduleExportConfig } from "./export";
 
 export const classGroupScheduleConfig = {
   fields: classGroupScheduleFields,
-  columns: classGroupScheduleColumns,
+  list: classGroupScheduleColumns,
   view: classGroupScheduleViewConfig,
   actions: classGroupScheduleActions,
   export: classGroupScheduleExportConfig,

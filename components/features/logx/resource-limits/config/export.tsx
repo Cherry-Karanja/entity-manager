@@ -2,7 +2,7 @@ import type { ExportConfig } from "@/components/entityManager";
 import type { ResourceLimit } from "../../types";
 import { 
   ENTITY_TYPE_LABELS, 
-  LIMIT_RESOURCE_TYPE_LABELS, 
+  RESOURCE_TYPE_LABELS, 
   PERIOD_TYPE_LABELS 
 } from "../../types";
 
@@ -34,7 +34,7 @@ export const resourceLimitExportConfig: ExportConfig<ResourceLimit> = {
       key: "resource_type",
       label: "Resource Type",
       transform: (value) => 
-        LIMIT_RESOURCE_TYPE_LABELS[value as keyof typeof LIMIT_RESOURCE_TYPE_LABELS] || value,
+        RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value,
     },
     {
       key: "max_value",

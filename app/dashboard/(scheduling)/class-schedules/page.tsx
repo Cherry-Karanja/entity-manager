@@ -6,9 +6,8 @@
 
 import React, { useEffect } from 'react';
 import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { classGroupScheduleListConfig, classGroupScheduleViewConfig, classGroupScheduleActionsConfig, classGroupScheduleExportConfig } from '@/components/features/logx/class-group-schedules/config';
-import { classGroupScheduleFields } from '@/components/features/logx/class-group-schedules/config/fields';
-import { default as classGroupScheduleClient } from '@/components/features/logx/class-group-schedules/api/client';
+import { classGroupScheduleListConfig, classGroupScheduleViewConfig, classGroupScheduleActionsConfig, classGroupScheduleExportConfig, classGroupScheduleFields } from '@/components/features/logx/class-group-schedules/config';
+import classGroupScheduleClient from '@/components/features/logx/class-group-schedules/api/client';
 import { CalendarDays } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';

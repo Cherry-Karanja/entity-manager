@@ -6,8 +6,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { default as resourceLimitClient } from '@/components/features/logx/resource-limits/api/client';
-import { ResourceLimit, ENTITY_TYPE_LABELS, LIMIT_RESOURCE_TYPE_LABELS, PERIOD_TYPE_LABELS } from '@/components/features/logx/types';
+import { resourceLimitApi } from '@/components/features/logx/resource-limits/api/client';
+import { ResourceLimit, ENTITY_TYPE_LABELS, RESOURCE_TYPE_LABELS, PERIOD_TYPE_LABELS } from '@/components/features/logx/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +26,7 @@ export default function ResourceLimitViewPage() {
     const fetchLimit = async () => {
       try {
         setLoading(true);
-        const response = await resourceLimitClient.get(id);
+        const response = await resourceLimitApi.get(id);
         if (response.error) {
           setError(response.error.message);
         } else {
@@ -66,7 +66,7 @@ export default function ResourceLimitViewPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">
-              {ENTITY_TYPE_LABELS[limit.entity_type as keyof typeof ENTITY_TYPE_LABELS]} - {LIMIT_RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof LIMIT_RESOURCE_TYPE_LABELS]} Limit
+              {ENTITY_TYPE_LABELS[limit.entity_type as keyof typeof ENTITY_TYPE_LABELS]} - {RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof RESOURCE_TYPE_LABELS]} Limit
             </h1>
             <p className="text-muted-foreground">
               Max: {limit.max_value} {PERIOD_TYPE_LABELS[limit.period_type as keyof typeof PERIOD_TYPE_LABELS]}
@@ -101,7 +101,7 @@ export default function ResourceLimitViewPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Resource Type</span>
               <Badge className="bg-orange-100 text-orange-800">
-                {LIMIT_RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof LIMIT_RESOURCE_TYPE_LABELS]}
+                {RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof RESOURCE_TYPE_LABELS]}
               </Badge>
             </div>
           </CardContent>
