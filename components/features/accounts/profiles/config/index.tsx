@@ -10,6 +10,7 @@ import { UserProfileFormConfig } from './fields';
 import { profileColumns } from './list';
 import { profileViewFields } from './view';
 import { UserProfileActionsConfig } from './actions';
+import { UserProfileExporterConfig } from './export';
 
 export const userProfileConfig: EntityConfig<UserProfile> = {
   // ===========================
@@ -25,8 +26,8 @@ export const userProfileConfig: EntityConfig<UserProfile> = {
   // ===========================
   list: {
     columns: profileColumns,
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    searchableFields: ['user_name', 'user_email', 'bio', 'job_title', 'department'],
+    sortConfig: { field: 'created_at', direction: 'desc' },
+    searchable: true,
   },
   
   // ===========================
@@ -45,6 +46,11 @@ export const userProfileConfig: EntityConfig<UserProfile> = {
   // Actions Configuration
   // ===========================
   actions: UserProfileActionsConfig,
+  
+  // ===========================
+  // Exporter Configuration
+  // ===========================
+  exporter: UserProfileExporterConfig,
   
   // ===========================
   // API Configuration
@@ -82,3 +88,4 @@ export * from './list';
 export * from './form';
 export * from './view';
 export * from './actions';
+export * from './export';

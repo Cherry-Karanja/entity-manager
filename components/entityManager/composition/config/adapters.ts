@@ -4,16 +4,16 @@
  * Adapters for converting external configurations to internal format.
  */
 
-import { EntityConfig, ConfigAdapter } from './types';
+import { EntityConfig, EntityConfigBuilderState, ConfigAdapter } from './types';
 import { BaseEntity } from '../../primitives/types';
 
 /**
  * JSON Schema adapter
- * Converts JSON Schema to entity config
+ * Converts JSON Schema to entity config builder state
  */
 export class JsonSchemaAdapter implements ConfigAdapter<any> {
-  adapt(schema: any): Partial<EntityConfig> {
-    const config: Partial<EntityConfig> = {
+  adapt(schema: any): Partial<EntityConfigBuilderState> {
+    const config: Partial<EntityConfigBuilderState> = {
       name: schema.title || 'Entity',
       description: schema.description,
       fields: [],
@@ -92,10 +92,10 @@ export class JsonSchemaAdapter implements ConfigAdapter<any> {
 
 /**
  * OpenAPI adapter
- * Converts OpenAPI schema to entity config
+ * Converts OpenAPI schema to entity config builder state
  */
 export class OpenApiAdapter implements ConfigAdapter<any> {
-  adapt(schema: any): Partial<EntityConfig> {
+  adapt(schema: any): Partial<EntityConfigBuilderState> {
     // OpenAPI schemas are similar to JSON Schema
     const jsonSchemaAdapter = new JsonSchemaAdapter();
     const config = jsonSchemaAdapter.adapt(schema);
@@ -115,11 +115,11 @@ export class OpenApiAdapter implements ConfigAdapter<any> {
 
 /**
  * TypeScript interface adapter
- * Converts TypeScript interface metadata to entity config
+ * Converts TypeScript interface metadata to entity config builder state
  */
 export class TypeScriptInterfaceAdapter implements ConfigAdapter<any> {
-  adapt(metadata: any): Partial<EntityConfig> {
-    const config: Partial<EntityConfig> = {
+  adapt(metadata: any): Partial<EntityConfigBuilderState> {
+    const config: Partial<EntityConfigBuilderState> = {
       name: metadata.name || 'Entity',
       fields: [],
       columns: [],
@@ -176,11 +176,11 @@ export class TypeScriptInterfaceAdapter implements ConfigAdapter<any> {
 
 /**
  * Database schema adapter
- * Converts database schema to entity config
+ * Converts database schema to entity config builder state
  */
 export class DatabaseSchemaAdapter implements ConfigAdapter<any> {
-  adapt(schema: any): Partial<EntityConfig> {
-    const config: Partial<EntityConfig> = {
+  adapt(schema: any): Partial<EntityConfigBuilderState> {
+    const config: Partial<EntityConfigBuilderState> = {
       name: schema.tableName || 'Entity',
       fields: [],
       columns: [],
@@ -275,7 +275,7 @@ export class AdapterFactory {
   /**
    * Auto-detect and adapt
    */
-  static adapt(data: any): Partial<EntityConfig> | null {
+  static adapt(data: any): Partial<EntityConfigBuilderState> | null {
     for (const [name, adapter] of this.adapters) {
       if (adapter.validate && adapter.validate(data)) {
         return adapter.adapt(data);

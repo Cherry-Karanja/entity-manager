@@ -5,11 +5,11 @@
  */
 
 import { BaseEntity} from '../../primitives/types';
-import { EntityActionsProps } from '../../components/actions/types';
-import { EntityExporterProps } from '../../components/exporter/types';
-import { EntityFormProps } from '../../components/form/types';
-import { EntityListProps } from '../../components/list/types';
-import { EntityViewProps } from '../../components/view/types';
+import { EntityActionsProps, Action } from '../../components/actions/types';
+import { EntityExporterProps, ExportField } from '../../components/exporter/types';
+import { EntityFormProps, FormField } from '../../components/form/types';
+import { EntityListProps, Column } from '../../components/list/types';
+import { EntityViewProps, ViewField } from '../../components/view/types';
 
 /**
  * Entity actions configuration
@@ -141,8 +141,87 @@ export interface ActionBuilderOptions {
  */
 export interface ConfigAdapter<T = unknown> {
   /** Adapt external config to internal format */
-  adapt: (externalConfig: T) => Partial<EntityConfig>;
+  adapt: (externalConfig: T) => Partial<EntityConfigBuilderState>;
   
   /** Validate external config */
   validate?: (externalConfig: T) => boolean;
+}
+
+/**
+ * Internal builder state type
+ * Used by EntityConfigBuilder and adapters for flat configuration building
+ * before transforming to nested EntityConfig structure
+ */
+export interface EntityConfigBuilderState<T extends BaseEntity = BaseEntity> {
+  /** Entity name */
+  name: string;
+  
+  /** Entity display name (plural) */
+  pluralName?: string;
+  
+  /** Entity label */
+  label?: string;
+  
+  /** Entity label plural */
+  labelPlural?: string;
+  
+  /** Entity description */
+  description?: string;
+  
+  /** Flat columns array (for builder) */
+  columns?: Column<T>[];
+  
+  /** Flat fields array (for builder) */
+  fields?: FormField<T>[];
+  
+  /** Flat view fields array (for builder) */
+  viewFields?: ViewField<T>[];
+  
+  /** Flat actions array (for builder) */
+  actions?: Action<T>[];
+  
+  /** Flat export fields array (for builder) */
+  exportFields?: ExportField<T>[];
+  
+  /** Default sort configuration */
+  defaultSort?: { field: string; direction: 'asc' | 'desc' };
+  
+  /** Default page size */
+  defaultPageSize?: number;
+  
+  /** Searchable fields */
+  searchableFields?: string[];
+  
+  /** Filterable fields */
+  filterableFields?: string[];
+  
+  /** Title field */
+  titleField?: string;
+  
+  /** Subtitle field */
+  subtitleField?: string;
+  
+  /** Image field */
+  imageField?: string;
+  
+  /** Date field */
+  dateField?: string;
+  
+  /** API endpoint */
+  apiEndpoint?: string;
+  
+  /** Icon */
+  icon?: string;
+  
+  /** Permissions */
+  permissions?: {
+    create?: boolean;
+    read?: boolean;
+    update?: boolean;
+    delete?: boolean;
+    export?: boolean;
+  };
+  
+  /** Metadata */
+  metadata?: Record<string, unknown>;
 }

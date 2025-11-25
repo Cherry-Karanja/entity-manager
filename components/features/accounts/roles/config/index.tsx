@@ -10,6 +10,7 @@ import { UserRoleFormConfig } from './fields';
 import { roleColumns } from './list';
 import { roleViewFields } from './view';
 import { UserRoleActionsConfig } from './actions';
+import { UserRoleExporterConfig } from './export';
 
 export const userRoleConfig: EntityConfig<UserRole> = {
   // ===========================
@@ -25,8 +26,9 @@ export const userRoleConfig: EntityConfig<UserRole> = {
   // ===========================
   list: {
     columns: roleColumns,
-    defaultSort: { field: 'display_name', direction: 'asc' },
-    searchableFields: ['display_name', 'name', 'description'],
+    sortConfig: { field: 'display_name', direction: 'asc' },
+    searchable: true,
+    searchPlaceholder: 'Search roles...',
   },
   
   // ===========================
@@ -45,6 +47,11 @@ export const userRoleConfig: EntityConfig<UserRole> = {
   // Actions Configuration
   // ===========================
   actions: UserRoleActionsConfig,
+  
+  // ===========================
+  // Exporter Configuration
+  // ===========================
+  exporter: UserRoleExporterConfig,
   
   // ===========================
   // API Configuration
@@ -82,3 +89,4 @@ export * from './list';
 export * from './form';
 export * from './view';
 export * from './actions';
+export * from './export';

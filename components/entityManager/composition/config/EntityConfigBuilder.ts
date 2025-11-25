@@ -5,7 +5,7 @@
  */
 
 import { BaseEntity } from '../../primitives/types';
-import { EntityConfig, BuilderCallback } from './types';
+import { EntityConfig, EntityConfigBuilderState, BuilderCallback, EntityActionsConfig, EntityExporterConfig } from './types';
 import { FieldBuilder } from './FieldBuilder';
 import { ColumnBuilder } from './ColumnBuilder';
 import { ActionBuilder } from './ActionBuilder';
@@ -19,7 +19,7 @@ import { ExportField } from '../../components/exporter/types';
  * Entity config builder class
  */
 export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
-  private config: Partial<EntityConfig<T>>;
+  private config: EntityConfigBuilderState<T>;
 
   constructor(name: string) {
     this.config = {
@@ -329,9 +329,48 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
 
   /**
    * Build the configuration
+   * Transforms flat builder state to nested EntityConfig structure
    */
   build(): EntityConfig<T> {
-    return this.config as EntityConfig<T>;
+    const { 
+      columns, 
+      fields, 
+      viewFields, 
+      actions, 
+      exportFields,
+      defaultSort,
+      defaultPageSize,
+      searchableFields,
+      ...rest 
+    } = this.config;
+    
+    // Transform flat structure to nested EntityConfig
+    const entityConfig: EntityConfig<T> = {
+      ...rest,
+      label: rest.label || rest.name,
+      labelPlural: rest.labelPlural || rest.pluralName || `${rest.name}s`,
+      list: {
+        columns: columns || [],
+        sortConfig: defaultSort,
+        paginationConfig: defaultPageSize ? { page: 1, pageSize: defaultPageSize, total: 0, totalPages: 0 } : undefined,
+        searchable: (searchableFields?.length ?? 0) > 0,
+      },
+      form: {
+        fields: fields || [],
+      },
+      view: {
+        fields: viewFields || [],
+      },
+      actions: {
+        actions: actions || [],
+      } as EntityActionsConfig<T>,
+      exporter: {
+        fields: exportFields as ExportField[] || [],
+        options: {},
+      } as EntityExporterConfig<T>,
+    } as EntityConfig<T>;
+    
+    return entityConfig;
   }
 
   /**
@@ -355,10 +394,31 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
 
   /**
    * Create from existing config
+   * Flattens a nested EntityConfig back to builder state
    */
   static from<T extends BaseEntity = BaseEntity>(config: Partial<EntityConfig<T>>): EntityConfigBuilder<T> {
     const builder = new EntityConfigBuilder<T>(config.name || 'Entity');
-    builder.config = { ...config };
+    
+    // Flatten the nested structure to builder state
+    builder.config = {
+      name: config.name || 'Entity',
+      label: config.label,
+      labelPlural: config.labelPlural,
+      pluralName: config.pluralName || config.labelPlural,
+      description: config.description,
+      columns: config.list?.columns || [],
+      fields: config.form?.fields || [],
+      viewFields: config.view?.fields || [],
+      actions: config.actions?.actions || [],
+      exportFields: config.exporter?.fields || [],
+      defaultSort: config.list?.sortConfig,
+      defaultPageSize: config.list?.paginationConfig?.pageSize,
+      apiEndpoint: config.apiEndpoint,
+      icon: config.icon,
+      permissions: config.permissions,
+      metadata: config.metadata,
+    };
+    
     return builder;
   }
 }

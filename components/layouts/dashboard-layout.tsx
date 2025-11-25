@@ -27,6 +27,12 @@ import {
   Search,
   User,
   UserCog,
+  KeyRound,
+  UserCircle,
+  Clock,
+  ShieldAlert,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -74,14 +80,27 @@ const sidebarItems = [
       {
         title: "Users",
         href: "/dashboard/users",
+        icon: User,
       },
       {
         title: "Roles",
         href: "/dashboard/roles",
+        icon: KeyRound,
       },
       {
         title: "Profiles",
         href: "/dashboard/profiles",
+        icon: UserCircle,
+      },
+      {
+        title: "Sessions",
+        href: "/dashboard/sessions",
+        icon: Clock,
+      },
+      {
+        title: "Login Attempts",
+        href: "/dashboard/login-attempts",
+        icon: ShieldAlert,
       },
     ],
   },
@@ -112,9 +131,19 @@ export function DashboardLayout({
   user,
 }: DashboardLayoutProps) {
   const [open, setOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    Accounts: true, // Default expanded
+  });
   const connectionStatus = useConnectionStatusColor();
   const { theme, setTheme } = useTheme();
   const { startTransition } = useThemeTransition();
+
+  const toggleMenu = (menuTitle: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuTitle]: !prev[menuTitle]
+    }));
+  };
 
   const handleThemeToggle = React.useCallback(() => {
     startTransition(() => {
@@ -158,19 +187,35 @@ export function DashboardLayout({
                 <SidebarMenuItem key={item.title}>
                   {item.items ? (
                     // Collapsible group for items with subitems
-                    <div className="py-2">
-                      <div className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-sidebar-foreground">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </div>
-                      <div className="ml-7 space-y-1">
+                    <div className="py-1">
+                      <button
+                        onClick={() => toggleMenu(item.title)}
+                        className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent rounded-md transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </div>
+                        {expandedMenus[item.title] ? (
+                          <ChevronDown className="h-4 w-4 text-sidebar-foreground/70" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-sidebar-foreground/70" />
+                        )}
+                      </button>
+                      <div
+                        className={cn(
+                          "ml-4 space-y-1 overflow-hidden transition-all duration-200",
+                          expandedMenus[item.title] ? "max-h-96 opacity-100 mt-1" : "max-h-0 opacity-0"
+                        )}
+                      >
                         {item.items.map((subItem) => (
                           <Link
                             key={subItem.title}
                             href={subItem.href}
-                            className="block px-4 py-1.5 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-md transition-colors"
+                            className="flex items-center gap-2 px-4 py-1.5 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-md transition-colors"
                           >
-                            {subItem.title}
+                            {subItem.icon && <subItem.icon className="h-3.5 w-3.5" />}
+                            <span>{subItem.title}</span>
                           </Link>
                         ))}
                       </div>

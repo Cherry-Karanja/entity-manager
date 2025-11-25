@@ -167,3 +167,35 @@ export const profileFields: FormField<UserProfile>[] = [
     width: '50%',
   },
 ];
+
+// Form configuration for EntityConfig
+export const UserProfileFormConfig = {
+  fields: profileFields,
+  groups: [
+    {
+      name: 'basic',
+      label: 'Basic Information',
+      description: 'Profile picture and biography',
+    },
+    {
+      name: 'contact',
+      label: 'Contact Information',
+      description: 'Phone and other contact details',
+    },
+    {
+      name: 'organization',
+      label: 'Organization',
+      description: 'Department and job information',
+    },
+    {
+      name: 'preferences',
+      label: 'Preferences',
+      description: 'Language, theme, and notification settings',
+    },
+    {
+      name: 'privacy',
+      label: 'Privacy Settings',
+      description: 'Control what information is visible to others',
+    },
+  ],
+};

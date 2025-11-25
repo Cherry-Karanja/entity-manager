@@ -8,6 +8,7 @@ import { UserSessionFormConfig } from './fields';
 import { sessionColumns } from './list';
 import { sessionViewFields } from './view';
 import { UserSessionActionsConfig } from './actions';
+import { UserSessionExporterConfig } from './export';
 
 export const userSessionConfig: EntityConfig<UserSession> = {
   name: 'userSession',
@@ -17,8 +18,8 @@ export const userSessionConfig: EntityConfig<UserSession> = {
   
   list: {
     columns: sessionColumns,
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    searchableFields: ['user_email', 'user_full_name', 'ip_address', 'device_type'],
+    sortConfig: { field: 'created_at', direction: 'desc' },
+    searchable: true,
   },
   
   form: UserSessionFormConfig,
@@ -26,6 +27,7 @@ export const userSessionConfig: EntityConfig<UserSession> = {
     fields: sessionViewFields,
   },
   actions: UserSessionActionsConfig,
+  exporter: UserSessionExporterConfig,
   apiEndpoint: '/api/v1/accounts/user-sessions/',
   icon: 'Monitor',
   
@@ -48,3 +50,4 @@ export * from './fields';
 export * from './list';
 export * from './view';
 export * from './actions';
+export * from './export';

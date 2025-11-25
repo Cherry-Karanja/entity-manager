@@ -367,5 +367,6 @@ export const UserFormConfig: EntityFormConfig<User> =
   resetOnSubmit: true,
 
 };
- 
 
+// Convenience exports for backward compatibility
+export const userFields = UserFormConfig.fields;

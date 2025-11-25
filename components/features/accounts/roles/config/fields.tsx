@@ -102,11 +102,11 @@ export const roleFields: FormField<UserRole>[] = [
     helpText: 'Select permissions for this role (grouped by app for easy management)',
     width: '100%',
     // Custom render function will use PermissionSelector component
-    render: 'PermissionSelector',
+    // render: (props) => <PermissionSelector {...props} />, // TODO: implement custom render
   },
 ];
 
-export const PermissionFormConfig = {
+export const UserRoleFormConfig = {
   fields: roleFields,
   groups: [
     {

@@ -7,6 +7,8 @@ import { LoginAttempt } from '../../types';
 import { LoginAttemptFormConfig } from './fields';
 import { loginAttemptColumns } from './list';
 import { loginAttemptViewFields } from './view';
+import { LoginAttemptActionsConfig } from './actions';
+import { LoginAttemptExporterConfig } from './export';
 
 export const loginAttemptConfig: EntityConfig<LoginAttempt> = {
   name: 'loginAttempt',
@@ -16,14 +18,16 @@ export const loginAttemptConfig: EntityConfig<LoginAttempt> = {
   
   list: {
     columns: loginAttemptColumns,
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    searchableFields: ['email', 'ip_address', 'user_email'],
+    sortConfig: { field: 'created_at', direction: 'desc' },
+    searchable: true,
   },
   
   form: LoginAttemptFormConfig,
   view: {
     fields: loginAttemptViewFields,
   },
+  actions: LoginAttemptActionsConfig,
+  exporter: LoginAttemptExporterConfig,
   apiEndpoint: '/api/v1/accounts/login-attempts/',
   icon: 'ShieldAlert',
   
@@ -45,3 +49,5 @@ export const loginAttemptConfig: EntityConfig<LoginAttempt> = {
 export * from './fields';
 export * from './list';
 export * from './view';
+export * from './actions';
+export * from './export';

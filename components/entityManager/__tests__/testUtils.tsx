@@ -185,7 +185,7 @@ export function createMockActions(): Action<TestUser>[] {
       label: 'Delete',
       actionType: 'confirm',
       icon: 'delete',
-      variant: 'danger',
+      variant: 'destructive',
       confirmMessage: 'Are you sure you want to delete this user?',
       confirmText: 'Delete User',
       cancelText: 'Cancel',

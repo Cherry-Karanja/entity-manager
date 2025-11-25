@@ -53,21 +53,17 @@ const densityOptions: Array<{
 function DropdownDensitySelector({ value, onChange, className }: DensitySelectorProps) {
   return (
     <DropdownMenu>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className={cn("min-h-[44px]", className)}>
-                <AlignJustify className="h-4 w-4" />
-                <span className="ml-2 hidden sm:inline">Density</span>
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Change row density</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={cn("min-h-[44px]", className)}
+          title="Change row density"
+        >
+          <AlignJustify className="h-4 w-4" />
+          <span className="ml-2 hidden sm:inline">Density</span>
+        </Button>
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Row Density</DropdownMenuLabel>

@@ -13,12 +13,12 @@ export const userSessionsApiClient = createHttpClient<UserSession>({
 
 export const userSessionActions = {
   async expire(id: string | number) {
-    return userSessionsApiClient.customAction(id, 'expire', undefined, 'POST');
+    return userSessionsApiClient.customAction(id, 'expire', {});
   },
   async expireAll() {
-    return userSessionsApiClient.customAction(undefined, 'expire-all', undefined, 'POST');
+    return userSessionsApiClient.customAction('bulk', 'expire-all', {});
   },
   async activeCount() {
-    return userSessionsApiClient.customAction(undefined, 'active-count', undefined, 'GET');
+    return userSessionsApiClient.customAction('stats', 'active-count', undefined);
   },
 };

@@ -413,7 +413,7 @@ import {
               name: 'adminField', 
               label: 'Admin Field', 
               type: 'text',
-              visible: (values) => values.role === 'admin'
+              visible: (values: Record<string, unknown>) => values.role === 'admin'
             },
           ]}
           onSubmit={mockHandlers.onSubmit}

@@ -182,9 +182,9 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       });
     }
     // If starting in list mode or create mode, fetch all entities
-else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state.state.entities.length === 0) {
-        const { page, pageSize, sort, search, filters } = state.state;
-        fetchEntities(page, pageSize, sort ?? null, search, filters).then(() => {
+    else if (initialViewToUse === 'list' || initialViewToUse === 'create') {
+      const { page, pageSize, sort, search, filters } = state.state;
+      fetchEntities(page, pageSize, sort ?? null, search, filters).then(() => {
         initialListFetchCompleted.current = true;
       });
     }
@@ -192,7 +192,8 @@ else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state
       // No initial fetch needed (e.g., initialData provided), mark as completed
       initialListFetchCompleted.current = true;
     }
-  }, [config.apiClient, initialViewToUse, initialIdToUse, fetchEntities, fetchSingleEntity, state.state]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.apiClient, initialViewToUse, initialIdToUse]);
 
   // Use ref to track previous filters and only update when content actually changes
   const prevFiltersRef = useRef<string>('');
@@ -209,18 +210,43 @@ else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state
   }, [state.state.filters]);
 
   // Refetch data when sorting, search, or filters change (but not pagination, handled directly)
+  // Track previous values to prevent unnecessary refetches
+  const prevSortRef = useRef<string | null>(null);
+  const prevSearchRef = useRef<string>('');
+  
   useEffect(() => {
     // Don't fetch if:
     // - No API client
     // - Not in list view
     // - Initial list fetch is still in progress (loading and not yet completed)
     if (!config.apiClient || view !== 'list') return;
-    if (!initialListFetchCompleted.current && state.state.loading) return;
+    if (!initialListFetchCompleted.current) return;
 
     const { page, pageSize, sort, search } = state.state;
+    
+    // Create stable sort key for comparison
+    const sortKey = sort ? `${sort.field}-${sort.direction}` : null;
+    
+    // Only refetch if sort, search, or filters actually changed
+    const sortChanged = sortKey !== prevSortRef.current;
+    const searchChanged = search !== prevSearchRef.current;
+    const filtersKey = JSON.stringify(stableFilters);
+    
+    if (!sortChanged && !searchChanged) {
+      // Check if filters changed by comparing with ref
+      if (filtersKey === prevFiltersRef.current) {
+        return; // Nothing changed, skip fetch
+      }
+    }
+    
+    // Update refs
+    prevSortRef.current = sortKey;
+    prevSearchRef.current = search;
+    
     fetchEntities(page, pageSize, sort ?? null, search, stableFilters);
-    // Note: Using specific state properties to avoid unnecessary refetches while satisfying deps
-  }, [config.apiClient, view, state.state, stableFilters, fetchEntities]);
+  // Using specific state properties to prevent infinite loop - state.state changes on every update
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.apiClient, view, state.state.sort, state.state.search, state.state.page, state.state.pageSize, stableFilters, fetchEntities]);
 
   // listen for view change and call onviewchange callback
   useEffect(() => {
@@ -236,7 +262,9 @@ else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state
 
     const { page, pageSize, sort, search } = state.state;
     await fetchEntities(page, pageSize, sort ?? null, search, stableFilters);
-  }, [config.apiClient, view, state.state, stableFilters, fetchEntities]);
+  // Using specific state properties to prevent infinite loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.apiClient, view, state.state.page, state.state.pageSize, state.state.sort, state.state.search, stableFilters, fetchEntities]);
 
   // Memoize actions with context to prevent re-renders
   const actionsWithContext = useMemo(() => {

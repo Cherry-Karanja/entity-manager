@@ -61,7 +61,7 @@ export const userRoleActions = {
    * Get users with this role
    */
   async getUsers(id: string | number) {
-    return userRolesApiClient.customAction(id, 'users', undefined, 'GET');
+    return userRolesApiClient.customAction(id, 'users');
   },
 };
 

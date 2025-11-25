@@ -227,4 +227,8 @@ export const UserViewConfig: EntityViewConfig<User> = {
   actions: []
 };
 
+// Convenience exports for backward compatibility
+export const userViewFields = UserViewConfig.fields;
+export const userViewGroups = UserViewConfig.groups;
+
 
