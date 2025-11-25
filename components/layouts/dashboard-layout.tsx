@@ -33,6 +33,23 @@ import {
   ShieldAlert,
   ChevronDown,
   ChevronRight,
+  Building2,
+  GraduationCap,
+  Users as UsersGroup,
+  Calendar,
+  CalendarDays,
+  UserPlus,
+  BookOpen,
+  FileText,
+  List,
+  UserCheck,
+  LayoutGrid,
+  CalendarClock,
+  Settings2,
+  AlertTriangle,
+  Scale,
+  Monitor,
+  Gauge,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -105,6 +122,114 @@ const sidebarItems = [
     ],
   },
   {
+    title: "Institution",
+    icon: Building2,
+    items: [
+      {
+        title: "Departments",
+        href: "/dashboard/departments",
+        icon: Building2,
+      },
+      {
+        title: "Programmes",
+        href: "/dashboard/programmes",
+        icon: GraduationCap,
+      },
+      {
+        title: "Class Groups",
+        href: "/dashboard/class-groups",
+        icon: UsersGroup,
+      },
+      {
+        title: "Academic Years",
+        href: "/dashboard/academic-years",
+        icon: Calendar,
+      },
+      {
+        title: "Terms",
+        href: "/dashboard/terms",
+        icon: CalendarDays,
+      },
+      {
+        title: "Intakes",
+        href: "/dashboard/intakes",
+        icon: UserPlus,
+      },
+    ],
+  },
+  {
+    title: "Academics",
+    icon: BookOpen,
+    items: [
+      {
+        title: "Units",
+        href: "/dashboard/units",
+        icon: BookOpen,
+      },
+      {
+        title: "Topics",
+        href: "/dashboard/topics",
+        icon: FileText,
+      },
+      {
+        title: "Subtopics",
+        href: "/dashboard/subtopics",
+        icon: List,
+      },
+      {
+        title: "Enrollments",
+        href: "/dashboard/enrollments",
+        icon: UserCheck,
+      },
+    ],
+  },
+  {
+    title: "Scheduling",
+    icon: CalendarClock,
+    items: [
+      {
+        title: "Rooms",
+        href: "/dashboard/rooms",
+        icon: LayoutGrid,
+      },
+      {
+        title: "Timetables",
+        href: "/dashboard/timetables",
+        icon: CalendarClock,
+      },
+      {
+        title: "Schedules",
+        href: "/dashboard/class-group-schedules",
+        icon: Calendar,
+      },
+      {
+        title: "Settings",
+        href: "/dashboard/timetable-settings",
+        icon: Settings2,
+      },
+      {
+        title: "Constraints",
+        href: "/dashboard/timetable-constraints",
+        icon: AlertTriangle,
+      },
+      {
+        title: "Penalty Rules",
+        href: "/dashboard/penalty-rules",
+        icon: Scale,
+      },
+      {
+        title: "Virtual Resources",
+        href: "/dashboard/virtual-resources",
+        icon: Monitor,
+      },
+      {
+        title: "Resource Limits",
+        href: "/dashboard/resource-limits",
+        icon: Gauge,
+      },
+    ],
+  },
+  {
     title: "Analytics",
     icon: BarChart3,
     href: "/dashboard/analytics",
@@ -132,7 +257,10 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const [open, setOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    Accounts: true, // Default expanded
+    Accounts: true,
+    Institution: false,
+    Academics: false,
+    Scheduling: false,
   });
   const connectionStatus = useConnectionStatusColor();
   const { theme, setTheme } = useTheme();

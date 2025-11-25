@@ -315,7 +315,6 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       handleBack();
     } catch (error) {
       const errorMessage = getErrorMessage(error, 'Operation failed');
-      toast.error(errorMessage);
       state.setError(errorMessage);
     }
   }, [view, selectedId, mutations, state, handleBack]);
