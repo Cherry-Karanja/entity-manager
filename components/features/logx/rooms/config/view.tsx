@@ -6,7 +6,7 @@
 import { ViewConfig } from '@/components/entityManager';
 import { Room, ROOM_TYPE_LABELS } from '../../types';
 import { Badge } from '@/components/ui/badge';
-import { LayoutGrid, Building2, Users, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { LayoutGrid, Building2, Users, Clock, CheckCircle } from 'lucide-react';
 
 export const roomViewConfig: ViewConfig<Room> = {
   title: (room) => room.name,

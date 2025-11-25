@@ -47,7 +47,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const response = await authApi.get<UserResponse>('/api/v1/accounts/users/me/');
+        const response = await authApi.get<UserResponse>('/api/v1/core/auth/user/');
         const userData = response.data;
         
         setProfileData({

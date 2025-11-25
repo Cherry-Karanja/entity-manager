@@ -5,7 +5,7 @@
 import { EntityActionsConfig } from '@/components/entityManager/composition/config/types';
 import { Intake } from '../../types';
 import { intakeActions as apiActions } from '../api/client';
-import { Trash2, CheckCircle, XCircle, Lock } from 'lucide-react';
+import { Trash2, CheckCircle, Lock } from 'lucide-react';
 
 export const IntakeActionsConfig: EntityActionsConfig<Intake> = {
   actions: [

@@ -160,7 +160,7 @@ export const UserProfileActionsConfig: EntityActionsConfig<UserProfile> = {
           // Get data to export - either selected items or all data
           const dataToExport: UserProfile[] = context?.selectedEntities && context.selectedEntities.length > 0
             ? context.selectedEntities as UserProfile[]
-            : (context?.customData as any)?.allData || [];
+            : (context?.customData as { allData?: UserProfile[] })?.allData || [];
 
           if (dataToExport.length === 0) {
             console.warn('No data to export');

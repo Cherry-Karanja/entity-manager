@@ -136,7 +136,7 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
     } finally {
       setState(prev => ({ ...prev, loading: false, executing: undefined }));
     }
-  }, [entity, context, onActionStart, onActionComplete, onActionError]);
+  }, [entity, context, onActionStart, onActionComplete, onActionError, handleBulkAction, handleConfirmAction, handleCustomAction, handleDownloadAction, handleFormAction, handleImmediateAction, handleModalAction, handleNavigationAction]);
 
   /**
    * Handle immediate action

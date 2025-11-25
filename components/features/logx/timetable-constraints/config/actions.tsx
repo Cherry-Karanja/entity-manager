@@ -44,7 +44,7 @@ export const timetableConstraintActions: ActionConfig<TimetableConstraint>[] = [
             ? "Parameters are valid!"
             : `Validation failed: ${result?.errors?.join(", ")}`,
         });
-      } catch (error) {
+      } catch {
         showDialog?.({
           title: "Validation Error",
           content: "Failed to validate parameters.",

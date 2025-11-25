@@ -127,7 +127,7 @@ export interface FormField<T extends BaseEntity = BaseEntity> {
   transform?: (value: unknown) => unknown;
   
   /** Relation config (for relation fields) */
-  relationConfig?: RelationConfig<any>;
+  relationConfig?: RelationConfig;
 }
 
 /**

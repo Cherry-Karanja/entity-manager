@@ -4,7 +4,7 @@
  * Pure utility functions for list operations.
  */
 
-import { BaseEntity, FilterConfig, SortConfig, PaginationConfig } from '../../primitives/types';
+import { BaseEntity, FilterConfig, SortConfig } from '../../primitives/types';
 import { Column, ListView } from './types';
 
 /**
@@ -28,7 +28,7 @@ export function getColumnValue<T extends BaseEntity>(
   // Handle nested paths (e.g., 'user.name')
   if (typeof columnKey === 'string' && columnKey.includes('.')) {
     const parts = columnKey.split('.');
-    let value: any = entity;
+    let value: unknown = entity;
     for (const part of parts) {
       value = value?.[part];
       if (value === undefined) break;

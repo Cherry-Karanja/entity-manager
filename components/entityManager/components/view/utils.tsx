@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { BaseEntity } from '../../primitives/types';
-import { formatDate, formatCurrency, formatBoolean } from '../../primitives/utils';
+import { formatDate, formatBoolean } from '../../primitives/utils';
 import { ViewField, FieldGroup } from './types';
 
 /**
@@ -269,11 +269,11 @@ export function getMetadataFields<T extends BaseEntity>(entity: T): Array<{ labe
   const metadata: Array<{ label: string; value: unknown }> = [];
 
   if ((entity as any).created_at) {
-    metadata.push({ label: 'Created', value: (entity as any).created_at });
+    metadata.push({ label: 'Created', value: formatDate((entity as any).created_at, 'YYYY-MM-DD HH:mm:ss') });
   }
 
   if ((entity as any).updated_at) {
-    metadata.push({ label: 'Updated', value: (entity as any).updated_at });
+    metadata.push({ label: 'Updated', value: formatDate((entity as any).updated_at, 'YYYY-MM-DD HH:mm:ss') });
   }
 
   if ((entity as any).created_by) {

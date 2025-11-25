@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/auth/contexts/auth-context'
-import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {

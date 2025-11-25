@@ -336,7 +336,7 @@ export const UserFormConfig: EntityFormConfig<User> =
     description: 'Password and security settings',
     fields: ['password', 'password2'],
     icon: <Lock className="h-4 w-4" />,
-    order: 2,
+    order: 2, 
   },
   {
     id: 'organization',

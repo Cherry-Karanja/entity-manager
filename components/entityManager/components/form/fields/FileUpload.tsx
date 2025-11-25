@@ -103,7 +103,7 @@ export function FileUpload({
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [currentFile, currentFileUrl]);
+  }, [currentFile, currentFileUrl, previewUrl]);
 
   /**
    * Validate file
@@ -164,7 +164,7 @@ export function FileUpload({
 
     onChange(file);
     setTimeout(() => setUploadProgress(0), 1500);
-  }, [onChange, maxSize, accept]);
+  }, [onChange, maxSize, accept, validateFile]);
 
   /**
    * Handle drag events

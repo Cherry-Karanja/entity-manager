@@ -5,7 +5,7 @@
 import { EntityActionsConfig } from '@/components/entityManager/composition/config/types';
 import { Unit } from '../../types';
 import { unitActions as apiActions } from '../api/client';
-import { Trash2, Download, CheckCircle, XCircle, BookOpen } from 'lucide-react';
+import { Trash2, CheckCircle, XCircle, BookOpen } from 'lucide-react';
 
 export const UnitActionsConfig: EntityActionsConfig<Unit> = {
   actions: [

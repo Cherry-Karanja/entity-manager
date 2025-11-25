@@ -37,8 +37,6 @@ export class HttpClient {
       baseURL: Endpoints.BaseUrl,
       withCredentials: true,
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
       },
       xsrfCookieName: 'csrftoken',
@@ -49,20 +47,12 @@ export class HttpClient {
     this.plainApi = axios.create({
       baseURL: Endpoints.BaseUrl,
       withCredentials: false,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
     });
 
     // Create refresh Axios instance (sends cookies but no interceptors)
     this.refreshApi = axios.create({
       baseURL: Endpoints.BaseUrl,
       withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
     });
 
     this.setupInterceptors();

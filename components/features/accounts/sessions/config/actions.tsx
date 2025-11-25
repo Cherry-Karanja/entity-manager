@@ -16,7 +16,7 @@ export const UserSessionActionsConfig: EntityActionsConfig<UserSession> = {
       actionType: 'confirm',
       variant: 'destructive',
       position: 'row',
-      confirmMessage: (session?: UserSession) =>
+      confirmMessage: () =>
         `Are you sure you want to expire this session?`,
       confirmText: 'Expire',
       onConfirm: async (session?: UserSession, context?) => {

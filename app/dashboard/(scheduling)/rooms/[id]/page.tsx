@@ -9,7 +9,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { default as roomClient } from '@/components/features/logx/rooms/api/client';
 import { Room, ROOM_TYPE_LABELS } from '@/components/features/logx/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Wrench } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 

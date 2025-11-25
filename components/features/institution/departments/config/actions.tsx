@@ -9,8 +9,6 @@ import { Department } from '../../types';
 import { 
   Trash2,
   Download,
-  UserPlus,
-  UserMinus,
 } from 'lucide-react';
 
 export const DepartmentActionsConfig: EntityActionsConfig<Department> = {

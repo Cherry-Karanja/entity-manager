@@ -49,7 +49,7 @@ export const virtualResourceActions: ActionConfig<VirtualResource>[] = [
     icon: <Copy className="h-4 w-4" />,
     type: "custom",
     handler: async (item, { api, refresh }) => {
-      const { id, created_at, updated_at, ...data } = item;
+      const { ...data } = item;
       await api.create({
         ...data,
         name: `${item.name} (Copy)`,

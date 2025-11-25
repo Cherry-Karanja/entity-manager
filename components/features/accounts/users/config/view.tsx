@@ -8,7 +8,6 @@ import { EntityViewConfig } from '@/components/entityManager/composition/config/
 import { User } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Lock } from 'lucide-react';
-import { toast } from 'sonner';
 
 export const UserViewConfig: EntityViewConfig<User> = {
   fields: [
@@ -155,7 +154,6 @@ export const UserViewConfig: EntityViewConfig<User> = {
       key: 'last_login',
       label: 'Last Login',
       type: 'date',
-      formatter: (value) => !value ? 'Never' : (value as string),
     },
     {
       key: 'last_login_ip',

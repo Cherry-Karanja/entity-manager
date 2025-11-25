@@ -5,7 +5,7 @@
  */
 
 import { FormLayout, FieldSection } from '@/components/entityManager/components/form/types';
-import { User, Mail, Lock, Building2, Shield } from 'lucide-react';
+import { User, Lock, Building2, Shield } from 'lucide-react';
 
 export const userFormLayout: FormLayout = 'tabs';
 

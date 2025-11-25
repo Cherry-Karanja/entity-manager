@@ -5,7 +5,7 @@
 import { EntityActionsConfig } from '@/components/entityManager/composition/config/types';
 import { AcademicYear } from '../../types';
 import { academicYearActions as apiActions } from '../api/client';
-import { Trash2, Download, CheckCircle, XCircle } from 'lucide-react';
+import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 export const AcademicYearActionsConfig: EntityActionsConfig<AcademicYear> = {
   actions: [

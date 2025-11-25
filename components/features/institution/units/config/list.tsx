@@ -5,7 +5,7 @@
 import { EntityListConfig } from '@/components/entityManager/composition/config/types';
 import { Unit } from '../../types';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, BookOpen } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 export const UnitListConfig: EntityListConfig<Unit> = {
   columns: [

@@ -6,7 +6,7 @@
 import { ActionConfig } from '@/components/entityManager';
 import { Timetable } from '../../types';
 import { timetablesClient, timetableActions } from '../api/client';
-import { Edit, Trash2, Eye, Power, PowerOff, RefreshCw, BarChart3 } from 'lucide-react';
+import { Edit, Trash2, Eye, Power, PowerOff, RefreshCw } from 'lucide-react';
 
 export const timetableActionsConfig: ActionConfig<Timetable> = {
   row: [

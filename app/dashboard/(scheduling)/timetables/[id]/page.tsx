@@ -9,7 +9,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { default as timetableClient } from '@/components/features/logx/timetables/api/client';
 import { Timetable } from '@/components/features/logx/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 

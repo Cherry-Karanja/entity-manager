@@ -1,7 +1,7 @@
 import { ColumnConfig } from "@/components/entityManager";
 import { Badge } from "@/components/ui/badge";
 import { VirtualResource, RESOURCE_TYPE_LABELS } from "../../types";
-import { Check, X, Share2 } from "lucide-react";
+import { X, Share2 } from "lucide-react";
 
 export const virtualResourceColumns: ColumnConfig<VirtualResource>[] = [
   {

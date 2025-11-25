@@ -162,13 +162,13 @@ export const UserActionsConfig: EntityActionsConfig<User> = {
           ],
         },
       ],
-      onSubmit: async (values, user?: User, context?) => {
+      onSubmit: async (values: Record<string, unknown>, user?: User, context?) => {
         if (!user || !context?.refresh) return;
         try {
           await apiActions.changeRole(user.id, values.role as string);
           console.log('Role changed for user:', user.id, 'to:', values.role);
           await context.refresh();
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Failed to change role:', error);
         }
       },
@@ -195,7 +195,7 @@ export const UserActionsConfig: EntityActionsConfig<User> = {
           required: true,
         },
       ],
-      onSubmit: async (values, user?: User) => {
+      onSubmit: async (values: Record<string, unknown>, user?: User) => {
         if (!user) return;
         // TODO: Implement API call
         console.log('Sending email to:', user.email, values);
@@ -272,7 +272,7 @@ export const UserActionsConfig: EntityActionsConfig<User> = {
           // Get data to export - either selected items or all data
           const dataToExport: User[] = context?.selectedEntities && context.selectedEntities.length > 0
             ? context.selectedEntities as User[]
-            : (context?.customData as any)?.allData || [];
+            : (context?.customData as { allData?: User[] })?.allData || [];
 
           if (dataToExport.length === 0) {
             console.warn('No data to export');

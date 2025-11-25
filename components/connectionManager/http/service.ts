@@ -11,8 +11,7 @@ import { AxiosError } from "axios";
  * Get endpoint URL for an entity operation
  */
 function getEndpointUrl(
-  config: EntityConfig,
-  operation: 'list' | 'create' | 'update' | 'delete'
+  config: EntityConfig
 ): string {
   // Use apiEndpoint (simplified for v2)
   return config.apiEndpoint || '/';
@@ -31,7 +30,7 @@ export function createApiService<T, U = T>(
     }
 
     // Use nested resource utilities if config and context are provided
-    return getEndpointUrl(urlOrConfig, operation);
+    return getEndpointUrl(urlOrConfig);
   };
 
   // Return a hook that can be used in components

@@ -66,7 +66,7 @@ export const UserRoleActionsConfig: EntityActionsConfig<UserRole> = {
       actionType: 'immediate',
       variant: 'outline',
       position: 'row',
-      handler: async (role?: UserRole, context?) => {
+      handler: async (role?: UserRole) => {
         if (!role) return;
         try {
           const users = await apiActions.getUsers(role.id);
@@ -148,7 +148,7 @@ export const UserRoleActionsConfig: EntityActionsConfig<UserRole> = {
           // Get data to export - either selected items or all data
           const dataToExport: UserRole[] = context?.selectedEntities && context.selectedEntities.length > 0
             ? context.selectedEntities as UserRole[]
-            : (context?.customData as any)?.allData || [];
+            : (context?.customData as { allData?: UserRole[] })?.allData || [];
 
           if (dataToExport.length === 0) {
             console.warn('No data to export');

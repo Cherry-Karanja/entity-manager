@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { permissionsApiClient, permissionActions, Permission } from '@/components/features/accounts/permissions';
+import { permissionActions, Permission } from '@/components/features/accounts/permissions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';

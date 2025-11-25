@@ -28,7 +28,7 @@ export interface Notification extends BaseEntity {
   action_label?: string | null;
   
   // Metadata
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   
   // Timestamps
   created_at: string;
