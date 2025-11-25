@@ -112,7 +112,7 @@ export function EntityExporter<T extends BaseEntity = BaseEntity>({
           // For XLSX, we need a library like xlsx or exceljs
           // For now, fall back to CSV
           content = entitiesToCSV(data, selectedFields, exportOptions);
-          console.warn('XLSX export requires xlsx library. Falling back to CSV.');
+          // Note: XLSX export requires xlsx library - falling back to CSV
           break;
         default:
           throw new Error(`Unsupported export format: ${selectedFormat}`);

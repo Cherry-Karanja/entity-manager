@@ -213,8 +213,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     if (paginationConfig?.page !== undefined && paginationConfig.page !== state.page) {
       setState(prev => ({ ...prev, page: paginationConfig.page || 1 }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paginationConfig?.page]);
+  }, [paginationConfig?.page, state.page]);
 
   React.useEffect(() => {
     if (paginationConfig?.pageSize !== undefined && paginationConfig.pageSize !== state.pageSize) {
@@ -222,8 +221,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
       const validPageSize = validPageSizes.includes(paginationConfig.pageSize) ? paginationConfig.pageSize : 10;
       setState(prev => ({ ...prev, pageSize: validPageSize, page: 1 }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paginationConfig?.pageSize]);
+  }, [paginationConfig?.pageSize, state.pageSize]);
 
   // Process data
   const processedData = useMemo(() => {
@@ -375,7 +373,6 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
       );
       
       if (isDuplicate) {
-        console.warn('Filter already exists:', newFilter);
         return prev;
       }
       
@@ -435,11 +432,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     const now = Date.now();
     const timeDiff = now - lastClickTime;
 
-    console.log('handleRowClick called:', { entityId: entity.id, index, timeDiff, clickCount });
-
     // If this is a double click (within 300ms of last click)
     if (timeDiff < 300 && clickCount === 1) {
-      console.log('Detected double-click for entity:', entity.id);
       // Clear any pending single click timeout
       if (clickTimeoutRef) {
         clearTimeout(clickTimeoutRef);
@@ -452,12 +446,10 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
       setLastClickTime(0);
     } else {
       // This is a single click - set timeout
-      console.log('Detected single-click for entity:', entity.id);
       setClickCount(1);
       setLastClickTime(now);
 
       const timeout = setTimeout(() => {
-        console.log('Executing single-click handler for entity:', entity.id);
         onRowClick?.(entity, index);
         setClickCount(0);
         setLastClickTime(0);
@@ -1016,7 +1008,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
               
               {rowActions.length > 0 && (
-                <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3">
                   <EntityActions 
                     actions={rowActions}
                     entity={entity}
@@ -1209,7 +1201,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
               
               {rowActions.length > 0 && (
-                <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 flex items-center gap-2 border-t pt-3">
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3">
                   <EntityActions 
                     actions={rowActions}
                     entity={entity}
@@ -1292,7 +1284,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
     
     // Simple placeholder for create action - in real usage, pass proper handler
     const createAction = () => {
-      console.log('Create new item');
+      // Placeholder - implement actual create handler
     };
     
     if (hasSearch) {

@@ -193,22 +193,15 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     // Validate form
     const isValid = await validateFormAsync();
     if (!isValid) {
-      console.log('Form is invalid, checking for tab switch');
       // For tabs layout, switch to the tab with errors
       if (layout === 'tabs' && sections && onValidate) {
-        console.log('Layout is tabs, sections and onValidate present');
         const allErrors = await onValidate(state.values);
-        console.log('allErrors:', allErrors);
         if (allErrors && Object.keys(allErrors).length > 0) {
-          console.log('There are errors');
           const sortedSections = sortSections(sections);
-          console.log('sortedSections:', sortedSections.map(s => ({ id: s.id, fields: s.fields })));
           const tabWithErrors = sortedSections.findIndex(section =>
             section.fields.some(fieldName => allErrors[fieldName])
           );
-          console.log('tabWithErrors:', tabWithErrors);
           if (tabWithErrors !== -1) {
-            console.log('Setting currentTabIndex to:', tabWithErrors);
             setState(prev => ({ ...prev, currentTabIndex: tabWithErrors }));
           }
         }
@@ -240,7 +233,6 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
         setState(prev => ({ ...prev, submitting: false }));
       }
     } catch (error) {
-      console.error('Form submission error:', error);
       setState(prev => ({ 
         ...prev, 
         submitting: false,
@@ -680,9 +672,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
       // Combine all errors
       const allErrors = { ...stepErrors, ...customErrors };
       
-      console.log('Wizard step validation errors:', allErrors);
       if (hasErrors(allErrors)) {
-        console.log('Wizard step has validation errors:', allErrors);
         setState(prev => ({ ...prev, errors: { ...prev.errors, ...allErrors } }));
         return;
       }
@@ -946,8 +936,7 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
             : opts;
           setSearchOptions(filtered);
           if (!loadedInitialRef.current) loadedInitialRef.current = true;
-        } catch (error) {
-          console.error('Failed to load options:', error);
+        } catch {
           setSearchOptions([]);
         }
       };

@@ -208,8 +208,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
       document.body.removeChild(textArea);
       return success;
     }
-  } catch (error) {
-    console.error('Copy failed:', error);
+  } catch {
     return false;
   }
 }

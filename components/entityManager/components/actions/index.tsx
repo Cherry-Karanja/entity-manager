@@ -136,7 +136,6 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
     } finally {
       setState(prev => ({ ...prev, loading: false, executing: undefined }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, context, onActionStart, onActionComplete, onActionError]);
 
   /**

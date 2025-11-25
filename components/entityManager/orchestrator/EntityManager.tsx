@@ -8,17 +8,59 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { BaseEntity } from '../primitives/types';
+import { BaseEntity, FilterConfig, SortConfig } from '../primitives/types';
 import { EntityManagerProps, EntityManagerView } from './types';
 import { EntityList } from '../components/list';
 import { EntityForm } from '../components/form';
 import { EntityView } from '../components/view';
-import { EntityActions } from '../components/actions';
 import { EntityStateProvider, useEntityState } from '../composition/exports';
 import { EntityApiProvider, useEntityMutations } from '../composition/exports';
-import { ActionContext } from '../components/actions/types';
 import { FormMode } from '../components/form/types';
 import { toast } from 'sonner';
+
+/**
+ * Build query parameters for API calls
+ */
+function buildQueryParams(
+  page: number,
+  pageSize: number,
+  sort: SortConfig | null,
+  search: string,
+  filters: FilterConfig[]
+): Record<string, unknown> {
+  const queryParams: Record<string, unknown> = {
+    page,
+    pageSize,
+  };
+  
+  if (sort) {
+    queryParams.sortField = sort.field;
+    queryParams.sortDirection = sort.direction;
+  }
+  
+  if (search) {
+    queryParams.search = search;
+  }
+  
+  if (filters && filters.length > 0) {
+    queryParams.filters = filters;
+  }
+  
+  return queryParams;
+}
+
+/**
+ * Parse error message from unknown error
+ */
+function getErrorMessage(error: unknown, defaultMessage: string): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return defaultMessage;
+}
 
 /**
  * Entity Manager Content (with hooks)
@@ -51,22 +93,8 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     totalCount: state.state.total
   }), [config.config.list.paginationConfig, state.state.page, state.state.pageSize, state.state.total]);
 
-  // action context 
-  const [actionContext, setActionContext] = useState< ActionContext<T> | undefined>(undefined);
-
-  // auto update action context
-  useEffect(() => {
-    setActionContext({
-      entities: state.state.entities,
-      selectedIds: state.state.selectedIds,
-    })
-  },[state.state])
-    
-
-
   // Watch for initialView and initialId changes from parent
   useEffect(() => {
-    console.log('initialView changed:', initialViewToUse, 'initialId:', initialIdToUse);
     setView(initialViewToUse);
     
     if (initialViewToUse === 'list') {
@@ -81,6 +109,57 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     }
   }, [initialViewToUse, initialIdToUse]);
 
+  /**
+   * Fetch entities from API with given parameters
+   */
+  const fetchEntities = useCallback(async (
+    page: number,
+    pageSize: number,
+    sort: SortConfig | null,
+    search: string,
+    filters: FilterConfig[]
+  ) => {
+    if (!config.apiClient) return;
+    
+    state.setLoading(true);
+    const queryParams = buildQueryParams(page, pageSize, sort, search, filters);
+    
+    try {
+      const response = await config.apiClient.list(queryParams as Parameters<typeof config.apiClient.list>[0]);
+      const data = response.data || [];
+      state.setEntities(data);
+      if (response.meta?.total !== undefined) {
+        state.setTotal(response.meta.total);
+      }
+    } catch (error) {
+      const errorMessage = getErrorMessage(error, 'Failed to load data');
+      state.setError(errorMessage);
+    } finally {
+      state.setLoading(false);
+    }
+  }, [config, state]);
+
+  /**
+   * Fetch a single entity by ID
+   */
+  const fetchSingleEntity = useCallback(async (id: string | number) => {
+    if (!config.apiClient) return;
+    
+    state.setLoading(true);
+    
+    try {
+      const response = await config.apiClient.get(id);
+      const entity = response.data;
+      state.setEntities([entity]);
+      state.setTotal(1);
+    } catch (error) {
+      const errorMessage = getErrorMessage(error, 'Failed to load entity');
+      state.setError(errorMessage);
+    } finally {
+      state.setLoading(false);
+    }
+  }, [config.apiClient, state]);
+
   // Auto-fetch data on mount if API client is available
   useEffect(() => {
     if (!config.apiClient || fetchAttempted.current) {
@@ -93,91 +172,31 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     
     // If starting in edit/view mode with an ID, fetch that specific entity
     if ((initialViewToUse === 'edit' || initialViewToUse === 'view') && initialIdToUse) {
-      // Not in list mode, so mark list fetch as completed
       initialListFetchCompleted.current = true;
-      state.setLoading(true);
-      config.apiClient.get(initialIdToUse)
-        .then((response) => {
-          const entity = response.data;
-          state.setEntities([entity]);
-          state.setTotal(1);
-          state.setLoading(false);
-        })
-        .catch((error) => {
-          console.error('Failed to fetch entity:', error);
-          state.setError(error.message || 'Failed to load entity');
-          state.setLoading(false);
-        });
+      fetchSingleEntity(initialIdToUse);
     }
     // If starting in list mode with an initial ID, fetch only that entity
     else if (initialViewToUse === 'list' && initialIdToUse) {
-      state.setLoading(true);
-      config.apiClient.get(initialIdToUse)
-        .then((response) => {
-          const entity = response.data;
-          state.setEntities([entity]);
-          state.setTotal(1);
-          state.setLoading(false);
-          initialListFetchCompleted.current = true;
-        })
-        .catch((error) => {
-          console.error('Failed to fetch entity:', error);
-          state.setError(error.message || 'Failed to load entity');
-          state.setLoading(false);
-          initialListFetchCompleted.current = true;
-        });
+      fetchSingleEntity(initialIdToUse).then(() => {
+        initialListFetchCompleted.current = true;
+      });
     }
     // If starting in list mode or create mode, fetch all entities
-    else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state.state.entities.length === 0) {
-      state.setLoading(true);
-      
-      // Build query parameters for initial load with all current state
-      const { page, pageSize, sort, search, filters } = state.state;
-      const queryParams: Record<string, unknown> = {
-        page,
-        pageSize,
-      };
-      
-      if (sort) {
-        queryParams.sortField = sort.field;
-        queryParams.sortDirection = sort.direction;
-      }
-      
-      if (search) {
-        queryParams.search = search;
-      }
-      
-      if (filters && filters.length > 0) {
-        queryParams.filters = filters;
-      }
-      
-      config.apiClient.list(queryParams as never)
-        .then((response) => {
-          const data = response.data || [];
-          state.setEntities(data);
-          if (response.meta?.total !== undefined) {
-            state.setTotal(response.meta.total);
-          }
-          state.setLoading(false);
-          initialListFetchCompleted.current = true;
-        })
-        .catch((error) => {
-          console.error('Failed to fetch entities:', error);
-          state.setError(error.message || 'Failed to load data');
-          state.setLoading(false);
-          initialListFetchCompleted.current = true;
-        });
+else if ((initialViewToUse === 'list' || initialViewToUse === 'create') && state.state.entities.length === 0) {
+        const { page, pageSize, sort, search, filters } = state.state;
+        fetchEntities(page, pageSize, sort ?? null, search, filters).then(() => {
+        initialListFetchCompleted.current = true;
+      });
     }
     else {
       // No initial fetch needed (e.g., initialData provided), mark as completed
       initialListFetchCompleted.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.apiClient, state]);
+  }, [config.apiClient, initialViewToUse, initialIdToUse, fetchEntities, fetchSingleEntity, state.state]);
 
   // Use ref to track previous filters and only update when content actually changes
   const prevFiltersRef = useRef<string>('');
-  const prevFiltersObjectRef = useRef<any[]>([]);
+  const prevFiltersObjectRef = useRef<FilterConfig[]>([]);
   const stableFilters = useMemo(() => {
     const filtersJson = JSON.stringify(state.state.filters);
     if (filtersJson !== prevFiltersRef.current) {
@@ -199,45 +218,9 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     if (!initialListFetchCompleted.current && state.state.loading) return;
 
     const { page, pageSize, sort, search } = state.state;
-    
-    state.setLoading(true);
-    
-    // Build query parameters for server-side filtering/sorting/pagination
-    const queryParams: Record<string, unknown> = {
-      page,
-      pageSize,
-    };
-    
-    if (sort) {
-      queryParams.sortField = sort.field;
-      queryParams.sortDirection = sort.direction;
-    }
-    
-    if (search) {
-      queryParams.search = search;
-    }
-    
-    if (stableFilters && stableFilters.length > 0) {
-      queryParams.filters = stableFilters;
-    }
-
-    config.apiClient.list(queryParams as never)
-      .then((response) => {
-        const data = response.data || [];
-        state.setEntities(data);
-        if (response.meta?.total !== undefined) {
-          state.setTotal(response.meta.total);
-        }
-        state.setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Failed to fetch entities:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load data';
-        state.setError(errorMessage);
-        state.setLoading(false);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.state.sort, state.state.search, stableFilters, view]);
+    fetchEntities(page, pageSize, sort ?? null, search, stableFilters);
+    // Note: Using specific state properties to avoid unnecessary refetches while satisfying deps
+  }, [config.apiClient, view, state.state, stableFilters, fetchEntities]);
 
   // listen for view change and call onviewchange callback
   useEffect(() => {
@@ -252,42 +235,8 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     if (!config.apiClient || view !== 'list') return;
 
     const { page, pageSize, sort, search } = state.state;
-    
-    state.setLoading(true);
-    
-    const queryParams: Record<string, unknown> = {
-      page,
-      pageSize,
-    };
-    
-    if (sort) {
-      queryParams.sortField = sort.field;
-      queryParams.sortDirection = sort.direction;
-    }
-    
-    if (search) {
-      queryParams.search = search;
-    }
-    
-    if (stableFilters && stableFilters.length > 0) {
-      queryParams.filters = stableFilters;
-    }
-
-    try {
-      const response = await config.apiClient.list(queryParams as never);
-      const data = response.data || [];
-      state.setEntities(data);
-      if (response.meta?.total !== undefined) {
-        state.setTotal(response.meta.total);
-      }
-      state.setLoading(false);
-    } catch (error) {
-      console.error('Failed to refresh entities:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load data';
-      state.setError(errorMessage);
-      state.setLoading(false);
-    }
-  }, [config.apiClient, view, state, stableFilters]);
+    await fetchEntities(page, pageSize, sort ?? null, search, stableFilters);
+  }, [config.apiClient, view, state.state, stableFilters, fetchEntities]);
 
   // Memoize actions with context to prevent re-renders
   const actionsWithContext = useMemo(() => {
@@ -304,57 +253,60 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       },
     };
   }, [config.config.list.actions, refreshData, state.state.entities]);
-
-  // Note: These handlers are available for use in action handlers defined in config
-  // They can be passed via context or bound to actions in the config
   
   // Handle edit
-  const handleEdit = (entity: T) => {
+  const handleEdit = useCallback((entity: T) => {
     setView('edit');
     setSelectedId(entity.id);
-  };
+  }, []);
 
   // Handle view
-  const handleView = (entity: T) => {
+  const handleView = useCallback((entity: T) => {
     setView('view');
     setSelectedId(entity.id);
-  };
+  }, []);
 
   // Handle back to list
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     setView('list');
     setSelectedId(null);
-  };
+  }, []);
 
   // Handle form submit
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  const handleSubmit = useCallback(async (values: Record<string, unknown>) => {
     try {
       if (view === 'create') {
         const created = await mutations.create(values as Partial<T>);
         state.addEntity(created);
+        toast.success('Created successfully');
       } else if (view === 'edit' && selectedId) {
         const updated = await mutations.update(selectedId, values as Partial<T>);
         state.updateEntity(updated);
+        toast.success('Updated successfully');
       }
       handleBack();
     } catch (error) {
-      console.error('Submit error:', error);
+      const errorMessage = getErrorMessage(error, 'Operation failed');
+      toast.error(errorMessage);
+      state.setError(errorMessage);
     }
-  };
+  }, [view, selectedId, mutations, state, handleBack]);
 
-  // Handle delete
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDelete = async (id: string | number) => {
-    try {
-      await mutations.delete(id);
-      state.deleteEntity(id);
-      if (selectedId === id) {
-        handleBack();
-      }
-    } catch (error) {
-      console.error('Delete error:', error);
+  // Handle pagination change
+  const handlePaginationChange = useCallback(async (paginationConfig: { page?: number; pageSize?: number }) => {
+    const newPage = paginationConfig.page || 1;
+    const newPageSize = paginationConfig.pageSize || 10;
+    
+    // Update state immediately
+    state.setPage(newPage);
+    state.setPageSize(newPageSize);
+    
+    // Trigger API call directly
+    if (config.apiClient && view === 'list') {
+      const { sort, search, filters } = state.state;
+      await fetchEntities(newPage, newPageSize, sort ?? null, search, filters);
     }
-  };
+  }, [config.apiClient, view, state, fetchEntities]);
 
   // Render breadcrumbs
   const renderBreadcrumbs = () => {
@@ -426,53 +378,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           onRowDoubleClick={handleEdit}
           pagination={true}
           paginationConfig={memoizedPaginationConfig}
-          onPaginationChange={async (paginationConfig) => {
-            const newPage = paginationConfig.page || 1;
-            const newPageSize = paginationConfig.pageSize || 10;
-            
-            // Update state immediately
-            state.setPage(newPage);
-            state.setPageSize(newPageSize);
-            
-            // Trigger API call directly
-            if (config.apiClient && view === 'list') {
-              state.setLoading(true);
-              
-              const { sort, search, filters } = state.state;
-              const queryParams: Record<string, unknown> = {
-                page: newPage,
-                pageSize: newPageSize,
-              };
-              
-              if (sort) {
-                queryParams.sortField = sort.field;
-                queryParams.sortDirection = sort.direction;
-              }
-              
-              if (search) {
-                queryParams.search = search;
-              }
-              
-              if (filters && filters.length > 0) {
-                queryParams.filters = filters;
-              }
-
-              try {
-                const response = await config.apiClient.list(queryParams as never);
-                const data = response.data || [];
-                state.setEntities(data);
-                if (response.meta?.total !== undefined) {
-                  state.setTotal(response.meta.total);
-                }
-                state.setLoading(false);
-              } catch (error) {
-                console.error('Failed to fetch entities:', error);
-                const errorMessage = error instanceof Error ? error.message : 'Failed to load data';
-                state.setError(errorMessage);
-                state.setLoading(false);
-              }
-            }
-          }}
+          onPaginationChange={handlePaginationChange}
           sortable={config.config.list.sortable}
           sortConfig={state.state.sort}
           onSortChange={state.setSort}
@@ -502,12 +408,6 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
 
   // Render form view (create/edit)
   if (view === 'create' || view === 'edit') {
-    console.log('Rendering form view:', view);
-    console.log('Form fields:', config.config.form.fields);
-    console.log('Form layout:', config.config.form.layout);
-    console.log('Form sections:', config.config.form.sections);
-    console.log('Form fields:', config.config.form.fields);
-    
     const currentMode: FormMode = view === 'create' ? 'create' : 'edit';
     
     const formLayout = config.config.form.layout;
@@ -556,24 +456,24 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       <div className="space-y-3 sm:space-y-4">
         {renderBreadcrumbs()}
         <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6">
-        <EntityView
-          entity={selectedEntity}
-          fields={config.config.view.fields}
-          groups={config.config.view.groups}
-          mode= { config.config.view.mode ||"detail"}
-          showMetadata={config.config.view.showMetadata}
-          tabs={config.config.view.tabs}
-          titleField={config.config.view.titleField}
-          subtitleField={config.config.view.subtitleField}
-          imageField={config.config.view.imageField}
-          loading={state.state.loading}
-          error={state.state.error}
-          className={config.config.view.className}
-          onCopy={()=>{
-            toast.success('Successfully copied to clipboard')
-          }}
-          actions={config.config.view.actions}
-        />
+          <EntityView
+            entity={selectedEntity}
+            fields={config.config.view.fields}
+            groups={config.config.view.groups}
+            mode={config.config.view.mode || "detail"}
+            showMetadata={config.config.view.showMetadata}
+            tabs={config.config.view.tabs}
+            titleField={config.config.view.titleField}
+            subtitleField={config.config.view.subtitleField}
+            imageField={config.config.view.imageField}
+            loading={state.state.loading}
+            error={state.state.error}
+            className={config.config.view.className}
+            onCopy={() => {
+              toast.success('Successfully copied to clipboard');
+            }}
+            actions={config.config.view.actions}
+          />
         </div>
       </div>
     );
