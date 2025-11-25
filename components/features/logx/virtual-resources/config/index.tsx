@@ -1,7 +1,7 @@
 export { virtualResourceFields } from "./fields";
-export { virtualResourceColumns } from "./list";
+export { virtualResourceColumns, virtualResourceColumns as virtualResourceListConfig } from "./list";
 export { virtualResourceViewConfig } from "./view";
-export { virtualResourceActions } from "./actions";
+export { virtualResourceActions, virtualResourceActions as virtualResourceActionsConfig } from "./actions";
 export { virtualResourceExportConfig } from "./export";
 
 import { virtualResourceFields } from "./fields";

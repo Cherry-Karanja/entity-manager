@@ -4,9 +4,9 @@
  */
 
 export { roomFields } from './fields';
-export { roomColumns } from './list';
+export { roomColumns, roomColumns as roomListConfig } from './list';
 export { roomViewConfig } from './view';
-export { roomActions } from './actions';
+export { roomActions, roomActions as roomActionsConfig } from './actions';
 export { roomExportConfig } from './export';
 
 import { roomFields } from './fields';

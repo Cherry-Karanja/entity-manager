@@ -105,6 +105,11 @@ const sidebarItems = [
         icon: KeyRound,
       },
       {
+        title: "Permissions",
+        href: "/dashboard/permissions",
+        icon: Shield,
+      },
+      {
         title: "Profiles",
         href: "/dashboard/profiles",
         icon: UserCircle,

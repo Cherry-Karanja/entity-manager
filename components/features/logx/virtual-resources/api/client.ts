@@ -61,3 +61,5 @@ export const virtualResourceApi = {
     return response;
   },
 };
+
+export default virtualResourceApi;

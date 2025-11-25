@@ -3,19 +3,21 @@
  * Handles all HTTP operations for room management
  */
 
-import { createHttpClient } from '@/components/connectionManager/http';
+import { createHttpClient } from '@/components/entityManager';
 import { Room } from '../../types';
 
-const API_BASE = '/api/v1/logx/resources';
+const API_BASE = '/api/v1/logx/resources/rooms/';
 
 // Create the base HTTP client for rooms
-export const roomsClient = createHttpClient<Room>(`${API_BASE}/rooms/`);
+export const roomsClient = createHttpClient<Room>({
+  endpoint: API_BASE,
+});
 
 // Room-specific actions (if any custom actions exist in views)
 export const roomActions = {
   // Check if room is available on a specific date
   checkAvailability: async (id: number, date: string): Promise<{ available: boolean; reason?: string }> => {
-    const response = await fetch(`${API_BASE}/rooms/${id}/check_availability/`, {
+    const response = await fetch(`/api/v1/logx/resources/rooms/${id}/check_availability/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,3 +31,5 @@ export const roomActions = {
     return response.json();
   },
 };
+
+export default roomsClient;

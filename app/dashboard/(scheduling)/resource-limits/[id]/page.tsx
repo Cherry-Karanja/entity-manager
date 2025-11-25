@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { default as resourceLimitClient } from '@/components/features/logx/resource-limits/api/client';
-import { ResourceLimit, ENTITY_TYPE_LABELS, LIMIT_RESOURCE_TYPE_LABELS, PERIOD_TYPE_LABELS } from '@/components/features/logx/types';
+import { ResourceLimit, ENTITY_TYPE_LABELS, RESOURCE_TYPE_LABELS, PERIOD_TYPE_LABELS } from '@/components/features/logx/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,10 +66,10 @@ export default function ResourceLimitViewPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">
-              {ENTITY_TYPE_LABELS[limit.entity_type as keyof typeof ENTITY_TYPE_LABELS]} - {LIMIT_RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof LIMIT_RESOURCE_TYPE_LABELS]} Limit
+              {ENTITY_TYPE_LABELS[limit.entity_type as keyof typeof ENTITY_TYPE_LABELS]} - {RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof RESOURCE_TYPE_LABELS]} Limit
             </h1>
             <p className="text-muted-foreground">
-              Max: {limit.max_value} {PERIOD_TYPE_LABELS[limit.period_type as keyof typeof PERIOD_TYPE_LABELS]}
+              Max: {limit.max_limit} {PERIOD_TYPE_LABELS[limit.period_type as keyof typeof PERIOD_TYPE_LABELS]}
             </p>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function ResourceLimitViewPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Timetable</span>
               <span className="font-medium">
-                {limit.timetable_details?.name || limit.timetable}
+                {limit.timetable_name || limit.timetable}
               </span>
             </div>
             <div className="flex justify-between">
@@ -101,7 +101,7 @@ export default function ResourceLimitViewPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Resource Type</span>
               <Badge className="bg-orange-100 text-orange-800">
-                {LIMIT_RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof LIMIT_RESOURCE_TYPE_LABELS]}
+                {RESOURCE_TYPE_LABELS[limit.resource_type as keyof typeof RESOURCE_TYPE_LABELS]}
               </Badge>
             </div>
           </CardContent>
@@ -114,7 +114,7 @@ export default function ResourceLimitViewPage() {
           <CardContent className="space-y-4">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Maximum Value</span>
-              <span className="font-medium text-2xl">{limit.max_value}</span>
+              <span className="font-medium text-2xl">{limit.max_limit}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Period Type</span>

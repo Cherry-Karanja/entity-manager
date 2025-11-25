@@ -1,7 +1,7 @@
 export { timetableConstraintFields } from "./fields";
-export { timetableConstraintColumns } from "./list";
+export { timetableConstraintColumns, timetableConstraintColumns as timetableConstraintListConfig } from "./list";
 export { timetableConstraintViewConfig } from "./view";
-export { timetableConstraintActions } from "./actions";
+export { timetableConstraintActions, timetableConstraintActions as timetableConstraintActionsConfig } from "./actions";
 export { timetableConstraintExportConfig } from "./export";
 
 import { timetableConstraintFields } from "./fields";
