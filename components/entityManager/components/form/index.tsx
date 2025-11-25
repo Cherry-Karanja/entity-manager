@@ -466,8 +466,8 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                 key={tab.id}
                 type="button"
                 className={`flex items-center gap-2 px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${state.currentTab === tab.id
-                    ? 'border-primary text-primary bg-primary/5'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                  ? 'border-primary text-primary bg-primary/5'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
                   }`}
                 onClick={() => setState(prev => ({ ...prev, currentTab: tab.id }))}
                 role="tab"
@@ -568,8 +568,8 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
                   key={section.id}
                   type="button"
                   className={`px-4 py-2.5 font-medium text-sm transition-all whitespace-nowrap border-b-2 ${index === currentTabIndex
-                      ? 'border-primary text-primary bg-primary/5'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                    ? 'border-primary text-primary bg-primary/5'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
                     }`}
                   onClick={() => setState(prev => ({ ...prev, currentTabIndex: index }))}
                   role="tab"
@@ -695,10 +695,10 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
               <div key={step.id} className="flex items-center flex-1 min-w-0">
                 <div className={`flex flex-col items-center flex-1 ${index > 0 ? 'ml-2' : ''}`}>
                   <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${index === currentStepIndex
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : index < currentStepIndex
-                        ? 'border-primary bg-primary/20 text-primary'
-                        : 'border-muted-foreground/30 bg-background text-muted-foreground'
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : index < currentStepIndex
+                      ? 'border-primary bg-primary/20 text-primary'
+                      : 'border-muted-foreground/30 bg-background text-muted-foreground'
                     }`}>
                     <span className="text-sm font-semibold">{index + 1}</span>
                   </div>
@@ -1165,7 +1165,26 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
           return () => clearTimeout(timer);
         }, [relationSearch]);
 
-        // Load relation options
+        // Load initial options on mount if there's a value
+        useEffect(() => {
+          if (value && !relationLoadedRef.current) {
+            const loadInitialOptions = async () => {
+              setRelationLoading(true);
+              try {
+                const entities = await relationConfig.fetchOptions('');
+                setRelationOptions(entities);
+                relationLoadedRef.current = true;
+              } catch (err) {
+                setRelationError(err instanceof Error ? err.message : 'Failed to load options');
+              } finally {
+                setRelationLoading(false);
+              }
+            };
+            loadInitialOptions();
+          }
+        }, [value, relationConfig]);
+
+        // Load relation options when popover opens or search changes
         useEffect(() => {
           if ((relationOpen && !relationLoadedRef.current) || debouncedRelationSearch) {
             const loadRelationOptions = async () => {

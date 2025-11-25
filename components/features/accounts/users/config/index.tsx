@@ -6,7 +6,7 @@
 
 import { EntityConfig } from '@/components/entityManager/composition/config/types';
 import { User } from '../../types';
-import { UserFormConfig } from './fields';
+import { UserFormConfig } from './form';
 import { UserListConfig } from './list';
 import { UserViewConfig } from './view';
 import { UserActionsConfig } from './actions';
@@ -23,23 +23,23 @@ export const userConfig: EntityConfig<User> = {
   label: 'User',
   labelPlural: 'Users',
   description: 'Manage system users, roles, and permissions',
-  
+
   // ===========================
   // List View Configuration
   // ===========================
   list: UserListConfig,
-  
+
   // ===========================
   // Form Configuration
   // ===========================
   form: UserFormConfig,
-  
-  
+
+
   // ===========================
   // Detail View Configuration
   // ===========================
   view: UserViewConfig,
-  
+
   // ===========================
   // Actions Configuration
   // ===========================
@@ -49,33 +49,33 @@ export const userConfig: EntityConfig<User> = {
   // Export Configuration
   // ===========================
   exporter: UserExporterConfig,
-  
+
   // ===========================
   // Validation
   // ===========================
   onValidate: async (values: Partial<User>) => {
     const errors: Record<string, string> = {};
-    
+
     // Basic validation
     if (!values.email?.trim()) {
       errors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
       errors.email = 'Invalid email format';
     }
-    
+
     if (!values.first_name?.trim()) {
       errors.first_name = 'First name is required';
     }
-    
+
     if (!values.last_name?.trim()) {
       errors.last_name = 'Last name is required';
     }
-    
+
     // Employee ID required only for create
     if (!values.id && !values.employee_id?.trim()) {
       errors.employee_id = 'Employee ID is required';
     }
-    
+
     return errors;
   },
 
@@ -95,7 +95,7 @@ export const userConfig: EntityConfig<User> = {
     delete: true,
     export: true,
   },
-  
+
   // ===========================
   // Additional Metadata
   // ===========================

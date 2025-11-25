@@ -79,7 +79,167 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
     overflowOpen: false,
   });
 
+
   /**
+   * Handle immediate action
+   */
+  const handleImmediateAction = useCallback(async (action: ImmediateAction<T>) => {
+    await action.handler(entity, context);
+  }, [entity, context]);
+
+  /**
+   * Handle confirm action
+   */
+  const handleConfirmAction = useCallback(async (action: ConfirmAction<T>) => {
+    // Show confirmation dialog
+    setState(prev => ({
+      ...prev,
+      modalOpen: true,
+      modalContent: (
+        <ConfirmDialog
+          title={action.confirmText || action.label}
+          message={getConfirmMessage(action.confirmMessage, entity)}
+          confirmText={action.confirmText || 'Confirm'}
+          cancelText={action.cancelText || 'Cancel'}
+          onConfirm={async () => {
+            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
+            await action.onConfirm(entity, context);
+          }}
+          onCancel={() => {
+            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
+            action.onCancel?.();
+          }}
+        />
+      ),
+    }));
+  }, [entity, context]);
+
+  /**
+   * Handle form action
+   */
+  const handleFormAction = useCallback((action: FormAction<T>) => {
+    const initialValues = getInitialFormValues(action.initialValues, entity, action.fields);
+    
+    setState(prev => ({
+      ...prev,
+      modalOpen: true,
+      modalContent: (
+        <FormModal
+          title={action.formTitle}
+          fields={action.fields}
+          initialValues={initialValues}
+          submitText={action.submitText}
+          onSubmit={async (values) => {
+            await action.onSubmit(values, entity, context);
+            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
+          }}
+          onCancel={() => {
+            action.onCancel?.();
+            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
+          }}
+        />
+      ),
+    }));
+  }, [entity, context]);
+
+  /**
+   * Handle modal action
+   */
+  const handleModalAction = useCallback((action: ModalAction<T>) => {
+    const ModalContent = action.content;
+    
+    setState(prev => ({
+      ...prev,
+      modalOpen: true,
+      modalContent: (
+        <ModalContent
+          entity={entity}
+          context={context}
+          onClose={() => {
+            action.onClose?.();
+            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
+          }}
+        />
+      ),
+    }));
+  }, [entity, context]);
+
+  /**
+   * Handle navigation action
+   */
+  const handleNavigationAction = useCallback(async (action: NavigationAction<T>) => {
+    // Check before navigate
+    if (action.beforeNavigate) {
+      const canNavigate = await action.beforeNavigate(entity, context);
+      if (!canNavigate) return;
+    }
+
+    const url = buildNavigationUrl(action.url, entity, context);
+    
+    if (action.newTab) {
+      window.open(url, '_blank');
+    } else {
+      window.location.href = url;
+    }
+  }, [entity, context]);
+
+  /**
+   * Handle bulk action
+   */
+  const handleBulkAction = useCallback(async (action: BulkAction<T>) => {
+    const entities = context?.selectedEntities || [];
+    
+    if (entities.length === 0) {
+      throw new Error('No items selected');
+    }
+
+    if (action.maxItems && entities.length > action.maxItems) {
+      throw new Error(`Maximum ${action.maxItems} items allowed`);
+    }
+
+    // Confirm bulk operation
+    if (action.confirmBulk) {
+      const message = getBulkConfirmMessage(action.bulkConfirmMessage, entities.length);
+      const confirmed = window.confirm(message);
+      if (!confirmed) return;
+    }
+
+    await action.handler(entities, context);
+  }, [context]);
+
+  /**
+   * Handle download action
+   */
+  const handleDownloadAction = useCallback(async (action: DownloadAction<T>) => {
+    if (action.downloadUrl) {
+      const url = typeof action.downloadUrl === 'string' 
+        ? action.downloadUrl 
+        : action.downloadUrl(entity);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      if (action.filename) {
+        const filename = typeof action.filename === 'string'
+          ? action.filename
+          : action.filename(entity);
+        link.download = filename;
+      }
+      link.click();
+    } else {
+      await action.handler(entity, context);
+    }
+  }, [entity, context]);
+
+  /**
+   * Handle custom action
+   */
+  const handleCustomAction = useCallback(async (action: CustomAction<T>) => {
+    if (action.handler) {
+      await action.handler(entity, context);
+    }
+  }, [entity, context]);
+
+    /**
    * Execute action based on type
    */
   const executeAction = useCallback(async (action: Action<T>) => {
@@ -138,164 +298,6 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
     }
   }, [entity, context, onActionStart, onActionComplete, onActionError, handleBulkAction, handleConfirmAction, handleCustomAction, handleDownloadAction, handleFormAction, handleImmediateAction, handleModalAction, handleNavigationAction]);
 
-  /**
-   * Handle immediate action
-   */
-  const handleImmediateAction = async (action: ImmediateAction<T>) => {
-    await action.handler(entity, context);
-  };
-
-  /**
-   * Handle confirm action
-   */
-  const handleConfirmAction = async (action: ConfirmAction<T>) => {
-    // Show confirmation dialog
-    setState(prev => ({
-      ...prev,
-      modalOpen: true,
-      modalContent: (
-        <ConfirmDialog
-          title={action.confirmText || action.label}
-          message={getConfirmMessage(action.confirmMessage, entity)}
-          confirmText={action.confirmText || 'Confirm'}
-          cancelText={action.cancelText || 'Cancel'}
-          onConfirm={async () => {
-            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
-            await action.onConfirm(entity, context);
-          }}
-          onCancel={() => {
-            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
-            action.onCancel?.();
-          }}
-        />
-      ),
-    }));
-  };
-
-  /**
-   * Handle form action
-   */
-  const handleFormAction = (action: FormAction<T>) => {
-    const initialValues = getInitialFormValues(action.initialValues, entity, action.fields);
-    
-    setState(prev => ({
-      ...prev,
-      modalOpen: true,
-      modalContent: (
-        <FormModal
-          title={action.formTitle}
-          fields={action.fields}
-          initialValues={initialValues}
-          submitText={action.submitText}
-          onSubmit={async (values) => {
-            await action.onSubmit(values, entity, context);
-            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
-          }}
-          onCancel={() => {
-            action.onCancel?.();
-            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
-          }}
-        />
-      ),
-    }));
-  };
-
-  /**
-   * Handle modal action
-   */
-  const handleModalAction = (action: ModalAction<T>) => {
-    const ModalContent = action.content;
-    
-    setState(prev => ({
-      ...prev,
-      modalOpen: true,
-      modalContent: (
-        <ModalContent
-          entity={entity}
-          context={context}
-          onClose={() => {
-            action.onClose?.();
-            setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
-          }}
-        />
-      ),
-    }));
-  };
-
-  /**
-   * Handle navigation action
-   */
-  const handleNavigationAction = async (action: NavigationAction<T>) => {
-    // Check before navigate
-    if (action.beforeNavigate) {
-      const canNavigate = await action.beforeNavigate(entity, context);
-      if (!canNavigate) return;
-    }
-
-    const url = buildNavigationUrl(action.url, entity, context);
-    
-    if (action.newTab) {
-      window.open(url, '_blank');
-    } else {
-      window.location.href = url;
-    }
-  };
-
-  /**
-   * Handle bulk action
-   */
-  const handleBulkAction = async (action: BulkAction<T>) => {
-    const entities = context?.selectedEntities || [];
-    
-    if (entities.length === 0) {
-      throw new Error('No items selected');
-    }
-
-    if (action.maxItems && entities.length > action.maxItems) {
-      throw new Error(`Maximum ${action.maxItems} items allowed`);
-    }
-
-    // Confirm bulk operation
-    if (action.confirmBulk) {
-      const message = getBulkConfirmMessage(action.bulkConfirmMessage, entities.length);
-      const confirmed = window.confirm(message);
-      if (!confirmed) return;
-    }
-
-    await action.handler(entities, context);
-  };
-
-  /**
-   * Handle download action
-   */
-  const handleDownloadAction = async (action: DownloadAction<T>) => {
-    if (action.downloadUrl) {
-      const url = typeof action.downloadUrl === 'string' 
-        ? action.downloadUrl 
-        : action.downloadUrl(entity);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      if (action.filename) {
-        const filename = typeof action.filename === 'string'
-          ? action.filename
-          : action.filename(entity);
-        link.download = filename;
-      }
-      link.click();
-    } else {
-      await action.handler(entity, context);
-    }
-  };
-
-  /**
-   * Handle custom action
-   */
-  const handleCustomAction = async (action: CustomAction<T>) => {
-    if (action.handler) {
-      await action.handler(entity, context);
-    }
-  };
 
   // Filter actions
   const filteredActions = filterActionsByPosition(actions, position);

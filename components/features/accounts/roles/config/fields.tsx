@@ -8,6 +8,9 @@ import { FormField } from '@/components/entityManager/components/form/types';
 import { UserRole } from '../types';
 
 export const roleFields: FormField<UserRole>[] = [
+  // ===========================
+  // Basic Information
+  // ===========================
   {
     name: 'name',
     label: 'Role Name',
@@ -83,16 +86,23 @@ export const roleFields: FormField<UserRole>[] = [
     helpText: 'Optional description of the role',
     width: '100%',
   },
+
+  // ===========================
+  // Status Fields
+  // ===========================
   {
     name: 'is_active',
     label: 'Active',
-    type: 'checkbox',
+    type: 'switch',
     required: false,
-    defaultValue: true,
     group: 'status',
-    helpText: 'Whether this role is active and can be assigned to users',
+    helpText: 'Role is active and can be assigned to users',
     width: '50%',
   },
+
+  // ===========================
+  // Permissions
+  // ===========================
   {
     name: 'permissions',
     label: 'Permissions',
@@ -105,24 +115,3 @@ export const roleFields: FormField<UserRole>[] = [
     // render: (props) => <PermissionSelector {...props} />, // TODO: implement custom render
   },
 ];
-
-export const UserRoleFormConfig = {
-  fields: roleFields,
-  groups: [
-    {
-      name: 'basic',
-      label: 'Basic Information',
-      description: 'Role name and description',
-    },
-    {
-      name: 'permissions',
-      label: 'Permissions',
-      description: 'Assign permissions to this role',
-    },
-    {
-      name: 'status',
-      label: 'Status',
-      description: 'Role activation status',
-    },
-  ],
-};
