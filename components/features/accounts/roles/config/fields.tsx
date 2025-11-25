@@ -101,28 +101,31 @@ export const roleFields: FormField<UserRole>[] = [
     group: 'permissions',
     helpText: 'Select permissions for this role (grouped by app for easy management)',
     width: '100%',
-    // Custom render function will use PermissionSelector component
-    render: 'PermissionSelector',
+    // Custom render function should be implemented in the actual form
+    // render: ({ value, onChange }) => <PermissionSelector value={value} onChange={onChange} />,
   },
 ];
 
-export const PermissionFormConfig = {
+export const UserRoleFormConfig = {
   fields: roleFields,
-  groups: [
+  sections: [
     {
-      name: 'basic',
+      id: 'basic',
       label: 'Basic Information',
       description: 'Role name and description',
+      fields: ['name', 'display_name', 'description'],
     },
     {
-      name: 'permissions',
+      id: 'permissions',
       label: 'Permissions',
       description: 'Assign permissions to this role',
+      fields: ['permissions'],
     },
     {
-      name: 'status',
+      id: 'status',
       label: 'Status',
       description: 'Role activation status',
+      fields: ['is_active'],
     },
   ],
 };

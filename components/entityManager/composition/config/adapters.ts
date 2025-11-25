@@ -6,6 +6,20 @@
 
 import { EntityConfig, ConfigAdapter } from './types';
 import { BaseEntity } from '../../primitives/types';
+import { FormField } from '../../components/form/types';
+import { Column } from '../../components/list/types';
+import { ViewField } from '../../components/view/types';
+
+/**
+ * Helper interface for adapter internal state
+ */
+interface AdaptedConfig {
+  name: string;
+  description?: string;
+  formFields: FormField<BaseEntity>[];
+  columns: Column<BaseEntity>[];
+  viewFields: ViewField<BaseEntity>[];
+}
 
 /**
  * JSON Schema adapter
@@ -13,10 +27,10 @@ import { BaseEntity } from '../../primitives/types';
  */
 export class JsonSchemaAdapter implements ConfigAdapter<any> {
   adapt(schema: any): Partial<EntityConfig> {
-    const config: Partial<EntityConfig> = {
+    const adaptedConfig: AdaptedConfig = {
       name: schema.title || 'Entity',
       description: schema.description,
-      fields: [],
+      formFields: [],
       columns: [],
       viewFields: []
     };
@@ -24,26 +38,26 @@ export class JsonSchemaAdapter implements ConfigAdapter<any> {
     // Convert properties to fields
     if (schema.properties) {
       Object.entries(schema.properties).forEach(([key, prop]: [string, any]) => {
-        const field: any = {
+        const formField: FormField<BaseEntity> = {
           name: key,
           label: prop.title || key,
-          type: this.mapType(prop.type),
+          type: this.mapFormType(prop.type),
           required: schema.required?.includes(key),
           helpText: prop.description
         };
 
         // Add validation
-        if (prop.minLength) field.minLength = prop.minLength;
-        if (prop.maxLength) field.maxLength = prop.maxLength;
-        if (prop.minimum) field.min = prop.minimum;
-        if (prop.maximum) field.max = prop.maximum;
-        if (prop.pattern) field.validation = [{ type: 'pattern', value: prop.pattern }];
-        if (prop.enum) field.options = prop.enum.map((v: any) => ({ label: v, value: v }));
+        if (prop.minLength) formField.minLength = prop.minLength;
+        if (prop.maxLength) formField.maxLength = prop.maxLength;
+        if (prop.minimum) formField.min = prop.minimum;
+        if (prop.maximum) formField.max = prop.maximum;
+        if (prop.pattern) formField.validation = [{ type: 'pattern', value: prop.pattern, message: 'Invalid format' }];
+        if (prop.enum) formField.options = prop.enum.map((v: any) => ({ label: v, value: v }));
 
-        config.fields!.push(field);
+        adaptedConfig.formFields.push(formField);
         
         // Add as column
-        config.columns!.push({
+        adaptedConfig.columns.push({
           key,
           label: prop.title || key,
           type: this.mapColumnType(prop.type),
@@ -52,35 +66,67 @@ export class JsonSchemaAdapter implements ConfigAdapter<any> {
         });
         
         // Add as view field
-        config.viewFields!.push({
+        adaptedConfig.viewFields.push({
           key,
           label: prop.title || key,
-          type: this.mapType(prop.type)
+          type: this.mapViewType(prop.type)
         });
       });
     }
 
-    return config;
+    return {
+      name: adaptedConfig.name,
+      description: adaptedConfig.description,
+      label: adaptedConfig.name,
+      labelPlural: adaptedConfig.name + 's',
+      list: {
+        columns: adaptedConfig.columns,
+      },
+      form: {
+        fields: adaptedConfig.formFields,
+      },
+      view: {
+        fields: adaptedConfig.viewFields,
+      },
+      actions: {
+        actions: [],
+      },
+      exporter: {
+        fields: [],
+      },
+    };
   }
 
-  private mapType(jsonType: string): 'number' | 'boolean' | 'text' | 'email' | 'url' | 'date' | 'file' | 'image' | 'json' | 'custom' | undefined {
-    const typeMap: Record<string, 'number' | 'boolean' | 'text' | 'email' | 'url' | 'date' | 'file' | 'image' | 'json' | 'custom'> = {
+  private mapFormType(jsonType: string): FormField<BaseEntity>['type'] {
+    const typeMap: Record<string, FormField<BaseEntity>['type']> = {
       'string': 'text',
       'number': 'number',
       'integer': 'number',
-      'boolean': 'boolean',
+      'boolean': 'checkbox',
       'array': 'json',
       'object': 'json'
     };
     return typeMap[jsonType] || 'text';
   }
 
-  private mapColumnType(jsonType: string): 'text' | 'number' | 'date' | 'boolean' | 'select' {
-    const typeMap: Record<string, any> = {
+  private mapColumnType(jsonType: string): Column<BaseEntity>['type'] {
+    const typeMap: Record<string, Column<BaseEntity>['type']> = {
       'string': 'text',
       'number': 'number',
       'integer': 'number',
       'boolean': 'boolean'
+    };
+    return typeMap[jsonType] || 'text';
+  }
+
+  private mapViewType(jsonType: string): ViewField<BaseEntity>['type'] {
+    const typeMap: Record<string, ViewField<BaseEntity>['type']> = {
+      'string': 'text',
+      'number': 'number',
+      'integer': 'number',
+      'boolean': 'boolean',
+      'array': 'json',
+      'object': 'json'
     };
     return typeMap[jsonType] || 'text';
   }
@@ -119,36 +165,55 @@ export class OpenApiAdapter implements ConfigAdapter<any> {
  */
 export class TypeScriptInterfaceAdapter implements ConfigAdapter<any> {
   adapt(metadata: any): Partial<EntityConfig> {
-    const config: Partial<EntityConfig> = {
+    const adaptedConfig: AdaptedConfig = {
       name: metadata.name || 'Entity',
-      fields: [],
+      formFields: [],
       columns: [],
       viewFields: []
     };
 
     if (metadata.properties) {
       metadata.properties.forEach((prop: any) => {
-        const field: any = {
+        const formField: FormField<BaseEntity> = {
           name: prop.name,
           label: this.toLabel(prop.name),
-          type: this.mapTsType(prop.type),
+          type: this.mapTsFormType(prop.type),
           required: !prop.optional
         };
 
-        config.fields!.push(field);
-        config.columns!.push({
+        adaptedConfig.formFields.push(formField);
+        adaptedConfig.columns.push({
           key: prop.name,
           label: this.toLabel(prop.name),
           sortable: true
         });
-        config.viewFields!.push({
+        adaptedConfig.viewFields.push({
           key: prop.name,
           label: this.toLabel(prop.name)
         });
       });
     }
 
-    return config;
+    return {
+      name: adaptedConfig.name,
+      label: adaptedConfig.name,
+      labelPlural: adaptedConfig.name + 's',
+      list: {
+        columns: adaptedConfig.columns,
+      },
+      form: {
+        fields: adaptedConfig.formFields,
+      },
+      view: {
+        fields: adaptedConfig.viewFields,
+      },
+      actions: {
+        actions: [],
+      },
+      exporter: {
+        fields: [],
+      },
+    };
   }
 
   private toLabel(name: string): string {
@@ -158,11 +223,11 @@ export class TypeScriptInterfaceAdapter implements ConfigAdapter<any> {
       .trim();
   }
 
-  private mapTsType(tsType: string): 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom' | undefined {
-    const typeMap: Record<string, 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom'> = {
+  private mapTsFormType(tsType: string): FormField<BaseEntity>['type'] {
+    const typeMap: Record<string, FormField<BaseEntity>['type']> = {
       'string': 'text',
       'number': 'number',
-      'boolean': 'boolean',
+      'boolean': 'checkbox',
       'Date': 'date',
       'Array': 'custom'
     };
@@ -180,42 +245,61 @@ export class TypeScriptInterfaceAdapter implements ConfigAdapter<any> {
  */
 export class DatabaseSchemaAdapter implements ConfigAdapter<any> {
   adapt(schema: any): Partial<EntityConfig> {
-    const config: Partial<EntityConfig> = {
+    const adaptedConfig: AdaptedConfig = {
       name: schema.tableName || 'Entity',
-      fields: [],
+      formFields: [],
       columns: [],
       viewFields: []
     };
 
     if (schema.columns) {
       schema.columns.forEach((col: any) => {
-        const field: any = {
+        const formField: FormField<BaseEntity> = {
           name: col.name,
           label: this.toLabel(col.name),
-          type: this.mapDbType(col.type),
+          type: this.mapDbFormType(col.type),
           required: !col.nullable
         };
 
         // Add constraints
-        if (col.maxLength) field.maxLength = col.maxLength;
-        if (col.defaultValue !== undefined) field.defaultValue = col.defaultValue;
+        if (col.maxLength) formField.maxLength = col.maxLength;
+        if (col.defaultValue !== undefined) formField.defaultValue = col.defaultValue;
 
-        config.fields!.push(field);
-        config.columns!.push({
+        adaptedConfig.formFields.push(formField);
+        adaptedConfig.columns.push({
           key: col.name,
           label: this.toLabel(col.name),
           type: this.mapColumnDbType(col.type),
           sortable: true,
           filterable: true
         });
-        config.viewFields!.push({
+        adaptedConfig.viewFields.push({
           key: col.name,
           label: this.toLabel(col.name)
         });
       });
     }
 
-    return config;
+    return {
+      name: adaptedConfig.name,
+      label: adaptedConfig.name,
+      labelPlural: adaptedConfig.name + 's',
+      list: {
+        columns: adaptedConfig.columns,
+      },
+      form: {
+        fields: adaptedConfig.formFields,
+      },
+      view: {
+        fields: adaptedConfig.viewFields,
+      },
+      actions: {
+        actions: [],
+      },
+      exporter: {
+        fields: [],
+      },
+    };
   }
 
   private toLabel(name: string): string {
@@ -224,17 +308,17 @@ export class DatabaseSchemaAdapter implements ConfigAdapter<any> {
       .replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  private mapDbType(dbType: string): 'number' | 'boolean' | 'email' | 'text' | 'image' | 'date' | 'url' | 'file' | 'json' | 'custom' | undefined {
+  private mapDbFormType(dbType: string): FormField<BaseEntity>['type'] {
     const type = dbType.toLowerCase();
     if (type.includes('varchar') || type.includes('text')) return 'text';
     if (type.includes('int') || type.includes('decimal') || type.includes('float')) return 'number';
-    if (type.includes('bool')) return 'boolean';
+    if (type.includes('bool')) return 'checkbox';
     if (type.includes('date') || type.includes('time')) return 'date';
     if (type.includes('json')) return 'json';
     return 'text';
   }
 
-  private mapColumnDbType(dbType: string): 'text' | 'number' | 'date' | 'boolean' | 'select' {
+  private mapColumnDbType(dbType: string): Column<BaseEntity>['type'] {
     const type = dbType.toLowerCase();
     if (type.includes('int') || type.includes('decimal') || type.includes('float')) return 'number';
     if (type.includes('bool')) return 'boolean';

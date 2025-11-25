@@ -2,19 +2,20 @@
  * LoginAttempt List Configuration
  */
 
-import { ColumnDef } from '@tanstack/react-table';
+import { Column } from '@/components/entityManager/components/list/types';
 import { LoginAttempt } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
-export const loginAttemptColumns: ColumnDef<LoginAttempt>[] = [
+export const loginAttemptColumns: Column<LoginAttempt>[] = [
   {
-    accessorKey: 'success',
-    header: 'Result',
-    cell: ({ row }) => (
+    key: 'success',
+    label: 'Result',
+    sortable: true,
+    render: (_value, entity) => (
       <div className="flex items-center gap-2">
-        {row.original.success ? (
+        {entity.success ? (
           <>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             <Badge variant="default" className="bg-green-500">Success</Badge>
@@ -29,50 +30,55 @@ export const loginAttemptColumns: ColumnDef<LoginAttempt>[] = [
     ),
   },
   {
-    accessorKey: 'email',
-    header: 'Email',
-    cell: ({ row }) => (
+    key: 'email',
+    label: 'Email',
+    sortable: true,
+    filterable: true,
+    render: (_value, entity) => (
       <div>
-        <div className="font-medium">{row.original.email}</div>
-        {row.original.user_full_name && (
-          <div className="text-xs text-muted-foreground">{row.original.user_full_name}</div>
+        <div className="font-medium">{entity.email}</div>
+        {entity.user_full_name && (
+          <div className="text-xs text-muted-foreground">{entity.user_full_name}</div>
         )}
       </div>
     ),
   },
   {
-    accessorKey: 'ip_address',
-    header: 'IP Address',
+    key: 'ip_address',
+    label: 'IP Address',
+    sortable: true,
   },
   {
-    accessorKey: 'device_type',
-    header: 'Device',
-    cell: ({ row }) => (
+    key: 'device_type',
+    label: 'Device',
+    render: (_value, entity) => (
       <div>
-        <div className="text-sm">{row.original.device_type || 'Unknown'}</div>
+        <div className="text-sm">{entity.device_type || 'Unknown'}</div>
         <div className="text-xs text-muted-foreground">
-          {row.original.browser} • {row.original.device_os}
+          {entity.browser} • {entity.device_os}
         </div>
       </div>
     ),
   },
   {
-    accessorKey: 'failure_reason',
-    header: 'Reason',
-    cell: ({ row }) => (
-      row.original.failure_reason ? (
-        <span className="text-sm text-red-600">{row.original.failure_reason}</span>
+    key: 'failure_reason',
+    label: 'Reason',
+    render: (_value, entity) => (
+      entity.failure_reason ? (
+        <span className="text-sm text-red-600">{entity.failure_reason}</span>
       ) : (
         <span className="text-sm text-muted-foreground">-</span>
       )
     ),
   },
   {
-    accessorKey: 'created_at',
-    header: 'Attempted',
-    cell: ({ row }) => (
+    key: 'created_at',
+    label: 'Attempted',
+    sortable: true,
+    type: 'date',
+    render: (_value, entity) => (
       <span className="text-sm">
-        {formatDistanceToNow(new Date(row.original.created_at), { addSuffix: true })}
+        {formatDistanceToNow(new Date(entity.created_at), { addSuffix: true })}
       </span>
     ),
   },

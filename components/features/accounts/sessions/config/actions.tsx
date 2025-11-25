@@ -2,17 +2,28 @@
  * UserSession Actions Configuration
  */
 
-import { EntityAction } from '@/components/entityManager/composition/config/types';
+import { ConfirmAction } from '@/components/entityManager/components/actions/types';
 import { UserSession } from '../../types';
+import { userSessionActions } from '../api/client';
 
-export const UserSessionActionsConfig: EntityAction<UserSession>[] = [
-  {
-    name: 'expire',
-    label: 'Expire Session',
-    icon: 'XCircle',
-    variant: 'destructive',
-    requiresSelection: true,
-    confirmationMessage: 'Are you sure you want to expire this session?',
-    scope: 'row',
+export const expireSessionAction: ConfirmAction<UserSession> = {
+  id: 'expire',
+  label: 'Expire Session',
+  actionType: 'confirm',
+  icon: 'XCircle',
+  variant: 'destructive',
+  position: 'row',
+  requiresSelection: true,
+  confirmMessage: 'Are you sure you want to expire this session?',
+  confirmText: 'Expire',
+  cancelText: 'Cancel',
+  onConfirm: async (entity) => {
+    if (entity?.id) {
+      await userSessionActions.expire(entity.id);
+    }
   },
-];
+};
+
+export const UserSessionActionsConfig = {
+  actions: [expireSessionAction],
+};

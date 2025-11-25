@@ -17,8 +17,9 @@ export const userSessionConfig: EntityConfig<UserSession> = {
   
   list: {
     columns: sessionColumns,
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    searchableFields: ['user_email', 'user_full_name', 'ip_address', 'device_type'],
+    sortConfig: { field: 'created_at', direction: 'desc' },
+    searchable: true,
+    searchPlaceholder: 'Search by email, name, IP or device...',
   },
   
   form: UserSessionFormConfig,
@@ -26,6 +27,9 @@ export const userSessionConfig: EntityConfig<UserSession> = {
     fields: sessionViewFields,
   },
   actions: UserSessionActionsConfig,
+  exporter: {
+    fields: [],
+  },
   apiEndpoint: '/api/v1/accounts/user-sessions/',
   icon: 'Monitor',
   

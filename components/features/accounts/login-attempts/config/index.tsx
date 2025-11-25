@@ -16,13 +16,20 @@ export const loginAttemptConfig: EntityConfig<LoginAttempt> = {
   
   list: {
     columns: loginAttemptColumns,
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    searchableFields: ['email', 'ip_address', 'user_email'],
+    sortConfig: { field: 'created_at', direction: 'desc' },
+    searchable: true,
+    searchPlaceholder: 'Search by email or IP address...',
   },
   
   form: LoginAttemptFormConfig,
   view: {
     fields: loginAttemptViewFields,
+  },
+  actions: {
+    actions: [],
+  },
+  exporter: {
+    fields: [],
   },
   apiEndpoint: '/api/v1/accounts/login-attempts/',
   icon: 'ShieldAlert',

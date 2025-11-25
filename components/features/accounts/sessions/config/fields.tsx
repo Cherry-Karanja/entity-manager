@@ -15,7 +15,7 @@ export const sessionFields: FormField<UserSession>[] = [
     group: 'basic',
     helpText: 'Email of the user',
     width: '50%',
-    readOnly: true,
+    disabled: true,
   },
   {
     name: 'ip_address',
@@ -25,7 +25,7 @@ export const sessionFields: FormField<UserSession>[] = [
     group: 'basic',
     helpText: 'IP address of the session',
     width: '50%',
-    readOnly: true,
+    disabled: true,
   },
 ];
 

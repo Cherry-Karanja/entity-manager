@@ -163,7 +163,7 @@ function handleAxiosError(error: unknown): never {
  */
 export function createHttpClient<T extends BaseEntity>(
   config: HttpClientConfig
-): ApiClient<T> & { customAction: (id: string | number, action: string, data?: unknown) => Promise<ApiResponse<T>> } {
+): ApiClient<T> & { customAction: (id: string | number | undefined, action: string, data?: unknown, method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE') => Promise<ApiResponse<T>> } {
   const { endpoint } = config;
 
   return {
@@ -269,16 +269,43 @@ export function createHttpClient<T extends BaseEntity>(
      * 
      * @example
      * ```typescript
-     * // Approve user
+     * // Approve user (POST)
      * await client.customAction(userId, 'approve');
      * 
-     * // Change role
+     * // Change role (POST with data)
      * await client.customAction(userId, 'change_role', { role: 'admin' });
+     * 
+     * // Get users with role (GET)
+     * await client.customAction(roleId, 'users', undefined, 'GET');
+     * 
+     * // Collection-level action (no id)
+     * await client.customAction(undefined, 'expire-all', undefined, 'POST');
      * ```
      */
-    async customAction(id: string | number, action: string, data?: unknown): Promise<ApiResponse<T>> {
+    async customAction(id: string | number | undefined, action: string, data?: unknown, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST'): Promise<ApiResponse<T>> {
       try {
-        const response = await authApi.post(`${endpoint}${id}/${action}/`, data);
+        const url = id !== undefined ? `${endpoint}${id}/${action}/` : `${endpoint}${action}/`;
+        let response;
+        
+        switch (method) {
+          case 'GET':
+            response = await authApi.get(url, { params: data as Record<string, unknown> });
+            break;
+          case 'PUT':
+            response = await authApi.put(url, data);
+            break;
+          case 'PATCH':
+            response = await authApi.patch(url, data);
+            break;
+          case 'DELETE':
+            response = await authApi.delete(url, { data });
+            break;
+          case 'POST':
+          default:
+            response = await authApi.post(url, data);
+            break;
+        }
+        
         return handleAxiosResponse<T>(response.data);
       } catch (error) {
         return handleAxiosError(error);

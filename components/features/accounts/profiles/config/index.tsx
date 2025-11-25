@@ -25,8 +25,9 @@ export const userProfileConfig: EntityConfig<UserProfile> = {
   // ===========================
   list: {
     columns: profileColumns,
-    defaultSort: { field: 'created_at', direction: 'desc' },
-    searchableFields: ['user_name', 'user_email', 'bio', 'job_title', 'department'],
+    sortConfig: { field: 'created_at', direction: 'desc' },
+    searchable: true,
+    searchPlaceholder: 'Search by name, email, bio, job title or department...',
   },
   
   // ===========================
@@ -45,6 +46,13 @@ export const userProfileConfig: EntityConfig<UserProfile> = {
   // Actions Configuration
   // ===========================
   actions: UserProfileActionsConfig,
+  
+  // ===========================
+  // Exporter Configuration
+  // ===========================
+  exporter: {
+    fields: [],
+  },
   
   // ===========================
   // API Configuration

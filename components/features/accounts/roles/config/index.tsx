@@ -25,8 +25,9 @@ export const userRoleConfig: EntityConfig<UserRole> = {
   // ===========================
   list: {
     columns: roleColumns,
-    defaultSort: { field: 'display_name', direction: 'asc' },
-    searchableFields: ['display_name', 'name', 'description'],
+    sortConfig: { field: 'display_name', direction: 'asc' },
+    searchable: true,
+    searchPlaceholder: 'Search by name or description...',
   },
   
   // ===========================
@@ -45,6 +46,13 @@ export const userRoleConfig: EntityConfig<UserRole> = {
   // Actions Configuration
   // ===========================
   actions: UserRoleActionsConfig,
+  
+  // ===========================
+  // Exporter Configuration
+  // ===========================
+  exporter: {
+    fields: [],
+  },
   
   // ===========================
   // API Configuration

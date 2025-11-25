@@ -167,3 +167,39 @@ export const profileFields: FormField<UserProfile>[] = [
     width: '50%',
   },
 ];
+
+export const UserProfileFormConfig = {
+  fields: profileFields,
+  sections: [
+    {
+      id: 'basic',
+      label: 'Basic Information',
+      description: 'Your profile picture and biography',
+      fields: ['avatar', 'bio'],
+    },
+    {
+      id: 'contact',
+      label: 'Contact Information',
+      description: 'Your contact details',
+      fields: ['phone_number'],
+    },
+    {
+      id: 'organization',
+      label: 'Organization',
+      description: 'Your department and job title',
+      fields: ['department', 'job_title'],
+    },
+    {
+      id: 'preferences',
+      label: 'Preferences',
+      description: 'Your language and theme preferences',
+      fields: ['preferred_language', 'interface_theme', 'allow_notifications'],
+    },
+    {
+      id: 'privacy',
+      label: 'Privacy Settings',
+      description: 'Control what information is visible to others',
+      fields: ['show_email', 'show_phone'],
+    },
+  ],
+};

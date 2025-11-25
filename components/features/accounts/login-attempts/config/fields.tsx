@@ -13,7 +13,7 @@ export const loginAttemptFields: FormField<LoginAttempt>[] = [
     type: 'email',
     required: false,
     group: 'basic',
-    readOnly: true,
+    disabled: true,
   },
   {
     name: 'success',
@@ -21,7 +21,7 @@ export const loginAttemptFields: FormField<LoginAttempt>[] = [
     type: 'checkbox',
     required: false,
     group: 'basic',
-    readOnly: true,
+    disabled: true,
   },
 ];
 
