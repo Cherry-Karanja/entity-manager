@@ -1,138 +1,86 @@
 /**
  * UserProfile API Client
  * 
- * API client for profile management operations.
+ * API client for Django user-profiles endpoint using the HTTP client factory.
+ * 
+ * The HTTP client factory handles all CRUD operations automatically:
+ * - Authentication via authApi from connectionManager
+ * - CSRF token handling
+ * - 401 token refresh
+ * - DRF pagination format (results, count, next, previous)
+ * - Error handling with toast notifications
+ * - Bulk operations
+ * - Custom actions
  */
 
-import { authApi as apiClient } from '@/components/connectionManager/http/client';
-import { UserProfile, CreateUserProfileRequest, UpdateUserProfileRequest, UserProfileListResponse } from '../types';
+import { createHttpClient } from '@/components/entityManager';
+import { UserProfile } from '../types';
 
-const BASE_URL = '/api/accounts/profiles';
+/**
+ * UserProfile API Client
+ * 
+ * Example usage:
+ * ```typescript
+ * // List profiles with pagination
+ * const result = await userProfilesApiClient.list({ page: 1, pageSize: 10 });
+ * 
+ * // Get single profile
+ * const profile = await userProfilesApiClient.get('uuid-here');
+ * 
+ * // Create profile
+ * const newProfile = await userProfilesApiClient.create({ user_id: '123', ... });
+ * 
+ * // Update profile
+ * const updated = await userProfilesApiClient.update('uuid', { bio: 'New bio' });
+ * 
+ * // Delete profile
+ * await userProfilesApiClient.delete('uuid');
+ * 
+ * // Bulk operations
+ * await userProfilesApiClient.bulkDelete(['uuid1', 'uuid2', 'uuid3']);
+ * ```
+ */
+export const userProfilesApiClient = createHttpClient<UserProfile>({
+  endpoint: '/api/v1/accounts/user-profiles/',
+});
 
-export const userProfileApi = {
+/**
+ * Custom user profile actions
+ * 
+ * These use the customAction method which makes POST requests to:
+ * /api/v1/accounts/user-profiles/{id}/{action}/
+ * 
+ * Example usage:
+ * ```typescript
+ * // Approve profile
+ * await userProfileActions.approve('uuid');
+ * 
+ * // Reject profile
+ * await userProfileActions.reject('uuid');
+ * 
+ * // Suspend profile
+ * await userProfileActions.suspend('uuid');
+ * ```
+ */
+export const userProfileActions = {
   /**
-   * Get all profiles
+   * Approve user profile
    */
-  list: async (params?: {
-    page?: number;
-    page_size?: number;
-    search?: string;
-    ordering?: string;
-    status?: string;
-  }): Promise<UserProfileListResponse> => {
-    const response = await apiClient.get(BASE_URL, { params });
-    return response.data;
+  async approve(id: string | number) {
+    return userProfilesApiClient.customAction(id, 'approve');
   },
 
   /**
-   * Get a single profile
+   * Reject user profile
    */
-  get: async (id: string): Promise<UserProfile> => {
-    const response = await apiClient.get(`${BASE_URL}/${id}/`);
-    return response.data;
+  async reject(id: string | number) {
+    return userProfilesApiClient.customAction(id, 'reject');
   },
 
   /**
-   * Create a new profile
+   * Suspend user profile
    */
-  create: async (data: CreateUserProfileRequest): Promise<UserProfile> => {
-    const formData = new FormData();
-    
-    // Add avatar file if present
-    if (data.avatar) {
-      formData.append('avatar', data.avatar);
-    }
-    
-    // Add other fields
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'avatar' && value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
-    
-    const response = await apiClient.post(`${BASE_URL}/`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
-
-  /**
-   * Update an existing profile
-   */
-  update: async (id: string, data: UpdateUserProfileRequest): Promise<UserProfile> => {
-    const formData = new FormData();
-    
-    // Add avatar file if present
-    if (data.avatar) {
-      formData.append('avatar', data.avatar);
-    }
-    
-    // Add other fields
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'avatar' && value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
-    
-    const response = await apiClient.patch(`${BASE_URL}/${id}/`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
-
-  /**
-   * Delete a profile
-   */
-  delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`${BASE_URL}/${id}/`);
-  },
-
-  /**
-   * Approve a profile
-   */
-  approve: async (id: string): Promise<UserProfile> => {
-    const response = await apiClient.post(`${BASE_URL}/${id}/approve/`);
-    return response.data;
-  },
-
-  /**
-   * Reject a profile
-   */
-  reject: async (id: string): Promise<UserProfile> => {
-    const response = await apiClient.post(`${BASE_URL}/${id}/reject/`);
-    return response.data;
-  },
-
-  /**
-   * Suspend a profile
-   */
-  suspend: async (id: string): Promise<UserProfile> => {
-    const response = await apiClient.post(`${BASE_URL}/${id}/suspend/`);
-    return response.data;
-  },
-
-  /**
-   * Bulk approve profiles
-   */
-  bulkApprove: async (ids: string[]): Promise<void> => {
-    await apiClient.post(`${BASE_URL}/bulk_approve/`, { ids });
-  },
-
-  /**
-   * Bulk reject profiles
-   */
-  bulkReject: async (ids: string[]): Promise<void> => {
-    await apiClient.post(`${BASE_URL}/bulk_reject/`, { ids });
-  },
-
-  /**
-   * Bulk delete profiles
-   */
-  bulkDelete: async (ids: string[]): Promise<void> => {
-    await apiClient.post(`${BASE_URL}/bulk_delete/`, { ids });
+  async suspend(id: string | number) {
+    return userProfilesApiClient.customAction(id, 'suspend');
   },
 };

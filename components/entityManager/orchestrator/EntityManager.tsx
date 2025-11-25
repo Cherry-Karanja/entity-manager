@@ -556,15 +556,6 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       <div className="space-y-3 sm:space-y-4">
         {renderBreadcrumbs()}
         <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6">
-        <EntityActions
-          actions={config.config.actions.actions}
-          entity={selectedEntity}
-          context={actionContext}
-          mode={config.config.actions.mode || 'dropdown'}
-          position={config.config.actions.position || 'toolbar'}
-          className={config.config.actions.className}
-        />
-        
         <EntityView
           entity={selectedEntity}
           fields={config.config.view.fields}

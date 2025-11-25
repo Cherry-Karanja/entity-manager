@@ -14,11 +14,7 @@ import { BaseEntity } from '../../primitives/types';
 import {
   EntityViewProps,
   ViewState,
-  ViewMode,
   FieldRenderProps,
-  ViewField,
-  FieldGroup,
-  ViewTab,
 } from './types';
 import {
   getVisibleFields,
@@ -216,78 +212,80 @@ function DetailView<T extends BaseEntity>({
         {actions && <div className="flex flex-wrap gap-2 justify-end flex-shrink-0">{actions}</div>}
       </div>
 
-      {/* Main content */}
-      <div className="space-y-4 sm:space-y-6">
-        {/* Ungrouped fields */}
-        {groupedFields.get(null) && (
-          <div className="space-y-2 sm:space-y-3">
-            {groupedFields.get(null)!.map(field => (
-              <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
-            ))}
-          </div>
-        )}
-
-        {/* Grouped fields */}
-        {sortedGroups.map((group: any) => {
-          const groupFields = groupedFields.get(group.id);
-          if (!groupFields || groupFields.length === 0) return null;
-
-          const isCollapsed = state.collapsedGroups.has(group.id);
-
-          return (
-            <div key={group.id} className="border rounded-lg overflow-hidden">
-              <div
-                className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
-                  }`}
-                onClick={() => group.collapsible && onToggleGroup(group.id)}
-                {...(group.collapsible ? { role: 'button' as const, 'aria-expanded': (!isCollapsed ? 'true' : 'false') as 'true' | 'false' } : {})}
-              >
-
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
-                  {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
-                </div>
-                {group.collapsible && (
-                  <svg
-                    className={`w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground transition-transform ${isCollapsed ? 'rotate-0' : 'rotate-180'
-                      }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                )}
-              </div>
-              {!isCollapsed && (
-                <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-card">
-                  {groupFields.map(field => (
-                    <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Metadata */}
-        {showMetadata && (
-          <div className="border rounded-lg overflow-hidden">
-            <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50">
-              <h3 className="text-sm font-semibold text-foreground">Metadata</h3>
-            </div>
-            <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-card">
-              {getMetadataFields(entity).map(({ label, value }) => (
-                <div key={label} className="flex flex-col sm:flex-row items-start">
-                  <div className="w-full sm:w-1/3 text-xs sm:text-sm font-medium text-muted-foreground mb-0.5 sm:mb-0">{label}</div>
-                  <div className="w-full sm:w-2/3 text-xs sm:text-sm text-foreground">{String(value)}</div>
-                </div>
+      {/* Main content - only show if no tabs, otherwise content goes in tabs */}
+      {!tabs || tabs.length === 0 ? (
+        <div className="space-y-4 sm:space-y-6">
+          {/* Ungrouped fields */}
+          {groupedFields.get(null) && (
+            <div className="space-y-2 sm:space-y-3">
+              {groupedFields.get(null)!.map(field => (
+                <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
               ))}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* Grouped fields */}
+          {sortedGroups.map((group: any) => {
+            const groupFields = groupedFields.get(group.id);
+            if (!groupFields || groupFields.length === 0) return null;
+
+            const isCollapsed = state.collapsedGroups.has(group.id);
+
+            return (
+              <div key={group.id} className="border rounded-lg overflow-hidden">
+                <div
+                  className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
+                    }`}
+                  onClick={() => group.collapsible && onToggleGroup(group.id)}
+                  {...(group.collapsible ? { role: 'button' as const, 'aria-expanded': (!isCollapsed ? 'true' : 'false') as 'true' | 'false' } : {})}
+                >
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
+                    {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
+                  </div>
+                  {group.collapsible && (
+                    <svg
+                      className={`w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground transition-transform ${isCollapsed ? 'rotate-0' : 'rotate-180'
+                        }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </div>
+                {!isCollapsed && (
+                  <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-card">
+                    {groupFields.map(field => (
+                      <FieldRow key={String(field.key)} field={field} value={getFieldValue(entity, field.key)} entity={entity} onCopy={onCopy} copiedField={copiedField} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Metadata */}
+          {showMetadata && (
+            <div className="border rounded-lg overflow-hidden">
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50">
+                <h3 className="text-sm font-semibold text-foreground">Metadata</h3>
+              </div>
+              <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-card">
+                {getMetadataFields(entity).map(({ label, value }) => (
+                  <div key={label} className="flex flex-col sm:flex-row items-start">
+                    <div className="w-full sm:w-1/3 text-xs sm:text-sm font-medium text-muted-foreground mb-0.5 sm:mb-0">{label}</div>
+                    <div className="w-full sm:w-2/3 text-xs sm:text-sm text-foreground">{String(value)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {/* Tabs */}
       {tabs && tabs.length > 0 && (

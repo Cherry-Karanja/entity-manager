@@ -4,51 +4,81 @@
  * Central configuration for the UserRole entity.
  */
 
-import { EntityConfig } from '@/components/entityManager/primitives/types';
+import { EntityConfig } from '@/components/entityManager/composition/config/types';
 import { UserRole } from '../types';
-import { roleFields } from './fields';
-import { roleColumns, roleListConfig } from './list';
-import { roleFormLayout, roleFormSections, roleFormMode } from './form';
-import { roleViewFields, roleViewGroups } from './view';
+import { UserRoleFormConfig } from './fields';
+import { roleColumns } from './list';
+import { roleViewFields } from './view';
+import { UserRoleActionsConfig } from './actions';
 
 export const userRoleConfig: EntityConfig<UserRole> = {
-  // Entity metadata
-  name: 'UserRole',
+  // ===========================
+  // Basic Metadata
+  // ===========================
+  name: 'userRole',
   label: 'Role',
   labelPlural: 'Roles',
+  description: 'Manage user roles and permissions',
+  
+  // ===========================
+  // List View Configuration
+  // ===========================
+  list: {
+    columns: roleColumns,
+    defaultSort: { field: 'display_name', direction: 'asc' },
+    searchableFields: ['display_name', 'name', 'description'],
+  },
+  
+  // ===========================
+  // Form Configuration
+  // ===========================
+  form: UserRoleFormConfig,
+  
+  // ===========================
+  // Detail View Configuration
+  // ===========================
+  view: {
+    fields: roleViewFields,
+  },
+  
+  // ===========================
+  // Actions Configuration
+  // ===========================
+  actions: UserRoleActionsConfig,
+  
+  // ===========================
+  // API Configuration
+  // ===========================
+  apiEndpoint: '/api/v1/accounts/user-roles/',
+  
+  // ===========================
+  // Icon
+  // ===========================
   icon: 'Shield',
   
-  // Fields
-  fields: roleFields,
+  // ===========================
+  // Permissions
+  // ===========================
+  permissions: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+    export: true,
+  },
   
-  // List Configuration
-  columns: roleColumns,
-  listConfig: roleListConfig,
-  
-  // Form Configuration
-  formLayout: roleFormLayout,
-  formSections: roleFormSections,
-  formMode: roleFormMode,
-  
-  // View Configuration
-  viewFields: roleViewFields,
-  viewGroups: roleViewGroups,
-  
-  // Actions - Temporarily disabled due to type mismatch
-  // actions: roleActions,
-  // bulkActions: roleBulkActions,
-  
-  // API Configuration
-  apiEndpoint: '/api/accounts/roles',
-  
-  // Display Configuration
-  displayField: 'display_name',
-  searchFields: ['display_name', 'name', 'description'],
-  defaultSort: { field: 'display_name', direction: 'asc' },
+  // ===========================
+  // Additional Metadata
+  // ===========================
+  metadata: {
+    color: 'indigo',
+    category: 'accounts',
+    tags: ['roles', 'permissions', 'access-control'],
+  },
 };
 
 export * from './fields';
 export * from './list';
 export * from './form';
 export * from './view';
-// export * from './actions'; // Temporarily disabled - type mismatch
+export * from './actions';
