@@ -43,10 +43,10 @@ export const DepartmentFormConfig: EntityFormConfig<Department> = {
       placeholder: 'Select Head of Department',
       group: 'basic',
       relationConfig: {
-        endpoint: '/api/v1/accounts/users/',
-        labelField: 'full_name',
+        entity: 'user',
+        displayField: 'full_name',
         valueField: 'id',
-        searchField: 'search',
+        searchFields: ['email','first_name','last_name'],
       },
       helpText: 'User assigned as the Head of Department',
       width: '100%',
