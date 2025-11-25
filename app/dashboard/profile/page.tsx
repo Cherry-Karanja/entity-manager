@@ -12,6 +12,7 @@ import { ProfileManager } from '@/components/profile';
 import { authApi } from '@/components/connectionManager/http/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ProfileData {
   first_name?: string;
@@ -162,12 +163,39 @@ export default function ProfilePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <p className="text-destructive mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="text-primary hover:underline"
+          <Button 
+            variant="outline"
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              // Re-fetch profile
+              const retryFetch = async () => {
+                try {
+                  const response = await authApi.get<UserResponse>('/api/v1/accounts/users/me/');
+                  const userData = response.data;
+                  
+                  setProfileData({
+                    first_name: userData.first_name,
+                    last_name: userData.last_name,
+                    email: userData.email,
+                    phone: userData.phone_number,
+                    bio: userData.profile?.bio,
+                    department: userData.profile?.department,
+                    avatar: userData.profile?.profile_picture,
+                  });
+                  setError(null);
+                } catch (err) {
+                  console.error('Failed to fetch profile:', err);
+                  setError('Failed to load profile data');
+                } finally {
+                  setLoading(false);
+                }
+              };
+              retryFetch();
+            }}
           >
             Try again
-          </button>
+          </Button>
         </div>
       </div>
     );
