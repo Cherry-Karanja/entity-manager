@@ -6,6 +6,8 @@
 
 import { FormField } from '@/components/entityManager/components/form/types';
 import { UserRole } from '../types';
+import { Permission } from '../../types';
+import { PermissionSelector } from '../../permissions';
 
 export const roleFields: FormField<UserRole>[] = [
   // ===========================
@@ -111,7 +113,32 @@ export const roleFields: FormField<UserRole>[] = [
     group: 'permissions',
     helpText: 'Select permissions for this role (grouped by app for easy management)',
     width: '100%',
-    // Custom render function will use PermissionSelector component
-    // render: (props) => <PermissionSelector {...props} />, // TODO: implement custom render
+    render: (props) => {
+      // Convert permission IDs to Permission objects for the selector
+      const selectedPermissions: Permission[] = Array.isArray(props.value)
+        ? props.value.map((id: string | number | Permission) => {
+          // If it's already a Permission object, return it
+          if (typeof id === 'object' && id !== null && 'id' in id) {
+            return id as Permission;
+          }
+          // Otherwise, create a minimal Permission object
+          // The PermissionSelector will handle loading full details
+          return { id: typeof id === 'string' ? parseInt(id) : id } as Permission;
+        })
+        : [];
+
+      return (
+        <PermissionSelector
+          selectedPermissions={selectedPermissions}
+          onSelectionChange={(permissions: Permission[]) => {
+            // Convert Permission objects to IDs for form storage
+            const permissionIds = permissions.map(p => p.id);
+            props.onChange?.(permissionIds);
+          }}
+          mode="select"
+          className="w-full"
+        />
+      );
+    },
   },
 ];

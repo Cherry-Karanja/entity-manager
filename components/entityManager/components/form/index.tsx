@@ -939,6 +939,108 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
     }
   }, [isSearchableSelect, open, debouncedQuery, field, formValues]);
 
+  // State for relations
+  const [relationOpen, setRelationOpen] = useState(false);
+  const [relationSearch, setRelationSearch] = useState('');
+  const [relationOptions, setRelationOptions] = useState<Record<string, unknown>[]>([]);
+  const [relationLoading, setRelationLoading] = useState(false);
+  const [relationError, setRelationError] = useState<string | null>(null);
+  const relationLoadedRef = useRef(false);
+  const [debouncedRelationSearch, setDebouncedRelationSearch] = useState('');
+
+  // State for multi relations
+  const [multiRelationOpen, setMultiRelationOpen] = useState(false);
+  const [multiRelationSearch, setMultiRelationSearch] = useState('');
+  const [multiRelationOptions, setMultiRelationOptions] = useState<Record<string, unknown>[]>([]);
+  const [multiRelationLoading, setMultiRelationLoading] = useState(false);
+  const [multiRelationError, setMultiRelationError] = useState<string | null>(null);
+  const multiRelationLoadedRef = useRef(false);
+  const [debouncedMultiRelationSearch, setDebouncedMultiRelationSearch] = useState('');
+
+  // Debounce for relation search
+  useEffect(() => {
+    if (field.type === 'relation') {
+      const timer = setTimeout(() => {
+        setDebouncedRelationSearch(relationSearch);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [field.type, relationSearch]);
+
+  // Debounce for multi relation search
+  useEffect(() => {
+    if (field.type === 'multirelation') {
+      const timer = setTimeout(() => {
+        setDebouncedMultiRelationSearch(multiRelationSearch);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [field.type, multiRelationSearch]);
+
+  // Load initial options for relation if value exists
+  useEffect(() => {
+    if (field.type === 'relation' && field.relationConfig && value && !relationLoadedRef.current) {
+      const loadInitialOptions = async () => {
+        setRelationLoading(true);
+        try {
+          const cfg = field.relationConfig as NonNullable<typeof field.relationConfig>;
+          const entities = await cfg.fetchOptions('');
+          setRelationOptions(entities as unknown as Record<string, unknown>[]);
+          relationLoadedRef.current = true;
+        } catch (err) {
+          setRelationError(err instanceof Error ? err.message : 'Failed to load options');
+        } finally {
+          setRelationLoading(false);
+        }
+      };
+      loadInitialOptions();
+    }
+  }, [field, field.relationConfig, value]);
+
+  // Load relation options when open or search changes
+  useEffect(() => {
+    if (field.type === 'relation' && field.relationConfig && ((relationOpen && !relationLoadedRef.current) || debouncedRelationSearch)) {
+      const loadRelationOptions = async () => {
+        setRelationLoading(true);
+        setRelationError(null);
+        try {
+          const cfg = field.relationConfig as NonNullable<typeof field.relationConfig>;
+          const entities = await cfg.fetchOptions(debouncedRelationSearch);
+          setRelationOptions(entities as unknown as Record<string, unknown>[]);
+          if (!relationLoadedRef.current) relationLoadedRef.current = true;
+        } catch (err) {
+          setRelationError(err instanceof Error ? err.message : 'Failed to load options');
+          setRelationOptions([]);
+        } finally {
+          setRelationLoading(false);
+        }
+      };
+      loadRelationOptions();
+    }
+  }, [field, relationOpen, debouncedRelationSearch]);
+
+  // Load multi relation options
+  useEffect(() => {
+    if (field.type === 'multirelation' && field.relationConfig && ((multiRelationOpen && !multiRelationLoadedRef.current) || debouncedMultiRelationSearch)) {
+      const loadMultiRelationOptions = async () => {
+        setMultiRelationLoading(true);
+        setMultiRelationError(null);
+        try {
+          const cfg = field.relationConfig as NonNullable<typeof field.relationConfig>;
+          const entities = await cfg.fetchOptions(debouncedMultiRelationSearch);
+          setMultiRelationOptions(entities as unknown as Record<string, unknown>[]);
+          if (!multiRelationLoadedRef.current) multiRelationLoadedRef.current = true;
+        } catch (err) {
+          setMultiRelationError(err instanceof Error ? err.message : 'Failed to load options');
+          setMultiRelationOptions([]);
+        } finally {
+          setMultiRelationLoading(false);
+        }
+      };
+      loadMultiRelationOptions();
+    }
+  }, [field, multiRelationOpen, debouncedMultiRelationSearch]);
+
   // Show errors immediately if validateOnChange is true, otherwise wait for touch
   const showError = validateOnChange ? !!error : (touched && !!error);
   const errorId = `${String(field.name)}-error`;
@@ -1149,61 +1251,6 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
         }
 
         const relationConfig = field.relationConfig;
-        const [relationOpen, setRelationOpen] = useState(false);
-        const [relationSearch, setRelationSearch] = useState('');
-        const [relationOptions, setRelationOptions] = useState<any[]>([]);
-        const [relationLoading, setRelationLoading] = useState(false);
-        const [relationError, setRelationError] = useState<string | null>(null);
-        const relationLoadedRef = useRef(false);
-
-        // Debounce search
-        const [debouncedRelationSearch, setDebouncedRelationSearch] = useState('');
-        useEffect(() => {
-          const timer = setTimeout(() => {
-            setDebouncedRelationSearch(relationSearch);
-          }, 300);
-          return () => clearTimeout(timer);
-        }, [relationSearch]);
-
-        // Load initial options on mount if there's a value
-        useEffect(() => {
-          if (value && !relationLoadedRef.current) {
-            const loadInitialOptions = async () => {
-              setRelationLoading(true);
-              try {
-                const entities = await relationConfig.fetchOptions('');
-                setRelationOptions(entities);
-                relationLoadedRef.current = true;
-              } catch (err) {
-                setRelationError(err instanceof Error ? err.message : 'Failed to load options');
-              } finally {
-                setRelationLoading(false);
-              }
-            };
-            loadInitialOptions();
-          }
-        }, [value, relationConfig]);
-
-        // Load relation options when popover opens or search changes
-        useEffect(() => {
-          if ((relationOpen && !relationLoadedRef.current) || debouncedRelationSearch) {
-            const loadRelationOptions = async () => {
-              setRelationLoading(true);
-              setRelationError(null);
-              try {
-                const entities = await relationConfig.fetchOptions(debouncedRelationSearch);
-                setRelationOptions(entities);
-                if (!relationLoadedRef.current) relationLoadedRef.current = true;
-              } catch (err) {
-                setRelationError(err instanceof Error ? err.message : 'Failed to load options');
-                setRelationOptions([]);
-              } finally {
-                setRelationLoading(false);
-              }
-            };
-            loadRelationOptions();
-          }
-        }, [relationOpen, debouncedRelationSearch, relationConfig]);
 
         // Find selected option
         const selectedEntity = relationOptions.find(
@@ -1285,45 +1332,9 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
         }
 
         const relationConfig = field.relationConfig;
-        const [multiRelationOpen, setMultiRelationOpen] = useState(false);
-        const [multiRelationSearch, setMultiRelationSearch] = useState('');
-        const [multiRelationOptions, setMultiRelationOptions] = useState<any[]>([]);
-        const [multiRelationLoading, setMultiRelationLoading] = useState(false);
-        const [multiRelationError, setMultiRelationError] = useState<string | null>(null);
-        const multiRelationLoadedRef = useRef(false);
 
         // Ensure value is an array
         const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
-
-        // Debounce search
-        const [debouncedMultiRelationSearch, setDebouncedMultiRelationSearch] = useState('');
-        useEffect(() => {
-          const timer = setTimeout(() => {
-            setDebouncedMultiRelationSearch(multiRelationSearch);
-          }, 300);
-          return () => clearTimeout(timer);
-        }, [multiRelationSearch]);
-
-        // Load relation options
-        useEffect(() => {
-          if ((multiRelationOpen && !multiRelationLoadedRef.current) || debouncedMultiRelationSearch) {
-            const loadMultiRelationOptions = async () => {
-              setMultiRelationLoading(true);
-              setMultiRelationError(null);
-              try {
-                const entities = await relationConfig.fetchOptions(debouncedMultiRelationSearch);
-                setMultiRelationOptions(entities);
-                if (!multiRelationLoadedRef.current) multiRelationLoadedRef.current = true;
-              } catch (err) {
-                setMultiRelationError(err instanceof Error ? err.message : 'Failed to load options');
-                setMultiRelationOptions([]);
-              } finally {
-                setMultiRelationLoading(false);
-              }
-            };
-            loadMultiRelationOptions();
-          }
-        }, [multiRelationOpen, debouncedMultiRelationSearch, relationConfig]);
 
         // Find selected entities
         const selectedEntities = multiRelationOptions.filter((entity) =>
@@ -1331,7 +1342,7 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
         );
 
         // Handle selection toggle
-        const toggleSelection = (entityValue: any) => {
+        const toggleSelection = (entityValue: unknown) => {
           const newValues = selectedValues.includes(entityValue)
             ? selectedValues.filter((v) => v !== entityValue)
             : [...selectedValues, entityValue];
@@ -1345,7 +1356,7 @@ const DefaultFieldRenderer = React.memo(<T extends BaseEntity>({
         };
 
         // Handle remove
-        const removeSelection = (entityValue: any) => {
+        const removeSelection = (entityValue: unknown) => {
           onChange(selectedValues.filter((v) => v !== entityValue));
         };
 

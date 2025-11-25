@@ -23,7 +23,7 @@ export const permissionActions = {
    * Get permissions grouped by app
    */
   async getByApp() {
-    const response = await authApi.get('/api/v1/accounts/permissions/by-app/');
+    const response = await authApi.get('/api/v1/accounts/permissions/by_app/');
     return response.data;
   },
 
@@ -31,7 +31,7 @@ export const permissionActions = {
    * Get permissions for a specific model
    */
   async getByModel(appLabel: string, model: string) {
-    const response = await authApi.get('/api/v1/accounts/permissions/by-model/', {
+    const response = await authApi.get('/api/v1/accounts/permissions/by_model/', {
       params: { app_label: appLabel, model },
     });
     return response.data;

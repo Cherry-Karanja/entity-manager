@@ -56,11 +56,22 @@ export function PermissionSelector({
         setLoading(true);
         const grouped = await permissionActions.getByApp();
         setGroupedPermissions(grouped);
-        
-        // Auto-expand first app if any
+
+        // Auto-expand apps that have selected permissions (for editing)
+        // or just the first app (for creating)
         const appLabels = Object.keys(grouped);
         if (appLabels.length > 0) {
-          setExpandedApps([appLabels[0]]);
+          if (selectedIds.size > 0) {
+            // Expand apps with selected permissions
+            const appsWithSelections = appLabels.filter(appLabel => {
+              const appPermissions = grouped[appLabel] || [];
+              return appPermissions.some((p: Permission) => selectedIds.has(p.id));
+            });
+            setExpandedApps(appsWithSelections.length > 0 ? appsWithSelections : [appLabels[0]]);
+          } else {
+            // No selections, just expand first app
+            setExpandedApps([appLabels[0]]);
+          }
         }
       } catch (error) {
         console.error('Failed to load permissions:', error);
@@ -70,7 +81,7 @@ export function PermissionSelector({
     };
 
     loadPermissions();
-  }, []);
+  }, [selectedIds]);
 
   // Filter permissions based on search query
   const filteredGroupedPermissions = useMemo(() => {
@@ -103,7 +114,7 @@ export function PermissionSelector({
     if (mode === 'view') return;
 
     const newSelectedIds = new Set(selectedIds);
-    
+
     if (newSelectedIds.has(permission.id)) {
       newSelectedIds.delete(permission.id);
     } else {
@@ -203,7 +214,7 @@ export function PermissionSelector({
           <div>
             <CardTitle>Permissions</CardTitle>
             <CardDescription>
-              {mode === 'view' 
+              {mode === 'view'
                 ? `${selectedCount} of ${totalPermissions} permissions assigned`
                 : `Select permissions to assign. ${selectedCount} of ${totalPermissions} selected`
               }
@@ -281,9 +292,8 @@ export function PermissionSelector({
                       {permissions.map((permission) => (
                         <div
                           key={permission.id}
-                          className={`flex items-start space-x-3 rounded-md p-2 hover:bg-accent ${
-                            mode === 'select' ? 'cursor-pointer' : ''
-                          }`}
+                          className={`flex items-start space-x-3 rounded-md p-2 hover:bg-accent ${mode === 'select' ? 'cursor-pointer' : ''
+                            }`}
                           onClick={() => handleTogglePermission(permission)}
                         >
                           {mode === 'select' && (

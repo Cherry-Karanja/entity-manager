@@ -32,20 +32,20 @@ function buildQueryParams(
     page,
     pageSize,
   };
-  
+
   if (sort) {
     queryParams.sortField = sort.field;
     queryParams.sortDirection = sort.direction;
   }
-  
+
   if (search) {
     queryParams.search = search;
   }
-  
+
   if (filters && filters.length > 0) {
     queryParams.filters = filters;
   }
-  
+
   return queryParams;
 }
 
@@ -68,20 +68,20 @@ function getErrorMessage(error: unknown, defaultMessage: string): string {
 function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   props: EntityManagerProps<T>
 ) {
-  const { 
-    config, 
+  const {
+    config,
   } = props;
-  
+
   // Use initialView/initialId from config or props (props take precedence)
   const initialViewToUse = config.initialView ?? 'list';
   const initialIdToUse = config.initialId;
   const onViewChangeToUse = config.onViewChange;
-  
+
   const [view, setView] = useState<EntityManagerView>(initialViewToUse);
   const [selectedId, setSelectedId] = useState<string | number | null>(initialIdToUse || null);
   const fetchAttempted = useRef(false);
   const initialListFetchCompleted = useRef(false);
-  
+
   const state = useEntityState<T>();
   const mutations = useEntityMutations<T>();
 
@@ -96,13 +96,13 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // Watch for initialView and initialId changes from parent
   useEffect(() => {
     setView(initialViewToUse);
-    
+
     if (initialViewToUse === 'list') {
       setSelectedId(null);
     } else if (initialIdToUse !== undefined && initialIdToUse !== null) {
       setSelectedId(initialIdToUse);
     }
-    
+
     // Reset fetch flag when view changes to allow refetching if needed
     if (initialViewToUse !== 'list') {
       fetchAttempted.current = false;
@@ -120,10 +120,10 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     filters: FilterConfig[]
   ) => {
     if (!config.apiClient) return;
-    
+
     state.setLoading(true);
     const queryParams = buildQueryParams(page, pageSize, sort, search, filters);
-    
+
     try {
       const response = await config.apiClient.list(queryParams as Parameters<typeof config.apiClient.list>[0]);
       const data = response.data || [];
@@ -142,16 +142,21 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   /**
    * Fetch a single entity by ID
    */
-  const fetchSingleEntity = useCallback(async (id: string | number) => {
+  const fetchSingleEntity = useCallback(async (id: string | number, merge = false) => {
     if (!config.apiClient) return;
-    
+
     state.setLoading(true);
-    
+
     try {
       const response = await config.apiClient.get(id);
       const entity = response.data;
-      state.setEntities([entity]);
-      state.setTotal(1);
+
+      if (merge) {
+        state.updateEntity(entity);
+      } else {
+        state.setEntities([entity]);
+        state.setTotal(1);
+      }
     } catch (error) {
       const errorMessage = getErrorMessage(error, 'Failed to load entity');
       state.setError(errorMessage);
@@ -169,7 +174,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     }
 
     fetchAttempted.current = true;
-    
+
     // If starting in edit/view mode with an ID, fetch that specific entity
     if ((initialViewToUse === 'edit' || initialViewToUse === 'view') && initialIdToUse) {
       initialListFetchCompleted.current = true;
@@ -192,7 +197,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       // No initial fetch needed (e.g., initialData provided), mark as completed
       initialListFetchCompleted.current = true;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, initialViewToUse, initialIdToUse]);
 
   // Use ref to track previous filters and only update when content actually changes
@@ -213,7 +218,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // Track previous values to prevent unnecessary refetches
   const prevSortRef = useRef<string | null>(null);
   const prevSearchRef = useRef<string>('');
-  
+
   useEffect(() => {
     // Don't fetch if:
     // - No API client
@@ -223,36 +228,36 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     if (!initialListFetchCompleted.current) return;
 
     const { page, pageSize, sort, search } = state.state;
-    
+
     // Create stable sort key for comparison
     const sortKey = sort ? `${sort.field}-${sort.direction}` : null;
-    
+
     // Only refetch if sort, search, or filters actually changed
     const sortChanged = sortKey !== prevSortRef.current;
     const searchChanged = search !== prevSearchRef.current;
     const filtersKey = JSON.stringify(stableFilters);
-    
+
     if (!sortChanged && !searchChanged) {
       // Check if filters changed by comparing with ref
       if (filtersKey === prevFiltersRef.current) {
         return; // Nothing changed, skip fetch
       }
     }
-    
+
     // Update refs
     prevSortRef.current = sortKey;
     prevSearchRef.current = search;
-    
+
     fetchEntities(page, pageSize, sort ?? null, search, stableFilters);
-  // Using specific state properties to prevent infinite loop - state.state changes on every update
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Using specific state properties to prevent infinite loop - state.state changes on every update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, view, state.state.sort, state.state.search, state.state.page, state.state.pageSize, stableFilters, fetchEntities]);
 
   // listen for view change and call onviewchange callback
   useEffect(() => {
     onViewChangeToUse?.(view);
   }, [view, onViewChangeToUse]);
-  
+
   // Get selected entity
   const selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
 
@@ -262,14 +267,14 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
 
     const { page, pageSize, sort, search } = state.state;
     await fetchEntities(page, pageSize, sort ?? null, search, stableFilters);
-  // Using specific state properties to prevent infinite loop
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Using specific state properties to prevent infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.apiClient, view, state.state.page, state.state.pageSize, state.state.sort, state.state.search, stableFilters, fetchEntities]);
 
   // Memoize actions with context to prevent re-renders
   const actionsWithContext = useMemo(() => {
     if (!config.config.list.actions) return undefined;
-    
+
     return {
       ...config.config.list.actions,
       context: {
@@ -281,18 +286,20 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
       },
     };
   }, [config.config.list.actions, refreshData, state.state.entities]);
-  
+
   // Handle edit
   const handleEdit = useCallback((entity: T) => {
     setView('edit');
     setSelectedId(entity.id);
-  }, []);
+    fetchSingleEntity(entity.id, true);
+  }, [fetchSingleEntity]);
 
   // Handle view
   const handleView = useCallback((entity: T) => {
     setView('view');
     setSelectedId(entity.id);
-  }, []);
+    fetchSingleEntity(entity.id, true);
+  }, [fetchSingleEntity]);
 
   // Handle back to list
   const handleBack = useCallback(() => {
@@ -323,11 +330,11 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   const handlePaginationChange = useCallback(async (paginationConfig: { page?: number; pageSize?: number }) => {
     const newPage = paginationConfig.page || 1;
     const newPageSize = paginationConfig.pageSize || 10;
-    
+
     // Update state immediately
     state.setPage(newPage);
     state.setPageSize(newPageSize);
-    
+
     // Trigger API call directly
     if (config.apiClient && view === 'list') {
       const { sort, search, filters } = state.state;
@@ -343,11 +350,10 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           <li className="inline-flex items-center">
             <button
               onClick={handleBack}
-              className={`inline-flex items-center font-medium transition-colors ${
-                view === 'list'
+              className={`inline-flex items-center font-medium transition-colors ${view === 'list'
                   ? 'text-primary cursor-default'
                   : 'text-muted-foreground hover:text-primary'
-              }`}
+                }`}
               disabled={view === 'list'}
               aria-current={view === 'list' ? 'page' : undefined}
             >
@@ -436,11 +442,11 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   // Render form view (create/edit)
   if (view === 'create' || view === 'edit') {
     const currentMode: FormMode = view === 'create' ? 'create' : 'edit';
-    
+
     const formLayout = config.config.form.layout;
     const formSections = config.config.form.sections;
     const formFields = config.config.form.fields;
-    
+
     return (
       <div className="space-y-3 sm:space-y-4">
         {renderBreadcrumbs()}
@@ -468,8 +474,8 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           {renderBreadcrumbs()}
           <div className="bg-card rounded-lg border shadow-sm p-4 sm:p-6 text-center">
             <p className="text-sm sm:text-base text-muted-foreground mb-4">No entity selected</p>
-            <button 
-              onClick={handleBack} 
+            <button
+              onClick={handleBack}
               className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
               Back to List
@@ -478,7 +484,7 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
         </div>
       );
     }
-    
+
     return (
       <div className="space-y-3 sm:space-y-4">
         {renderBreadcrumbs()}
@@ -525,7 +531,7 @@ export function EntityManager<T extends BaseEntity = BaseEntity>(
   // Default layout with providers
   return (
     <div className={`entity-manager ${className}`}>
-      <EntityStateProvider 
+      <EntityStateProvider
         initialEntities={config.initialData}
         initialPageSize={config.config.list.paginationConfig?.pageSize || 10}
         initialSort={config.config.list.sortConfig}
