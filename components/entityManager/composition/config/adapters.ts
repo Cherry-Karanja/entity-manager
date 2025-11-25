@@ -51,7 +51,7 @@ export class JsonSchemaAdapter implements ConfigAdapter<any> {
         if (prop.maxLength) formField.maxLength = prop.maxLength;
         if (prop.minimum) formField.min = prop.minimum;
         if (prop.maximum) formField.max = prop.maximum;
-        if (prop.pattern) formField.validation = [{ type: 'pattern', value: prop.pattern, message: 'Invalid format' }];
+        if (prop.pattern) formField.validation = [{ type: 'pattern', value: prop.pattern, message: `Value must match pattern: ${prop.pattern}` }];
         if (prop.enum) formField.options = prop.enum.map((v: any) => ({ label: v, value: v }));
 
         adaptedConfig.formFields.push(formField);

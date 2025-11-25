@@ -19,7 +19,12 @@ export const expireSessionAction: ConfirmAction<UserSession> = {
   cancelText: 'Cancel',
   onConfirm: async (entity) => {
     if (entity?.id) {
-      await userSessionActions.expire(entity.id);
+      try {
+        await userSessionActions.expire(entity.id);
+      } catch (error) {
+        console.error('Failed to expire session:', error);
+        throw error; // Re-throw to let the action handler show error feedback
+      }
     }
   },
 };
