@@ -2,7 +2,7 @@ import type { ListConfig } from "@/components/entityManager";
 import type { ResourceLimit } from "../../types";
 import { 
   ENTITY_TYPE_LABELS, 
-  LIMIT_RESOURCE_TYPE_LABELS, 
+  RESOURCE_TYPE_LABELS, 
   PERIOD_TYPE_LABELS 
 } from "../../types";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,7 @@ export const resourceLimitListConfig: ListConfig<ResourceLimit> = {
       label: "Resource Type",
       sortable: true,
       render: (value) => {
-        const label = LIMIT_RESOURCE_TYPE_LABELS[value as keyof typeof LIMIT_RESOURCE_TYPE_LABELS] || value;
+        const label = RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value;
         const colorMap: Record<string, string> = {
           hours: "bg-orange-100 text-orange-800",
           sessions: "bg-teal-100 text-teal-800",
@@ -108,7 +108,7 @@ export const resourceLimitListConfig: ListConfig<ResourceLimit> = {
       key: "resource_type",
       label: "Resource Type",
       type: "select",
-      options: Object.entries(LIMIT_RESOURCE_TYPE_LABELS).map(([value, label]) => ({
+      options: Object.entries(RESOURCE_TYPE_LABELS).map(([value, label]) => ({
         value,
         label,
       })),

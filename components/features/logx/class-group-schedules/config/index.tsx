@@ -1,7 +1,7 @@
 export { classGroupScheduleFields } from "./fields";
-export { classGroupScheduleColumns } from "./list";
+export { classGroupScheduleColumns, classGroupScheduleColumns as classGroupScheduleListConfig } from "./list";
 export { classGroupScheduleViewConfig } from "./view";
-export { classGroupScheduleActions } from "./actions";
+export { classGroupScheduleActions, classGroupScheduleActions as classGroupScheduleActionsConfig } from "./actions";
 export { classGroupScheduleExportConfig } from "./export";
 
 import { classGroupScheduleFields } from "./fields";

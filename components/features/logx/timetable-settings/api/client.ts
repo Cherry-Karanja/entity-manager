@@ -31,3 +31,5 @@ export const timetableSettingsApi = {
     await httpClient.delete(`${BASE_PATH}${id}/`);
   },
 };
+
+export default timetableSettingsApi;

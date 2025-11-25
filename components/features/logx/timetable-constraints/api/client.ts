@@ -57,3 +57,5 @@ export const timetableConstraintApi = {
     return response;
   },
 };
+
+export default timetableConstraintApi;

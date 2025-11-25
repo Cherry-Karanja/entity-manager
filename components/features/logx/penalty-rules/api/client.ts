@@ -55,3 +55,5 @@ export const penaltyRuleApi = {
     return response;
   },
 };
+
+export default penaltyRuleApi;

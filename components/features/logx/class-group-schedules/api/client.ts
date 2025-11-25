@@ -60,3 +60,5 @@ export const classGroupScheduleApi = {
     return response;
   },
 };
+
+export default classGroupScheduleApi;

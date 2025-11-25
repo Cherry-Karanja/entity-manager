@@ -9,7 +9,9 @@ import { Timetable } from '../../types';
 const API_BASE = '/api/v1/logx/timetabling';
 
 // Create the base HTTP client for timetables
-export const timetablesClient = createHttpClient<Timetable>(`${API_BASE}/timetables/`);
+export const timetablesClient = createHttpClient<Timetable>({
+  endpoint: `${API_BASE}/timetables/`,
+});
 
 // Timetable-specific actions from the ViewSet
 export const timetableActions = {
@@ -61,3 +63,5 @@ export const timetableActions = {
     return response.json();
   },
 };
+
+export default timetablesClient;
