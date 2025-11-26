@@ -50,7 +50,7 @@ exports.__esModule = true;
 exports.virtualResourceApi = void 0;
 var entityManager_1 = require("@/components/entityManager");
 var client_1 = require("@/components/connectionManager/http/client");
-var BASE_PATH = '/api/v1/logx/timetabling/virtual-resources/';
+var BASE_PATH = '/api/v1/timetabling/virtual-resources/';
 var base = entityManager_1.createHttpClient({ endpoint: BASE_PATH });
 exports.virtualResourceApi = __assign(__assign({}, base), { 
     // Custom action: Check availability of virtual resource

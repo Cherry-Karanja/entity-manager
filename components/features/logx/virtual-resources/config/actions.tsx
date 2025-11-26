@@ -35,7 +35,7 @@ export const virtualResourceActionsConfig: EntityActionsConfig<VirtualResource> 
         `Are you sure you want to ${item?.is_active ? "deactivate" : "activate"} this resource?`,
       onConfirm: async (item?: VirtualResource, context?: ActionContext<VirtualResource>): Promise<void> => {
         if (!item) return;
-        const apiClient = (context as any)?.api;
+        const apiClient = context?.api;
         if (!apiClient?.update) return;
         await apiClient.update(item.id, { is_active: !item.is_active });
         await Promise.resolve(context?.refresh?.());
@@ -48,7 +48,7 @@ export const virtualResourceActionsConfig: EntityActionsConfig<VirtualResource> 
       actionType: "custom",
       position: "row",
       handler: async (item?: VirtualResource, context?: ActionContext<VirtualResource>): Promise<void> => {
-        await (context as any)?.showDialog?.({
+        await context?.showDialog?.({
           title: "Check Resource Availability",
           content: `Select date and time to check availability for: ${item?.name}`,
         });
@@ -62,7 +62,7 @@ export const virtualResourceActionsConfig: EntityActionsConfig<VirtualResource> 
       position: "row",
       handler: async (item?: VirtualResource, context?: ActionContext<VirtualResource>): Promise<void> => {
         if (!item) return;
-        const apiClient = (context as any)?.api;
+        const apiClient = context?.api;
         if (!apiClient?.create) return;
         const { ...data } = item;
         await apiClient.create({
@@ -84,7 +84,7 @@ export const virtualResourceActionsConfig: EntityActionsConfig<VirtualResource> 
         `Are you sure you want to delete "${item?.name}"? This action cannot be undone.`,
       onConfirm: async (item?: VirtualResource, context?: ActionContext<VirtualResource>): Promise<void> => {
         if (!item) return;
-        const apiClient = (context as any)?.api;
+        const apiClient = context?.api;
         if (!apiClient?.delete) return;
         await apiClient.delete(item.id);
         await Promise.resolve(context?.refresh?.());

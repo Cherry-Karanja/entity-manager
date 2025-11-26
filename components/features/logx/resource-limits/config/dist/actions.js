@@ -52,18 +52,18 @@ exports.resourceLimitActionsConfig = {
             variant: "outline",
             handler: function (entity, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var client;
-                var _a, _b, _c, _d;
-                return __generator(this, function (_e) {
-                    switch (_e.label) {
+                var _a, _b;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
                             if (!entity)
                                 return [2 /*return*/];
-                            client = (_d = (_b = (_a = context) === null || _a === void 0 ? void 0 : _a.customApi) !== null && _b !== void 0 ? _b : (_c = context) === null || _c === void 0 ? void 0 : _c.api) !== null && _d !== void 0 ? _d : undefined;
+                            client = (_b = (_a = context === null || context === void 0 ? void 0 : context.customApi) !== null && _a !== void 0 ? _a : context === null || context === void 0 ? void 0 : context.api) !== null && _b !== void 0 ? _b : undefined;
                             if (!(client === null || client === void 0 ? void 0 : client.checkLimit)) return [3 /*break*/, 2];
                             return [4 /*yield*/, client.checkLimit(entity.id)];
                         case 1:
-                            _e.sent();
-                            _e.label = 2;
+                            _c.sent();
+                            _c.label = 2;
                         case 2: return [2 /*return*/];
                     }
                 });
@@ -80,22 +80,22 @@ exports.resourceLimitActionsConfig = {
             },
             onConfirm: function (entity, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var apiClient, updatedResp, updated;
-                var _a, _b, _c, _d;
-                return __generator(this, function (_e) {
-                    switch (_e.label) {
+                var _a, _b, _c;
+                return __generator(this, function (_d) {
+                    switch (_d.label) {
                         case 0:
                             if (!entity)
                                 return [2 /*return*/];
-                            apiClient = (_a = context) === null || _a === void 0 ? void 0 : _a.api;
+                            apiClient = context === null || context === void 0 ? void 0 : context.api;
                             if (!(apiClient === null || apiClient === void 0 ? void 0 : apiClient.update))
                                 return [2 /*return*/];
                             return [4 /*yield*/, apiClient.update(entity.id, { is_active: !entity.is_active })];
                         case 1:
-                            updatedResp = _e.sent();
-                            updated = (_c = (_b = updatedResp) === null || _b === void 0 ? void 0 : _b.data) !== null && _c !== void 0 ? _c : updatedResp;
-                            return [4 /*yield*/, Promise.resolve((_d = context === null || context === void 0 ? void 0 : context.refresh) === null || _d === void 0 ? void 0 : _d.call(context))];
+                            updatedResp = _d.sent();
+                            updated = (_b = (_a = updatedResp) === null || _a === void 0 ? void 0 : _a.data) !== null && _b !== void 0 ? _b : updatedResp;
+                            return [4 /*yield*/, Promise.resolve((_c = context === null || context === void 0 ? void 0 : context.refresh) === null || _c === void 0 ? void 0 : _c.call(context))];
                         case 2:
-                            _e.sent();
+                            _d.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -109,19 +109,19 @@ exports.resourceLimitActionsConfig = {
             confirmMessage: "Are you sure you want to activate the selected resource limits?",
             handler: function (items, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var apiClient;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
-                            apiClient = (_a = context) === null || _a === void 0 ? void 0 : _a.api;
+                            apiClient = context === null || context === void 0 ? void 0 : context.api;
                             if (!(apiClient === null || apiClient === void 0 ? void 0 : apiClient.update))
                                 return [2 /*return*/];
                             return [4 /*yield*/, Promise.all(items.map(function (item) { return apiClient.update(item.id, { is_active: true }); }))];
                         case 1:
-                            _c.sent();
-                            return [4 /*yield*/, Promise.resolve((_b = context === null || context === void 0 ? void 0 : context.refresh) === null || _b === void 0 ? void 0 : _b.call(context))];
+                            _b.sent();
+                            return [4 /*yield*/, Promise.resolve((_a = context === null || context === void 0 ? void 0 : context.refresh) === null || _a === void 0 ? void 0 : _a.call(context))];
                         case 2:
-                            _c.sent();
+                            _b.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -135,19 +135,19 @@ exports.resourceLimitActionsConfig = {
             confirmMessage: "Are you sure you want to deactivate the selected resource limits?",
             handler: function (items, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var apiClient;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
-                            apiClient = (_a = context) === null || _a === void 0 ? void 0 : _a.api;
+                            apiClient = context === null || context === void 0 ? void 0 : context.api;
                             if (!(apiClient === null || apiClient === void 0 ? void 0 : apiClient.update))
                                 return [2 /*return*/];
                             return [4 /*yield*/, Promise.all(items.map(function (item) { return apiClient.update(item.id, { is_active: false }); }))];
                         case 1:
-                            _c.sent();
-                            return [4 /*yield*/, Promise.resolve((_b = context === null || context === void 0 ? void 0 : context.refresh) === null || _b === void 0 ? void 0 : _b.call(context))];
+                            _b.sent();
+                            return [4 /*yield*/, Promise.resolve((_a = context === null || context === void 0 ? void 0 : context.refresh) === null || _a === void 0 ? void 0 : _a.call(context))];
                         case 2:
-                            _c.sent();
+                            _b.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -161,19 +161,19 @@ exports.resourceLimitActionsConfig = {
             confirmMessage: "Are you sure you want to delete the selected resource limits? This action cannot be undone.",
             handler: function (items, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var apiClient;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
-                            apiClient = (_a = context) === null || _a === void 0 ? void 0 : _a.api;
+                            apiClient = context === null || context === void 0 ? void 0 : context.api;
                             if (!(apiClient === null || apiClient === void 0 ? void 0 : apiClient["delete"]))
                                 return [2 /*return*/];
                             return [4 /*yield*/, Promise.all(items.map(function (item) { return apiClient["delete"](item.id); }))];
                         case 1:
-                            _c.sent();
-                            return [4 /*yield*/, Promise.resolve((_b = context === null || context === void 0 ? void 0 : context.refresh) === null || _b === void 0 ? void 0 : _b.call(context))];
+                            _b.sent();
+                            return [4 /*yield*/, Promise.resolve((_a = context === null || context === void 0 ? void 0 : context.refresh) === null || _a === void 0 ? void 0 : _a.call(context))];
                         case 2:
-                            _c.sent();
+                            _b.sent();
                             return [2 /*return*/];
                     }
                 });

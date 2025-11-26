@@ -50,7 +50,7 @@ exports.__esModule = true;
 exports.timetableConstraintApi = void 0;
 var entityManager_1 = require("@/components/entityManager");
 var client_1 = require("@/components/connectionManager/http/client");
-var BASE_PATH = '/api/v1/logx/timetabling/timetable-constraints/';
+var BASE_PATH = '/api/v1/timetabling/timetable-constraints/';
 var base = entityManager_1.createHttpClient({ endpoint: BASE_PATH });
 exports.timetableConstraintApi = __assign(__assign({}, base), { 
     // Custom action: Validate constraint parameters

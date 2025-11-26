@@ -43,7 +43,7 @@ exports.__esModule = true;
 exports.roomsClient = void 0;
 var entityManager_1 = require("@/components/entityManager");
 var client_1 = require("@/components/connectionManager/http/client");
-var API_BASE = '/api/v1/logx/resources/rooms/';
+var API_BASE = '/api/v1/resources/rooms/';
 // Create the base HTTP client for rooms
 exports.roomsClient = entityManager_1.createHttpClient({
     endpoint: API_BASE

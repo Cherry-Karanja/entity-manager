@@ -2,7 +2,7 @@ import { createHttpClient } from '@/components/entityManager';
 import { authApi } from '@/components/connectionManager/http/client';
 import { ClassGroupSchedule } from '../../types';
 
-const BASE_PATH = '/api/v1/logx/timetabling/class-group-schedules/';
+const BASE_PATH = '/api/v1/timetabling/class-group-schedules/';
 
 const base = createHttpClient<ClassGroupSchedule>({ endpoint: BASE_PATH });
 

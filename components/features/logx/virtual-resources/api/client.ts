@@ -2,7 +2,7 @@ import { createHttpClient } from '@/components/entityManager';
 import { authApi } from '@/components/connectionManager/http/client';
 import { VirtualResource } from '../../types';
 
-const BASE_PATH = '/api/v1/logx/timetabling/virtual-resources/';
+const BASE_PATH = '/api/v1/timetabling/virtual-resources/';
 
 const base = createHttpClient<VirtualResource>({ endpoint: BASE_PATH });
 

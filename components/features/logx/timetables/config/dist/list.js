@@ -14,18 +14,18 @@ exports.timetableColumns = [
         sortable: true,
         width: '200px'
     },
-    {
-        key: 'academic_year_name',
-        label: 'Academic Year',
-        sortable: true,
-        render: function (value, row) { return value || "Year " + (row === null || row === void 0 ? void 0 : row.academic_year); }
-    },
-    {
-        key: 'term_name',
-        label: 'Term',
-        sortable: true,
-        render: function (value, row) { return value || "Term " + (row === null || row === void 0 ? void 0 : row.term); }
-    },
+    // {
+    //   key: 'academic_year_name',
+    //   label: 'Academic Year',
+    //   sortable: true,
+    //   render: (value: any, row?: Timetable) => (value as string) || `Year ${row?.academic_year}`,
+    // },
+    // {
+    //   key: 'term_name',
+    //   label: 'Term',
+    //   sortable: true,
+    //   render: (value: any, row?: Timetable) => (value as string) || `Term ${row?.term}`,
+    // },
     {
         key: 'start_date',
         label: 'Start Date',

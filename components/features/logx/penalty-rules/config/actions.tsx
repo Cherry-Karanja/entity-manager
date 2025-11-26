@@ -35,7 +35,7 @@ export const penaltyRuleActionsConfig: EntityActionsConfig<PenaltyRule> = {
         `Are you sure you want to ${item?.is_active ? "deactivate" : "activate"} this rule?`,
       onConfirm: async (item?: PenaltyRule, context?: ActionContext<PenaltyRule>): Promise<void> => {
         if (!item) return;
-        const apiClient = (context as any)?.api;
+        const apiClient = context?.api;
         if (!apiClient?.update) return;
         await apiClient.update(item.id, { is_active: !item.is_active });
         await Promise.resolve(context?.refresh?.());
@@ -48,7 +48,7 @@ export const penaltyRuleActionsConfig: EntityActionsConfig<PenaltyRule> = {
       actionType: "custom",
       position: "row",
       handler: async (item?: PenaltyRule, context?: ActionContext<PenaltyRule>): Promise<void> => {
-        await (context as any)?.showDialog?.({
+        await context?.showDialog?.({
           title: "Calculate Penalty",
           content: `Configure violations to calculate penalty using rule: ${item?.name}`,
         });
@@ -62,7 +62,7 @@ export const penaltyRuleActionsConfig: EntityActionsConfig<PenaltyRule> = {
       position: "row",
       handler: async (item?: PenaltyRule, context?: ActionContext<PenaltyRule>): Promise<void> => {
         if (!item) return;
-        const apiClient = (context as any)?.api;
+        const apiClient = context?.api;
         if (!apiClient?.create) return;
         const { ...data } = item;
         await apiClient.create({
@@ -83,7 +83,7 @@ export const penaltyRuleActionsConfig: EntityActionsConfig<PenaltyRule> = {
         `Are you sure you want to delete "${item?.name}"? This action cannot be undone.`,
       onConfirm: async (item?: PenaltyRule, context?: ActionContext<PenaltyRule>): Promise<void> => {
         if (!item) return;
-        const apiClient = (context as any)?.api;
+        const apiClient = context?.api;
         if (!apiClient?.delete) return;
         await apiClient.delete(item.id);
         await Promise.resolve(context?.refresh?.());

@@ -2,7 +2,7 @@ import { createHttpClient } from '@/components/entityManager';
 import { authApi } from '@/components/connectionManager/http/client';
 import { TimetableConstraint } from '../../types';
 
-const BASE_PATH = '/api/v1/logx/timetabling/timetable-constraints/';
+const BASE_PATH = '/api/v1/timetabling/timetable-constraints/';
 
 const base = createHttpClient<TimetableConstraint>({ endpoint: BASE_PATH });
 

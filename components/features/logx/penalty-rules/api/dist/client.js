@@ -50,7 +50,7 @@ exports.__esModule = true;
 exports.penaltyRuleApi = void 0;
 var entityManager_1 = require("@/components/entityManager");
 var client_1 = require("@/components/connectionManager/http/client");
-var BASE_PATH = '/api/v1/logx/timetabling/penalty-rules/';
+var BASE_PATH = '/api/v1/timetabling/penalty-rules/';
 var base = entityManager_1.createHttpClient({ endpoint: BASE_PATH });
 exports.penaltyRuleApi = __assign(__assign({}, base), { 
     // Custom action: Calculate penalty for violations

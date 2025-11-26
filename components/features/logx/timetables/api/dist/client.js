@@ -43,7 +43,7 @@ exports.__esModule = true;
 exports.timetableActions = exports.timetablesClient = void 0;
 var entityManager_1 = require("@/components/entityManager");
 var client_1 = require("@/components/connectionManager/http/client");
-var API_BASE = '/api/v1/logx/timetabling';
+var API_BASE = '/api/v1/timetabling';
 // Create the base HTTP client for timetables
 exports.timetablesClient = entityManager_1.createHttpClient({
     endpoint: API_BASE + "/timetables/"

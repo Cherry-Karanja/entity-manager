@@ -7,7 +7,7 @@ import { createHttpClient } from "@/components/entityManager";
 import { authApi } from '@/components/connectionManager/http/client';
 import { Timetable } from '../../types';
 
-const API_BASE = '/api/v1/logx/timetabling';
+const API_BASE = '/api/v1/timetabling';
 
 // Create the base HTTP client for timetables
 export const timetablesClient = createHttpClient<Timetable, {

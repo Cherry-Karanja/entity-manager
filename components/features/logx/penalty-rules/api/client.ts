@@ -2,7 +2,7 @@ import { createHttpClient } from '@/components/entityManager';
 import { authApi } from '@/components/connectionManager/http/client';
 import { PenaltyRule } from '../../types';
 
-const BASE_PATH = '/api/v1/logx/timetabling/penalty-rules/';
+const BASE_PATH = '/api/v1/timetabling/penalty-rules/';
 
 const base = createHttpClient<PenaltyRule>({ endpoint: BASE_PATH });
 

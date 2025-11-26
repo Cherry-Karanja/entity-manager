@@ -50,7 +50,7 @@ exports.__esModule = true;
 exports.classGroupScheduleApi = void 0;
 var entityManager_1 = require("@/components/entityManager");
 var client_1 = require("@/components/connectionManager/http/client");
-var BASE_PATH = '/api/v1/logx/timetabling/class-group-schedules/';
+var BASE_PATH = '/api/v1/timetabling/class-group-schedules/';
 var base = entityManager_1.createHttpClient({ endpoint: BASE_PATH });
 exports.classGroupScheduleApi = __assign(__assign({}, base), { 
     // Custom action: Check for scheduling conflicts

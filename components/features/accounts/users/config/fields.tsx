@@ -160,7 +160,7 @@ export const userFields: FormField<User>[] = [
       displayField: 'description',
       valueField: 'name',
       searchFields: ['name', 'description'],
-        fetchOptions: async (search?: string) => {
+      fetchOptions: async (search?: string) => {
         const response = await userRolesApiClient.list({ search, pageSize: 50 });
         return getListData(response);
       },

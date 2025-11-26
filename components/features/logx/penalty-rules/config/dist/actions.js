@@ -90,21 +90,21 @@ exports.penaltyRuleActionsConfig = {
             },
             onConfirm: function (item, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var apiClient;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
                             if (!item)
                                 return [2 /*return*/];
-                            apiClient = (_a = context) === null || _a === void 0 ? void 0 : _a.api;
+                            apiClient = context === null || context === void 0 ? void 0 : context.api;
                             if (!(apiClient === null || apiClient === void 0 ? void 0 : apiClient.update))
                                 return [2 /*return*/];
                             return [4 /*yield*/, apiClient.update(item.id, { is_active: !item.is_active })];
                         case 1:
-                            _c.sent();
-                            return [4 /*yield*/, Promise.resolve((_b = context === null || context === void 0 ? void 0 : context.refresh) === null || _b === void 0 ? void 0 : _b.call(context))];
+                            _b.sent();
+                            return [4 /*yield*/, Promise.resolve((_a = context === null || context === void 0 ? void 0 : context.refresh) === null || _a === void 0 ? void 0 : _a.call(context))];
                         case 2:
-                            _c.sent();
+                            _b.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -117,15 +117,15 @@ exports.penaltyRuleActionsConfig = {
             actionType: "custom",
             position: "row",
             handler: function (item, context) { return __awaiter(void 0, void 0, Promise, function () {
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
-                        case 0: return [4 /*yield*/, ((_b = (_a = context) === null || _a === void 0 ? void 0 : _a.showDialog) === null || _b === void 0 ? void 0 : _b.call(_a, {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0: return [4 /*yield*/, ((_a = context === null || context === void 0 ? void 0 : context.showDialog) === null || _a === void 0 ? void 0 : _a.call(context, {
                                 title: "Calculate Penalty",
                                 content: "Configure violations to calculate penalty using rule: " + (item === null || item === void 0 ? void 0 : item.name)
                             }))];
                         case 1:
-                            _c.sent();
+                            _b.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -139,22 +139,22 @@ exports.penaltyRuleActionsConfig = {
             position: "row",
             handler: function (item, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var apiClient, data;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
                             if (!item)
                                 return [2 /*return*/];
-                            apiClient = (_a = context) === null || _a === void 0 ? void 0 : _a.api;
+                            apiClient = context === null || context === void 0 ? void 0 : context.api;
                             if (!(apiClient === null || apiClient === void 0 ? void 0 : apiClient.create))
                                 return [2 /*return*/];
                             data = __rest(item, []);
                             return [4 /*yield*/, apiClient.create(__assign(__assign({}, data), { name: item.name + " (Copy)" }))];
                         case 1:
-                            _c.sent();
-                            return [4 /*yield*/, Promise.resolve((_b = context === null || context === void 0 ? void 0 : context.refresh) === null || _b === void 0 ? void 0 : _b.call(context))];
+                            _b.sent();
+                            return [4 /*yield*/, Promise.resolve((_a = context === null || context === void 0 ? void 0 : context.refresh) === null || _a === void 0 ? void 0 : _a.call(context))];
                         case 2:
-                            _c.sent();
+                            _b.sent();
                             return [2 /*return*/];
                     }
                 });
@@ -172,21 +172,21 @@ exports.penaltyRuleActionsConfig = {
             },
             onConfirm: function (item, context) { return __awaiter(void 0, void 0, Promise, function () {
                 var apiClient;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
                             if (!item)
                                 return [2 /*return*/];
-                            apiClient = (_a = context) === null || _a === void 0 ? void 0 : _a.api;
+                            apiClient = context === null || context === void 0 ? void 0 : context.api;
                             if (!(apiClient === null || apiClient === void 0 ? void 0 : apiClient["delete"]))
                                 return [2 /*return*/];
                             return [4 /*yield*/, apiClient["delete"](item.id)];
                         case 1:
-                            _c.sent();
-                            return [4 /*yield*/, Promise.resolve((_b = context === null || context === void 0 ? void 0 : context.refresh) === null || _b === void 0 ? void 0 : _b.call(context))];
+                            _b.sent();
+                            return [4 /*yield*/, Promise.resolve((_a = context === null || context === void 0 ? void 0 : context.refresh) === null || _a === void 0 ? void 0 : _a.call(context))];
                         case 2:
-                            _c.sent();
+                            _b.sent();
                             return [2 /*return*/];
                     }
                 });

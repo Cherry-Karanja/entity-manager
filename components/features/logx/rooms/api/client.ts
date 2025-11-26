@@ -7,7 +7,7 @@ import { createHttpClient } from '@/components/entityManager';
 import { authApi } from '@/components/connectionManager/http/client';
 import { Room } from '../../types';
 
-const API_BASE = '/api/v1/logx/resources/rooms/';
+const API_BASE = '/api/v1/resources/rooms/';
 
 // Create the base HTTP client for rooms
 export const roomsClient = createHttpClient<Room>({
