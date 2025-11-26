@@ -1,8 +1,9 @@
 import type { FormField } from "@/components/entityManager/components/form/types";
 import { RESOURCE_TYPE_LABELS } from "../../types";
 import { authApi } from '@/components/connectionManager/http/client';
+import { VirtualResource } from "../../types";
 
-export const virtualResourceFields: FormField[] = [
+export const virtualResourceFields: FormField<VirtualResource>[] = [
   {
     name: "name",
     label: "Resource Name",

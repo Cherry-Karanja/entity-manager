@@ -1,7 +1,8 @@
 import { FormField } from '@/components/entityManager/components/form/types';
 import { authApi } from '@/components/connectionManager/http/client';
+import { TimetableSettings } from "../../types";
 
-export const timetableSettingsFields: FormField<any>[] = [
+export const timetableSettingsFields: FormField<TimetableSettings>[] = [
   {
     name: "name",
     label: "Settings Name",

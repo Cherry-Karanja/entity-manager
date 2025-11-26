@@ -1,23 +1,26 @@
 /**
  * Class Schedules Management Page
+ * 
+ * Main page for managing class schedules using Entity Manager with Django backend integration.
  */
 
 'use client';
 
 import React, { useEffect } from 'react';
-import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { classGroupScheduleListConfig, classGroupScheduleViewConfig, classGroupScheduleActionsConfig, classGroupScheduleExportConfig } from '@/components/features/logx/class-group-schedules/config';
-import { classGroupScheduleFields } from '@/components/features/logx/class-group-schedules/config/fields';
-import { default as classGroupScheduleClient } from '@/components/features/logx/class-group-schedules/api/client';
+import { EntityManager } from '@/components/entityManager';
+import { classGroupScheduleConfig } from '@/components/features/logx/class-group-schedules/config';
+import classGroupScheduleClient from '@/components/features/logx/class-group-schedules/api/client';
 import { CalendarDays } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';
+import { EntityManagerView } from '@/components/entityManager';
 
 export default function ClassSchedulesPage() {
   const { setPageActions } = usePageActions();
   const [initialView, setInitialView] = React.useState<EntityManagerView>('list');
   const [initialId, setInitialId] = React.useState<string | number | undefined>(undefined);
 
+  // Set actions to display in the layout header
   useEffect(() => {
     setPageActions(
       <div className="flex gap-2">
@@ -25,6 +28,7 @@ export default function ClassSchedulesPage() {
           variant="default" 
           size="sm"
           onClick={() => {
+            console.log('Add Class Schedule button clicked');
             setInitialView('create');
             setInitialId(undefined);
           }}
@@ -34,10 +38,14 @@ export default function ClassSchedulesPage() {
         </Button>
       </div>
     );
+
+    // Cleanup on unmount
     return () => setPageActions(null);
   }, [setPageActions]);
 
+  // Callback when view changes internally (e.g., back to list after submit)
   const handleViewChange = React.useCallback((newView: EntityManagerView) => {
+    console.log('View changed to:', newView);
     setInitialView(newView);
     if (newView === 'list') {
       setInitialId(undefined);
@@ -47,15 +55,7 @@ export default function ClassSchedulesPage() {
   return (
     <EntityManager
       config={{
-        config: {
-          entityName: 'Class Schedule',
-          entityNamePlural: 'Class Schedules',
-          fields: classGroupScheduleFields,
-          list: classGroupScheduleListConfig,
-          view: classGroupScheduleViewConfig,
-          actions: classGroupScheduleActionsConfig,
-          export: classGroupScheduleExportConfig,
-        },
+        config: classGroupScheduleConfig,
         apiClient: classGroupScheduleClient,
         initialView: initialView,
         initialId: initialId,

@@ -2,7 +2,8 @@ import type { FormField } from "@/components/entityManager/components/form/types
 import { authApi } from '@/components/connectionManager/http/client';
 import { VIOLATION_TYPE_LABELS } from "../../types";
 
-export const penaltyRuleFields: FormField[] = [
+import { PenaltyRule } from "../../types";
+export const penaltyRuleFields: FormField<PenaltyRule>[] = [
   {
     name: "name",
     label: "Rule Name",

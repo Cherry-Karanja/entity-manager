@@ -1,9 +1,11 @@
-import { FieldConfig } from "@/components/entityManager";
+import { FormField } from "@/components/entityManager/components/form/types";
+import { TimetableConstraint } from "../../types";
+// import { FieldConfig } from "@/components/entityManager";
 import { CONSTRAINT_TYPE_LABELS } from "../../types";
 import { timetablesClient } from '../../timetables/api/client';
 import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
-export const timetableConstraintFields: FieldConfig[] = [
+export const timetableConstraintFields: FormField<TimetableConstraint>[] = [
   {
     name: "name",
     label: "Constraint Name",

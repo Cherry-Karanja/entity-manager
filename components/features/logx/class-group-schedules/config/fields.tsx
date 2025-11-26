@@ -1,8 +1,9 @@
 import type { FormField } from "@/components/entityManager/components/form/types";
 import { DAY_OF_WEEK_LABELS } from "../../types";
+import { ClassGroupSchedule } from "../../types";
 import { authApi } from '@/components/connectionManager/http/client';
 
-export const classGroupScheduleFields: FormField[] = [
+export const classGroupScheduleFields: FormField<ClassGroupSchedule>[] = [
   {
     name: "timetable",
     label: "Timetable",
