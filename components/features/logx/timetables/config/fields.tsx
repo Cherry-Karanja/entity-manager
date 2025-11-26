@@ -28,7 +28,7 @@ export const timetableFields: FormField<Timetable>[] = [
       valueField: 'id',
       fetchOptions: async (search?: string) => {
         const params = search ? { params: { search } } : undefined;
-        const resp = await authApi.get('/api/v1/institution/academic-years/', params as any);
+        const resp = await authApi.get('/api/v1/institution/academic-years/', params as Record<string, unknown> | undefined);
         const data = resp.data;
         return Array.isArray(data) ? data : data.results ?? data.data ?? [];
       },
@@ -47,7 +47,7 @@ export const timetableFields: FormField<Timetable>[] = [
       valueField: 'id',
       fetchOptions: async (search?: string) => {
         const params = search ? { params: { search } } : undefined;
-        const resp = await authApi.get('/api/v1/institution/terms/', params as any);
+        const resp = await authApi.get('/api/v1/institution/terms/', params as Record<string, unknown> | undefined);
         const data = resp.data;
         return Array.isArray(data) ? data : data.results ?? data.data ?? [];
       },

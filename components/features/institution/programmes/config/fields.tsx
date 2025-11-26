@@ -4,7 +4,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { authApi } from '@/components/connectionManager/http/client';
-import { Programme } from '../../types';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
+import { Programme, Department } from '../../types';
 
 export const ProgrammeFormConfig: EntityFormConfig<Programme> = {
   fields: [
@@ -63,9 +64,8 @@ export const ProgrammeFormConfig: EntityFormConfig<Programme> = {
         searchFields: ['search'],
         fetchOptions: async (query?: string) => {
           const params = query ? { params: { search: query } } : undefined;
-          const resp = await authApi.get('/api/v1/institution/departments/', params as any);
-          const data = resp.data;
-          return (Array.isArray(data) ? data : data.results ?? data.data ?? []) as any[];
+          const resp = await authApi.get('/api/v1/institution/departments/', params as Record<string, unknown> | undefined);
+          return getListData<Department>(resp.data);
         },
       },
       width: '100%',

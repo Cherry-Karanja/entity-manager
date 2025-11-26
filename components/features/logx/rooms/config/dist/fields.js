@@ -42,6 +42,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 exports.roomFields = void 0;
 var client_1 = require("@/components/connectionManager/http/client");
+var responseUtils_1 = require("@/components/entityManager/composition/api/responseUtils");
 var types_1 = require("../../types");
 exports.roomFields = [
     {
@@ -72,17 +73,15 @@ exports.roomFields = [
             displayField: 'name',
             valueField: 'id',
             fetchOptions: function (search) { return __awaiter(void 0, void 0, void 0, function () {
-                var q, resp, data;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var q, resp;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
                         case 0:
                             q = search ? { params: { search: search } } : undefined;
                             return [4 /*yield*/, client_1.authApi.get('/api/v1/institution/departments/', q)];
                         case 1:
-                            resp = _c.sent();
-                            data = resp.data;
-                            return [2 /*return*/, Array.isArray(data) ? data : (_b = (_a = data.results) !== null && _a !== void 0 ? _a : data.data) !== null && _b !== void 0 ? _b : []];
+                            resp = _a.sent();
+                            return [2 /*return*/, responseUtils_1.getListData(resp.data)];
                     }
                 });
             }); },

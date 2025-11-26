@@ -41,6 +41,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 exports.ProgrammeFormConfig = void 0;
 var client_1 = require("@/components/connectionManager/http/client");
+var responseUtils_1 = require("@/components/entityManager/composition/api/responseUtils");
 exports.ProgrammeFormConfig = {
     fields: [
         {
@@ -97,17 +98,15 @@ exports.ProgrammeFormConfig = {
                 valueField: 'id',
                 searchFields: ['search'],
                 fetchOptions: function (query) { return __awaiter(void 0, void 0, void 0, function () {
-                    var params, resp, data;
-                    var _a, _b;
-                    return __generator(this, function (_c) {
-                        switch (_c.label) {
+                    var params, resp;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
                             case 0:
                                 params = query ? { params: { search: query } } : undefined;
                                 return [4 /*yield*/, client_1.authApi.get('/api/v1/institution/departments/', params)];
                             case 1:
-                                resp = _c.sent();
-                                data = resp.data;
-                                return [2 /*return*/, (Array.isArray(data) ? data : (_b = (_a = data.results) !== null && _a !== void 0 ? _a : data.data) !== null && _b !== void 0 ? _b : [])];
+                                resp = _a.sent();
+                                return [2 /*return*/, responseUtils_1.getListData(resp.data)];
                         }
                     });
                 }); }

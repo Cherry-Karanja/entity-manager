@@ -5,6 +5,7 @@
 
 import type { FormField } from '@/components/entityManager/components/form/types';
 import { authApi } from '@/components/connectionManager/http/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 import { Room, ROOM_TYPE_LABELS } from '../../types';
 
 export const roomFields: FormField<Room>[] = [
@@ -37,9 +38,8 @@ export const roomFields: FormField<Room>[] = [
       valueField: 'id',
       fetchOptions: async (search?: string) => {
         const q = search ? { params: { search } } : undefined;
-        const resp = await authApi.get('/api/v1/institution/departments/', q as any);
-        const data = resp.data;
-        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+        const resp = await authApi.get('/api/v1/institution/departments/', q as Record<string, unknown> | undefined);
+        return getListData(resp.data);
       },
       searchFields: ['name'],
     },
