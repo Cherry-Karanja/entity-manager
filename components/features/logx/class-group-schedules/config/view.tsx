@@ -1,4 +1,4 @@
-import { ViewConfig } from "@/components/entityManager";
+import type { EntityViewConfig } from "@/components/entityManager/composition/config/types";
 import { ClassGroupSchedule, DAY_OF_WEEK_LABELS } from "../../types";
 
 const formatTime = (time: string | undefined): string => {
@@ -10,15 +10,19 @@ const formatTime = (time: string | undefined): string => {
   return `${displayHour}:${minutes} ${ampm}`;
 };
 
-export const classGroupScheduleViewConfig: ViewConfig<ClassGroupSchedule> = {
-  title: (item) => `${item.class_group_name || "Class"} - ${item.unit_name || "Unit"}`,
-  subtitle: (item) =>
-    item.day_of_week !== undefined
-      ? `${DAY_OF_WEEK_LABELS[item.day_of_week as keyof typeof DAY_OF_WEEK_LABELS]} ${formatTime(item.start_time)} - ${formatTime(item.end_time)}`
-      : undefined,
+export const classGroupScheduleViewConfig: EntityViewConfig<ClassGroupSchedule> = {
+  title: (item?: ClassGroupSchedule) => `${item?.class_group_name || "Class"} - ${item?.unit_name || "Unit"}`,
+  subtitle: (item?: ClassGroupSchedule) =>
+    item?.day_of_week !== undefined
+      ? `${DAY_OF_WEEK_LABELS[item.day_of_week as keyof typeof DAY_OF_WEEK_LABELS]} ${formatTime(
+          item.start_time
+        )} - ${formatTime(item.end_time)}`
+      : "",
+  fields: [],
   sections: [
     {
-      title: "Schedule Information",
+      id: "info",
+      label: "Schedule Information",
       fields: [
         {
           key: "timetable_name",
@@ -39,7 +43,8 @@ export const classGroupScheduleViewConfig: ViewConfig<ClassGroupSchedule> = {
       ],
     },
     {
-      title: "Location & Time",
+      id: "location",
+      label: "Location & Time",
       fields: [
         {
           key: "room_name",
@@ -48,30 +53,29 @@ export const classGroupScheduleViewConfig: ViewConfig<ClassGroupSchedule> = {
         {
           key: "day_of_week",
           label: "Day of Week",
-          render: (value) =>
-            value !== undefined
-              ? DAY_OF_WEEK_LABELS[value as keyof typeof DAY_OF_WEEK_LABELS]
-              : "—",
+          render: (value: unknown) =>
+            value !== undefined ? String(DAY_OF_WEEK_LABELS[value as keyof typeof DAY_OF_WEEK_LABELS]) : "—",
         },
         {
           key: "start_time",
           label: "Start Time",
-          render: (value) => formatTime(value as string | undefined),
+          render: (value: unknown) => formatTime(value as string | undefined),
         },
         {
           key: "end_time",
           label: "End Time",
-          render: (value) => formatTime(value as string | undefined),
+          render: (value: unknown) => formatTime(value as string | undefined),
         },
       ],
     },
     {
-      title: "Status",
+      id: "status",
+      label: "Status",
       fields: [
         {
           key: "is_locked",
           label: "Locked",
-          render: (value) => (value ? "Yes (Protected from regeneration)" : "No"),
+          render: (value: unknown) => (value ? "Yes (Protected from regeneration)" : "No"),
         },
         {
           key: "notes",
@@ -80,19 +84,18 @@ export const classGroupScheduleViewConfig: ViewConfig<ClassGroupSchedule> = {
       ],
     },
     {
-      title: "Timestamps",
+      id: "timestamps",
+      label: "Timestamps",
       fields: [
         {
           key: "created_at",
           label: "Created",
-          render: (value) =>
-            value ? new Date(value as string).toLocaleString() : "—",
+          render: (value: unknown) => (value ? new Date(value as string).toLocaleString() : "—"),
         },
         {
           key: "updated_at",
           label: "Last Updated",
-          render: (value) =>
-            value ? new Date(value as string).toLocaleString() : "—",
+          render: (value: unknown) => (value ? new Date(value as string).toLocaleString() : "—"),
         },
       ],
     },

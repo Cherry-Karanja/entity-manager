@@ -63,3 +63,9 @@ export const UserFormConfig: EntityFormConfig<UserType> = {
   validateOnBlur: true,
   resetOnSubmit: true,
 };
+
+// Backwards-compatibility named exports (legacy barrels expect these)
+export const userFormLayout = UserFormConfig.layout;
+export const userFormSections = UserFormConfig.sections;
+export const userFormFields = UserFormConfig.fields;
+export const userFormSubmitText = UserFormConfig.submitText;

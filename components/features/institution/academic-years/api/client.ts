@@ -5,7 +5,11 @@
 import { createHttpClient } from '@/components/entityManager';
 import { AcademicYear } from '../../types';
 
-export const academicYearsApiClient = createHttpClient<AcademicYear>({
+export const academicYearsApiClient = createHttpClient<AcademicYear, {
+  activate: AcademicYear;
+  deactivate: AcademicYear;
+  current: AcademicYear;
+}>({
   endpoint: '/api/v1/institution/academic-years/',
 });
 

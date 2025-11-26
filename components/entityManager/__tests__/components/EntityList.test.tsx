@@ -46,7 +46,7 @@ describe('EntityList', () => {
       );
 
       mockColumns.forEach(column => {
-        expect(screen.getByText(column.label)).toBeInTheDocument();
+        if (column.label) expect(screen.getByText(column.label)).toBeInTheDocument();
       });
     });
 

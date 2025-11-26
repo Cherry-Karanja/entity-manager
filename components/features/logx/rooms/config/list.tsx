@@ -3,64 +3,64 @@
  * Defines the columns displayed in the rooms list view
  */
 
-import { ColumnDefinition } from '@/components/entityManager';
+import type { Column } from '@/components/entityManager/components/list/types';
 import { Room, ROOM_TYPE_LABELS } from '../../types';
 import { Badge } from '@/components/ui/badge';
 
-export const roomColumns: ColumnDefinition<Room>[] = [
+export const roomColumns: Column<Room>[] = [
   {
     key: 'code',
-    header: 'Code',
+    label: 'Code',
     sortable: true,
     width: '100px',
   },
   {
     key: 'name',
-    header: 'Name',
+    label: 'Name',
     sortable: true,
     width: '200px',
   },
   {
     key: 'department_name',
-    header: 'Department',
+    label: 'Department',
     sortable: true,
-    render: (value, row) => value || `Department ${row.department}`,
+    render: (value: unknown, row?: Room) => (value ? String(value) : `Department ${row?.department}`),
   },
   {
     key: 'room_type',
-    header: 'Type',
+    label: 'Type',
     sortable: true,
-    render: (value) => (
+    render: (value: unknown) => (
       <Badge variant="outline">
-        {ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] || value}
+        {String(ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] ?? value)}
       </Badge>
     ),
   },
   {
     key: 'capacity',
-    header: 'Capacity',
+    label: 'Capacity',
     sortable: true,
     width: '100px',
-    render: (value) => `${value} people`,
+    render: (value: unknown) => `${String(value)} people`,
   },
   {
     key: 'building',
-    header: 'Location',
-    render: (value, row) => {
-      const parts = [];
-      if (row.building) parts.push(row.building);
-      if (row.floor) parts.push(`Floor ${row.floor}`);
+    label: 'Location',
+    render: (value: unknown, row?: Room) => {
+      const parts: string[] = [];
+      if (row?.building) parts.push(row.building);
+      if (row?.floor) parts.push(`Floor ${row.floor}`);
       return parts.length > 0 ? parts.join(', ') : '-';
     },
   },
   {
     key: 'is_active',
-    header: 'Status',
+    label: 'Status',
     sortable: true,
     width: '100px',
-    render: (value) => (
-      <Badge variant={value ? 'default' : 'secondary'}>
-        {value ? 'Active' : 'Inactive'}
+    render: (value: unknown) => (
+      <Badge variant={(value as boolean) ? 'default' : 'secondary'}>
+        {(value as boolean) ? 'Active' : 'Inactive'}
       </Badge>
     ),
   },

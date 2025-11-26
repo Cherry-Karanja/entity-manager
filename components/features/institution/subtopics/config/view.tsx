@@ -9,14 +9,14 @@ import { Badge } from '@/components/ui/badge';
 export const SubtopicViewConfig: EntityViewConfig<Subtopic> = {
   fields: [
     { key: 'name', label: 'Subtopic Name' },
-    { key: 'order', label: 'Order', render: (entity) => `#${(entity as Subtopic).order || '-'}` },
+    { key: 'order', label: 'Order', render: (entity?: Subtopic) => `#${(entity as Subtopic | undefined)?.order || '-'}` },
     { key: 'topic_name', label: 'Topic' },
-    { key: 'duration_minutes', label: 'Duration', render: (entity) => {
-      const mins = (entity as Subtopic).duration_minutes;
+    { key: 'duration_minutes', label: 'Duration', render: (entity?: Subtopic) => {
+      const mins = (entity as Subtopic | undefined)?.duration_minutes;
       return mins ? `${mins} minutes` : '-';
     }},
-    { key: 'content_type', label: 'Content Type', render: (entity) => {
-      const type = (entity as Subtopic).content_type;
+    { key: 'content_type', label: 'Content Type', render: (entity?: Subtopic) => {
+      const type = (entity as Subtopic | undefined)?.content_type;
       if (!type) return '-';
       const colors: Record<string, string> = {
         lecture: 'bg-blue-100 text-blue-800',

@@ -14,7 +14,7 @@ export const loginAttemptColumns: Column<LoginAttempt>[] = [
     label: 'Result',
     render: (value, attempt) => (
       <div className="flex items-center gap-2">
-        {attempt.success ? (
+        {attempt?.success ? (
           <>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             <Badge variant="default" className="bg-green-500">Success</Badge>
@@ -33,8 +33,8 @@ export const loginAttemptColumns: Column<LoginAttempt>[] = [
     label: 'Email',
     render: (value, attempt) => (
       <div>
-        <div className="font-medium">{attempt.email}</div>
-        {attempt.user_full_name && (
+        <div className="font-medium">{attempt?.email}</div>
+        {attempt?.user_full_name && (
           <div className="text-xs text-muted-foreground">{attempt.user_full_name}</div>
         )}
       </div>
@@ -49,9 +49,9 @@ export const loginAttemptColumns: Column<LoginAttempt>[] = [
     label: 'Device',
     render: (value, attempt) => (
       <div>
-        <div className="text-sm">{attempt.device_type || 'Unknown'}</div>
+        <div className="text-sm">{attempt?.device_type || 'Unknown'}</div>
         <div className="text-xs text-muted-foreground">
-          {attempt.browser} • {attempt.device_os}
+          {attempt?.browser} • {attempt?.device_os}
         </div>
       </div>
     ),
@@ -60,7 +60,7 @@ export const loginAttemptColumns: Column<LoginAttempt>[] = [
     key: 'failure_reason',
     label: 'Reason',
     render: (value, attempt) => (
-      attempt.failure_reason ? (
+      attempt?.failure_reason ? (
         <span className="text-sm text-red-600">{attempt.failure_reason}</span>
       ) : (
         <span className="text-sm text-muted-foreground">-</span>
@@ -72,7 +72,7 @@ export const loginAttemptColumns: Column<LoginAttempt>[] = [
     label: 'Attempted',
     render: (value, attempt) => (
       <span className="text-sm">
-        {formatDistanceToNow(new Date(attempt.created_at), { addSuffix: true })}
+        {attempt?.created_at ? formatDistanceToNow(new Date(attempt.created_at), { addSuffix: true }) : '-'}
       </span>
     ),
   },

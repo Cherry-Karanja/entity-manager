@@ -21,7 +21,7 @@ export interface ExportField<T extends BaseEntity = BaseEntity> {
   
   /** Display label in export */
   label: string;
-  
+
   /** Custom formatter function */
   formatter?: (value: unknown, entity: T) => string | number | boolean | null;
   

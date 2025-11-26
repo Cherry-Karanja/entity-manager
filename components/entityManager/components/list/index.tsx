@@ -715,8 +715,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                               action.variant === 'destructive' ? 'text-destructive hover:bg-destructive/10' : 'text-foreground'
                             }`}
                           >
-                            {action.icon && <span className="flex-shrink-0">{action.icon}</span>}
-                            <span className="flex-1 text-left">{action.label}</span>
+                            {action.icon && <span className="flex-shrink-0">{renderIcon(action.icon)}</span>}
+                            <span className="flex-1 text-left">{renderActionLabel(action.label)}</span>
                           </button>
                         ))}
                       </div>
@@ -738,6 +738,30 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   };
 
   // Render pagination
+
+  const renderActionLabel = (maybeLabel: any) => {
+    if (typeof maybeLabel === 'function') {
+      try {
+        return maybeLabel(undefined);
+      } catch {
+        return null;
+      }
+    }
+    return maybeLabel;
+  };
+  // Render icon which may be a React node or a component type
+  const renderIcon = (icon: any) => {
+    if (!icon) return null;
+    if (typeof icon === 'function') {
+      const IconComp = icon as React.ComponentType<any>;
+      try {
+        return <IconComp />;
+      } catch {
+        return null;
+      }
+    }
+    return icon;
+  };
   const renderPagination = () => {
     if (!pagination) return null;
 

@@ -4,7 +4,6 @@
  */
 
 export * from './config';
-export * from './api/client';
 export { roomConfig } from './config';
 
 // Re-export API client with expected name

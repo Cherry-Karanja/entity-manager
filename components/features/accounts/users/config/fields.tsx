@@ -7,6 +7,7 @@
 import { FormField } from '@/components/entityManager/components/form/types';
 import { User } from '../../types';
 import { userRolesApiClient } from '../../roles/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const userFields: FormField<User>[] = [
   // ===========================
@@ -159,9 +160,9 @@ export const userFields: FormField<User>[] = [
       displayField: 'description',
       valueField: 'name',
       searchFields: ['name', 'description'],
-      fetchOptions: async (search?: string) => {
+        fetchOptions: async (search?: string) => {
         const response = await userRolesApiClient.list({ search, pageSize: 50 });
-        return response.data;
+        return getListData(response);
       },
     },
     width: '25%',

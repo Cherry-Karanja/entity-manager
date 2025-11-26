@@ -10,7 +10,11 @@ import { Department } from '../../types';
 /**
  * Departments API Client
  */
-export const departmentsApiClient = createHttpClient<Department>({
+export const departmentsApiClient = createHttpClient<Department, {
+  assign_hod: Department;
+  add_trainer: Department;
+  remove_trainer: Department;
+}>({
   endpoint: '/api/v1/institution/departments/',
 });
 

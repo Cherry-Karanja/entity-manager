@@ -32,6 +32,9 @@ export type {
   EntityListProps
 } from './components/list/types';
 
+// Legacy alias for column configs
+export type { Column as ColumnConfig } from './components/list/types';
+
 // Form component
 export { EntityForm } from './components/form';
 export type {
@@ -43,6 +46,9 @@ export type {
   EntityFormProps
 } from './components/form/types';
 
+// Legacy aliases (backward compatibility)
+export type { FormField as FieldConfig } from './components/form/types';
+
 // View component
 export { EntityView } from './components/view';
 export type {
@@ -53,6 +59,9 @@ export type {
   EntityViewProps
 } from './components/view/types';
 
+// Legacy aliases
+export type { ViewField as ViewConfig, FieldGroup as FieldGroupConfig } from './components/view/types';
+
 // Actions component
 export { EntityActions } from './components/actions';
 export type {
@@ -62,6 +71,9 @@ export type {
   EntityActionsProps
 } from './components/actions/types';
 
+// Legacy action alias
+export type { Action as ActionConfig } from './components/actions/types';
+
 // Exporter component
 export { EntityExporter } from './components/exporter';
 export type {
@@ -70,6 +82,9 @@ export type {
   ExportOptions,
   EntityExporterProps
 } from './components/exporter/types';
+
+// Legacy export config alias
+export type { ExportConfig } from './components/exporter/types';
 
 // ===========================
 // Layer 1: Primitives

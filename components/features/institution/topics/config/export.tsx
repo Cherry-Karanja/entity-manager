@@ -16,6 +16,9 @@ export const TopicExporterConfig: EntityExporterConfig = {
     { key: 'description', label: 'Description' },
     { key: 'created_at', label: 'Created At' },
   ],
-  filename: 'topics',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'topics',
+  },
+  showFormatSelector: true,
 };

@@ -1,4 +1,4 @@
-import type { ListConfig } from "@/components/entityManager";
+import type { EntityListConfig } from "@/components/entityManager/composition/config/types";
 import type { ResourceLimit } from "../../types";
 import { 
   ENTITY_TYPE_LABELS, 
@@ -7,15 +7,15 @@ import {
 } from "../../types";
 import { Badge } from "@/components/ui/badge";
 
-export const resourceLimitListConfig: ListConfig<ResourceLimit> = {
+export const resourceLimitListConfig: EntityListConfig<ResourceLimit> = {
   columns: [
     {
       key: "timetable_details",
       label: "Timetable",
       sortable: true,
-      render: (value) => {
-        if (value && typeof value === "object" && "name" in value) {
-          return value.name;
+      render: (value: unknown) => {
+        if (value && typeof value === "object" && "name" in (value as any)) {
+          return (value as any).name as string;
         }
         return "-";
       },
@@ -24,8 +24,8 @@ export const resourceLimitListConfig: ListConfig<ResourceLimit> = {
       key: "entity_type",
       label: "Entity Type",
       sortable: true,
-      render: (value) => {
-        const label = ENTITY_TYPE_LABELS[value as keyof typeof ENTITY_TYPE_LABELS] || value;
+      render: (value: unknown) => {
+        const label = ENTITY_TYPE_LABELS[(value as any) as keyof typeof ENTITY_TYPE_LABELS] || (value as any);
         const colorMap: Record<string, string> = {
           teacher: "bg-purple-100 text-purple-800",
           room: "bg-blue-100 text-blue-800",
@@ -42,8 +42,8 @@ export const resourceLimitListConfig: ListConfig<ResourceLimit> = {
       key: "resource_type",
       label: "Resource Type",
       sortable: true,
-      render: (value) => {
-        const label = RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value;
+      render: (value: unknown) => {
+        const label = RESOURCE_TYPE_LABELS[(value as any) as keyof typeof RESOURCE_TYPE_LABELS] || (value as any);
         const colorMap: Record<string, string> = {
           hours: "bg-orange-100 text-orange-800",
           sessions: "bg-teal-100 text-teal-800",
@@ -59,14 +59,14 @@ export const resourceLimitListConfig: ListConfig<ResourceLimit> = {
       key: "max_value",
       label: "Max Value",
       sortable: true,
-      render: (value) => value?.toString() || "-",
+      render: (value: unknown) => (value as any)?.toString() || "-",
     },
     {
       key: "period_type",
       label: "Period",
       sortable: true,
-      render: (value) => {
-        const label = PERIOD_TYPE_LABELS[value as keyof typeof PERIOD_TYPE_LABELS] || value;
+      render: (value: unknown) => {
+        const label = PERIOD_TYPE_LABELS[(value as any) as keyof typeof PERIOD_TYPE_LABELS] || (value as any);
         const colorMap: Record<string, string> = {
           daily: "bg-cyan-100 text-cyan-800",
           weekly: "bg-indigo-100 text-indigo-800",
@@ -82,15 +82,15 @@ export const resourceLimitListConfig: ListConfig<ResourceLimit> = {
       key: "is_active",
       label: "Status",
       sortable: true,
-      render: (value) => (
-        <Badge variant={value ? "default" : "secondary"}>
-          {value ? "Active" : "Inactive"}
+      render: (value: unknown) => (
+        <Badge variant={(value as boolean) ? "default" : "secondary"}>
+          {(value as boolean) ? "Active" : "Inactive"}
         </Badge>
       ),
     },
   ],
-  defaultSort: {
-    key: "entity_type",
+  sortConfig: {
+    field: "entity_type",
     direction: "asc",
   },
   searchableFields: ["entity_type", "resource_type", "period_type"],

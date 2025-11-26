@@ -4,6 +4,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { Topic } from '../../types';
+import { unitsApiClient } from '../../units/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const TopicFormConfig: EntityFormConfig<Topic> = {
   fields: [
@@ -36,15 +38,19 @@ export const TopicFormConfig: EntityFormConfig<Topic> = {
     {
       name: 'unit',
       label: 'Unit',
-      type: 'select',
+      type: 'relation',
       required: true,
       group: 'associations',
       validation: [{ type: 'required', message: 'Unit is required' }],
-      optionsConfig: {
-        endpoint: '/api/v1/academics/units/',
-        labelField: 'name',
+      relationConfig: {
+        entity: 'Unit',
+        displayField: 'name',
         valueField: 'id',
-        searchable: true,
+        searchFields: ['name'],
+        fetchOptions: async (search?: string) => {
+          const response = await unitsApiClient.list({ search, pageSize: 50 });
+          return getListData(response);
+        },
       },
       width: '100%',
     },
@@ -104,5 +110,5 @@ export const TopicFormConfig: EntityFormConfig<Topic> = {
     { id: 'details', title: 'Details', collapsible: true, defaultExpanded: false },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

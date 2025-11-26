@@ -15,6 +15,9 @@ export const SubtopicExporterConfig: EntityExporterConfig = {
     { key: 'description', label: 'Description' },
     { key: 'created_at', label: 'Created At' },
   ],
-  filename: 'subtopics',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'subtopics',
+  },
+  showFormatSelector: true,
 };

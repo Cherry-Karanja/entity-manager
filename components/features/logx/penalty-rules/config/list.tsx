@@ -1,57 +1,57 @@
-import { ColumnConfig } from "@/components/entityManager";
+import type { Column } from "@/components/entityManager/components/list/types";
 import { Badge } from "@/components/ui/badge";
 import { PenaltyRule, VIOLATION_TYPE_LABELS } from "../../types";
 import { Check, X } from "lucide-react";
 
-export const penaltyRuleColumns: ColumnConfig<PenaltyRule>[] = [
+export const penaltyRuleColumns: Column<PenaltyRule>[] = [
   {
     key: "name",
-    header: "Name",
+    label: "Name",
     sortable: true,
-    render: (value) => <span className="font-medium">{value}</span>,
+    render: (value: unknown) => <span className="font-medium">{String(value)}</span>,
   },
   {
     key: "timetable_name",
-    header: "Timetable",
+    label: "Timetable",
     sortable: true,
   },
   {
     key: "violation_type",
-    header: "Violation Type",
+    label: "Violation Type",
     sortable: true,
-    render: (value) => (
+    render: (value: unknown) => (
       <Badge variant="outline">
-        {VIOLATION_TYPE_LABELS[value as keyof typeof VIOLATION_TYPE_LABELS] || value}
+        {VIOLATION_TYPE_LABELS[value as keyof typeof VIOLATION_TYPE_LABELS] || String(value)}
       </Badge>
     ),
   },
   {
     key: "base_penalty",
-    header: "Base Penalty",
+    label: "Base Penalty",
     sortable: true,
   },
   {
     key: "multiplier",
-    header: "Multiplier",
+    label: "Multiplier",
     sortable: true,
-    render: (value) => `×${value}`,
+    render: (value: unknown) => `×${String(value)}`,
   },
   {
     key: "max_penalty",
-    header: "Max Penalty",
+    label: "Max Penalty",
     sortable: true,
-    render: (value) => (value ? value : "No cap"),
+    render: (value: unknown) => (value ? String(value) : "No cap"),
   },
   {
     key: "threshold",
-    header: "Threshold",
+    label: "Threshold",
     sortable: true,
-    render: (value) => (value ? `${value} violations` : "Immediate"),
+    render: (value: unknown) => (value ? `${String(value)} violations` : "Immediate"),
   },
   {
     key: "is_active",
-    header: "Active",
-    render: (value) =>
+    label: "Active",
+    render: (value: unknown) =>
       value ? (
         <Check className="h-4 w-4 text-green-500" />
       ) : (

@@ -26,7 +26,7 @@ export const ProgrammeActionsConfig: EntityActionsConfig<Programme> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-delete',
       label: 'Delete Selected',
@@ -36,7 +36,7 @@ export const ProgrammeActionsConfig: EntityActionsConfig<Programme> = {
       confirmMessage: (items?: Programme[]) => 
         `Delete ${items?.length || 0} programmes?`,
       confirmText: 'Delete All',
-      onConfirm: async (items?: Programme[], context?) => {
+      onConfirm: async (items?: Programme[], context?: any) => {
         if (!items?.length || !context?.bulkDelete || !context?.refresh) return;
         await context.bulkDelete(items.map(p => p.id));
         await context.refresh();
@@ -46,9 +46,9 @@ export const ProgrammeActionsConfig: EntityActionsConfig<Programme> = {
       id: 'bulk-export',
       label: 'Export Selected',
       icon: <Download className="h-4 w-4" />,
-      actionType: 'custom',
+      actionType: 'bulk',
       variant: 'secondary',
-      onAction: async (items?: Programme[]) => {
+      handler: async (items?: Programme[]) => {
         console.log('Export programmes:', items);
       },
     },

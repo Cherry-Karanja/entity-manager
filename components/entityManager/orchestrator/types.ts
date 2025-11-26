@@ -44,7 +44,8 @@ export interface EntityManagerConfig<T extends BaseEntity = BaseEntity> {
  */
 export interface EntityManagerProps<T extends BaseEntity = BaseEntity> {
   /** Configuration */
-  config: EntityManagerConfig<T>; // note this is not entity config
+  // Accept either canonical config or legacy/compact shapes during migration
+  config: EntityManagerConfig<T> | Record<string, any>;
   
   /** Custom className */
   className?: string;

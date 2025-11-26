@@ -14,6 +14,9 @@ export const TermExporterConfig: EntityExporterConfig = {
     { key: 'is_active', label: 'Active', formatter: (v: unknown) => (v as boolean) ? 'Yes' : 'No' },
     { key: 'created_at', label: 'Created At' },
   ],
-  filename: 'terms',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'terms',
+  },
+  showFormatSelector: true,
 };

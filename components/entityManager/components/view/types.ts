@@ -26,7 +26,8 @@ export interface FieldGroup {
   description?: string;
   
   /** Fields in this group */
-  fields: string[];
+  /** Can be an array of field keys (string) or inline field definitions (legacy configs) */
+  fields: Array<string | ViewField<BaseEntity>>;
   
   /** Collapsible group */
   collapsible?: boolean;
@@ -36,6 +37,9 @@ export interface FieldGroup {
   
   /** Display order */
   order?: number;
+  
+  /** icon allowed  */
+  icon?: React.ReactNode | React.ElementType | string | null;
 }
 
 /**
@@ -49,13 +53,20 @@ export interface ViewField<T extends BaseEntity = BaseEntity> {
   label: string;
   
   /** Field type for rendering */
-  type?: 'text' | 'number' | 'date' | 'boolean' | 'email' | 'url' | 'image' | 'file' | 'json' | 'custom';
+  type?: 'text' | 'number' | 'date' | 'datetime' | 'boolean' | 'email' | 'url' | 'image' | 'file' | 'json' | 'custom';
   
   /** Custom formatter */
   formatter?: (value: unknown, entity: T) => React.ReactNode;
   
   /** Custom renderer */
-  render?: (entity: T) => React.ReactNode;
+  render?: ((entity: T) => React.ReactNode) | ((value: unknown, entity?: T, index?: number) => React.ReactNode);
+  
+  /** Legacy title builder for field-level titles (some configs define 'title' on view fields) */
+  title?: (entity?: T) => string | undefined;
+  /** Legacy subtitle builder for field-level subtitles */
+  subtitle?: (entity?: T) => string | undefined;
+  /** Legacy icon property at field level */
+  icon?: React.ReactNode | React.ElementType | string;
   
   /** Show in summary view */
   showInSummary?: boolean;
@@ -74,6 +85,8 @@ export interface ViewField<T extends BaseEntity = BaseEntity> {
   
   /** Display order */
   order?: number;
+  /** Legacy nested sections (some configs put sections on fields) */
+  sections?: FieldGroup[] | unknown;
 }
 
 /**
@@ -120,12 +133,22 @@ export interface EntityViewProps<T extends BaseEntity = BaseEntity> {
   
   /** Tabs for additional content */
   tabs?: ViewTab<T>[];
+
+  /** Optional icon for the view (legacy configs sometimes set an icon at the view level) */
+  icon?: React.ReactNode | React.ElementType | string;
+
+  /** Optional sections/groups defined at the view level (legacy configs) */
+  sections?: FieldGroup[];
   
   /** Title field key */
   titleField?: keyof T | string;
+  /** Legacy title builder (kept for backward compatibility) */
+  title?: (entity?: T) => string;
   
   /** Subtitle field key */
   subtitleField?: keyof T | string;
+  /** Legacy subtitle builder (kept for backward compatibility) */
+  subtitle?: (entity?: T) => string;
   
   /** Image field key */
   imageField?: keyof T | string;

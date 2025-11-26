@@ -78,20 +78,12 @@ export const DepartmentListConfig: EntityListConfig<Department> = {
     },
   ],
 
-  defaultSort: {
-    field: 'name',
-    direction: 'asc',
-  },
+  
 
   searchable: true,
   searchPlaceholder: 'Search departments...',
-  searchFields: ['name', 'hod_name'],
 
   selectable: true,
-  selectableKey: 'id',
 
-  pagination: {
-    defaultPageSize: 10,
-    pageSizeOptions: [10, 25, 50, 100],
-  },
+  pagination: true,
 };

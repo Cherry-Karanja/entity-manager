@@ -4,6 +4,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { Intake } from '../../types';
+import { academicYearsApiClient } from '../../academic-years/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const IntakeFormConfig: EntityFormConfig<Intake> = {
   fields: [
@@ -37,14 +39,19 @@ export const IntakeFormConfig: EntityFormConfig<Intake> = {
     {
       name: 'academic_year',
       label: 'Academic Year',
-      type: 'select',
+      type: 'relation',
       required: true,
       group: 'basic',
       validation: [{ type: 'required', message: 'Academic year is required' }],
-      optionsConfig: {
-        endpoint: '/api/v1/institution/academic-years/',
-        labelField: 'year',
+      relationConfig: {
+        entity: 'AcademicYear',
+        displayField: 'name',
         valueField: 'id',
+        searchFields: ['name', 'code'],
+        fetchOptions: async (search?: string) => {
+          const response = await academicYearsApiClient.list({ search, pageSize: 50 });
+          return getListData(response);
+        },
       },
       width: '50%',
     },
@@ -94,5 +101,5 @@ export const IntakeFormConfig: EntityFormConfig<Intake> = {
     { id: 'details', title: 'Additional Details', collapsible: true, defaultExpanded: false },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

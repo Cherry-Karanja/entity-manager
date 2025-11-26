@@ -14,27 +14,58 @@ import { EntityViewProps, ViewField } from '../../components/view/types';
 /**
  * Entity actions configuration
  */
-export type EntityActionsConfig<T extends BaseEntity = BaseEntity> = Omit<EntityActionsProps<T>, 'entity' | 'context' | 'onActionComplete' | 'onActionError'>;
+/**
+ * Entity actions configuration
+ *
+ * Backwards compatible: accept either the compact object shape used across feature configs
+ * (with optional `row` and `bulk` arrays) or the normalized `EntityActionsProps`-derived shape.
+ */
+export type EntityActionsConfig<T extends BaseEntity = BaseEntity> =
+  | (Omit<EntityActionsProps<T>, 'entity' | 'context' | 'onActionComplete' | 'onActionError'> & {
+      /** Allow extra legacy properties while migrating */
+      [key: string]: any;
+    })
+  /** Legacy compact actions shape used across older feature configs */
+  | ({ row?: Action<T>[]; bulk?: Action<T>[] } & { [key: string]: any });
 
 /**
  * Entity exporter configuration
  */
-export type EntityExporterConfig<T extends BaseEntity = BaseEntity> = Omit<EntityExporterProps<T>, 'data' | 'onExportStart' | 'onExportComplete' | 'onExportError'>;
+export type EntityExporterConfig<T extends BaseEntity = BaseEntity> = Omit<EntityExporterProps<T>, 'data' | 'onExportStart' | 'onExportComplete' | 'onExportError'> & {
+  /** Allow legacy top-level exporter keys during migration */
+  [key: string]: any;
+};
 
 /**
  * Entity form configuration
  */
-export type EntityFormConfig<T extends BaseEntity = BaseEntity> = Omit<EntityFormProps<T>, 'initialValues' | 'entity' | 'onSubmit' | 'onCancel' | 'onChange' | 'onValidate'>;
+export type EntityFormConfig<T extends BaseEntity = BaseEntity> = Omit<EntityFormProps<T>, 'initialValues' | 'entity' | 'onSubmit' | 'onCancel' | 'onChange' | 'onValidate'> & {
+  /** Allow legacy fieldGroups and other adapter/shorthand keys during migration */
+  fieldGroups?: any;
+  [key: string]: any;
+};
 
 /**
  * Entity list configuration
  */
-export type EntityListConfig<T extends BaseEntity = BaseEntity> = Omit<EntityListProps<T>, 'data' | 'selectedIds' | 'onSelectionChange' | 'onRowClick' | 'onRowDoubleClick' | 'onPaginationChange' | 'onSortChange' | 'onFilterChange' | 'onSearchChange'>;
+export type EntityListConfig<T extends BaseEntity = BaseEntity> = Omit<EntityListProps<T>, 'data' | 'selectedIds' | 'onSelectionChange' | 'onRowClick' | 'onRowDoubleClick' | 'onPaginationChange' | 'onSortChange' | 'onFilterChange' | 'onSearchChange'> & {
+  /** Legacy migration-friendly keys (defaultSort, searchableFields, etc.) */
+  defaultSort?: { field: string; direction: 'asc' | 'desc' };
+  searchableFields?: string[];
+  /** Allow arbitrary legacy properties temporarily during migration */
+  [key: string]: any;
+};
 
 /**
  * Entity view configuration
  */
-export type EntityViewConfig<T extends BaseEntity = BaseEntity> = Omit<EntityViewProps<T>, 'entity' | 'onCopy'>;
+export type EntityViewConfig<T extends BaseEntity = BaseEntity> =
+  Omit<EntityViewProps<T>, 'entity' | 'onCopy'> & {
+    /** Allow legacy layout property used in some feature configs */
+    layout?: string;
+    /** Allow extra legacy properties while we migrate configs */
+    [key: string]: any;
+  };
 
 /**
  * Entity configuration

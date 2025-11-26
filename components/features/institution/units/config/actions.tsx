@@ -45,10 +45,10 @@ export const UnitActionsConfig: EntityActionsConfig<Unit> = {
       id: 'view-topics',
       label: 'View Topics',
       icon: <BookOpen className="h-4 w-4" />,
-      actionType: 'navigate',
+      actionType: 'navigation',
       variant: 'secondary',
       position: 'row',
-      route: (unit?: Unit) => `/dashboard/academics/units/${unit?.id}/topics`,
+      url: (unit?: Unit) => `/dashboard/academics/units/${unit?.id}/topics`,
     },
     {
       id: 'delete',
@@ -67,7 +67,7 @@ export const UnitActionsConfig: EntityActionsConfig<Unit> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-activate',
       label: 'Activate Selected',
@@ -76,7 +76,7 @@ export const UnitActionsConfig: EntityActionsConfig<Unit> = {
       variant: 'primary',
       confirmMessage: (items?: Unit[]) => `Activate ${items?.length || 0} units?`,
       confirmText: 'Activate All',
-      onConfirm: async (items?: Unit[], context?) => {
+      onConfirm: async (items?: Unit[], context?: any) => {
         if (!items?.length || !context?.refresh) return;
         await Promise.all(items.map(u => apiActions.activate(u.id)));
         await context.refresh();
@@ -90,7 +90,7 @@ export const UnitActionsConfig: EntityActionsConfig<Unit> = {
       variant: 'destructive',
       confirmMessage: (items?: Unit[]) => `Delete ${items?.length || 0} units and their topics?`,
       confirmText: 'Delete All',
-      onConfirm: async (items?: Unit[], context?) => {
+      onConfirm: async (items?: Unit[], context?: any) => {
         if (!items?.length || !context?.bulkDelete || !context?.refresh) return;
         await context.bulkDelete(items.map(u => u.id));
         await context.refresh();

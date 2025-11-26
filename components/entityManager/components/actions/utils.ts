@@ -119,7 +119,14 @@ export function getEnabledActions<T extends BaseEntity>(
  */
 export function getActionLabel<T extends BaseEntity>(
   action: ActionDefinition<T>
-): string {
+): React.ReactNode {
+  if (typeof action.label === 'function') {
+    try {
+      return action.label();
+    } catch {
+      return null;
+    }
+  }
   return action.label;
 }
 
@@ -294,18 +301,25 @@ export function validateFormValues(
  * Get bulk confirmation message
  */
 export function getBulkConfirmMessage(
-  message: string | ((count: number) => string) | undefined,
-  count: number
+  message: string | ((items?: any[]) => string) | undefined,
+  items: any[]
 ): string {
+  const count = items?.length ?? 0;
   if (!message) {
     return `Are you sure you want to perform this action on ${count} item${count !== 1 ? 's' : ''}?`;
   }
-  
+
   if (typeof message === 'string') {
     return message.replace('{count}', String(count));
   }
-  
-  return message(count);
+
+  // If message is a function, prefer passing the full items array (legacy handlers often expect that)
+  try {
+    return message(items);
+  } catch {
+    // Fallback: call with count in case handler expects a number
+    return message(count as any);
+  }
 }
 
 /**

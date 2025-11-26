@@ -5,7 +5,11 @@
 import { createHttpClient } from '@/components/entityManager';
 import { Intake } from '../../types';
 
-export const intakesApiClient = createHttpClient<Intake>({
+export const intakesApiClient = createHttpClient<Intake, {
+  activate: Intake;
+  deactivate: Intake;
+  close: Intake;
+}>({
   endpoint: '/api/v1/institution/intakes/',
 });
 

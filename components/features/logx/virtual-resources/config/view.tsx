@@ -1,4 +1,4 @@
-import { ViewConfig } from "@/components/entityManager";
+import type { EntityViewConfig } from "@/components/entityManager/composition/config/types";
 import { VirtualResource, RESOURCE_TYPE_LABELS } from "../../types";
 
 const formatTime = (time: string | undefined): string => {
@@ -10,12 +10,14 @@ const formatTime = (time: string | undefined): string => {
   return `${displayHour}:${minutes} ${ampm}`;
 };
 
-export const virtualResourceViewConfig: ViewConfig<VirtualResource> = {
-  title: (item) => item.name || "Virtual Resource",
-  subtitle: (item) => item.code,
+export const virtualResourceViewConfig: EntityViewConfig<VirtualResource> = {
+  title: (item?: VirtualResource) => item?.name || "Virtual Resource",
+  subtitle: (item?: VirtualResource) => item?.code || "",
+  fields: [],
   sections: [
     {
-      title: "Basic Information",
+      id: "basic",
+      label: "Basic Information",
       fields: [
         {
           key: "name",
@@ -32,8 +34,8 @@ export const virtualResourceViewConfig: ViewConfig<VirtualResource> = {
         {
           key: "resource_type",
           label: "Resource Type",
-          render: (value) =>
-            RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value,
+          render: (value: unknown) =>
+            RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || String(value),
         },
         {
           key: "description",
@@ -42,55 +44,56 @@ export const virtualResourceViewConfig: ViewConfig<VirtualResource> = {
       ],
     },
     {
-      title: "Capacity & Availability",
+      id: "availability",
+      label: "Capacity & Availability",
       fields: [
         {
           key: "capacity",
           label: "Capacity",
-          render: (value) => (value ? String(value) : "Not specified"),
+          render: (value: unknown) => (value ? String(value) : "Not specified"),
         },
         {
           key: "availability_start",
           label: "Available From",
-          render: (value) => formatTime(value as string | undefined),
+          render: (value: unknown) => formatTime(value as string | undefined),
         },
         {
           key: "availability_end",
           label: "Available Until",
-          render: (value) => formatTime(value as string | undefined),
+          render: (value: unknown) => formatTime(value as string | undefined),
         },
       ],
     },
     {
-      title: "Configuration",
+      id: "config",
+      label: "Configuration",
       fields: [
         {
           key: "is_shared",
           label: "Shared Resource",
-          render: (value) =>
-            value ? "Yes (Can be used by multiple schedules)" : "No (Exclusive use)",
+          render: (value: unknown) =>
+            (value as boolean) ? "Yes (Can be used by multiple schedules)" : "No (Exclusive use)",
         },
         {
           key: "is_active",
           label: "Status",
-          render: (value) => (value ? "Active" : "Inactive"),
+          render: (value: unknown) => ((value as boolean) ? "Active" : "Inactive"),
         },
       ],
     },
     {
-      title: "Timestamps",
+      id: "timestamps",
+      label: "Timestamps",
       fields: [
         {
           key: "created_at",
           label: "Created",
-          render: (value) =>
-            value ? new Date(value as string).toLocaleString() : "—",
+          render: (value: unknown) => (value ? new Date(value as string).toLocaleString() : "—"),
         },
         {
           key: "updated_at",
           label: "Last Updated",
-          render: (value) =>
-            value ? new Date(value as string).toLocaleString() : "—",
+          render: (value: unknown) => (value ? new Date(value as string).toLocaleString() : "—"),
         },
       ],
     },

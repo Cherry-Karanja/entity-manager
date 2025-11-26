@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import Image from 'next/image';
 import { BaseEntity } from '../../primitives/types';
 import { formatDate, formatBoolean } from '../../primitives/utils';
 import { ViewField, FieldGroup } from './types';
@@ -59,6 +60,15 @@ export function formatFieldValue(
   switch (type) {
     case 'date':
       if (value instanceof Date) {
+        return formatDate(value, 'YYYY-MM-DD');
+      }
+      if (typeof value === 'string') {
+        const date = new Date(value);
+        return isNaN(date.getTime()) ? value : formatDate(date, 'YYYY-MM-DD');
+      }
+      return String(value);
+    case 'datetime':
+      if (value instanceof Date) {
         return formatDate(value, 'YYYY-MM-DD HH:mm:ss');
       }
       if (typeof value === 'string') {
@@ -72,18 +82,30 @@ export function formatFieldValue(
 
     case 'email':
       return <a href={`mailto:${value}`}>{String(value)}</a>;
-
     case 'url':
       return <a href={String(value)} target="_blank" rel="noopener noreferrer">{String(value)}</a>;
 
     case 'image':
-      return <img src={String(value)} alt="Image" className="field-image" />;
+      return (
+        <Image
+          src={String(value)}
+          alt="Image"
+          className="field-image"
+          width={400}
+          height={300}
+          style={{ objectFit: 'contain' }}
+        />
+      );
 
     case 'json':
+      return <pre className="json-value">{JSON.stringify(value, null, 2)}</pre>;
       return <pre className="json-value">{JSON.stringify(value, null, 2)}</pre>;
 
     case 'number':
       return typeof value === 'number' ? value.toLocaleString() : String(value);
+
+    case 'file':
+      return <a href={String(value)} target="_blank" rel="noopener noreferrer">Download File</a>;
 
     default:
       return String(value);
@@ -267,21 +289,27 @@ export function getEntityImage<T extends BaseEntity>(
  */
 export function getMetadataFields<T extends BaseEntity>(entity: T): Array<{ label: string; value: unknown }> {
   const metadata: Array<{ label: string; value: unknown }> = [];
+  const e = entity as unknown as {
+    created_at?: string | Date;
+    updated_at?: string | Date;
+    created_by?: unknown;
+    updated_by?: unknown;
+  };
 
-  if ((entity as any).created_at) {
-    metadata.push({ label: 'Created', value: formatDate((entity as any).created_at, 'YYYY-MM-DD HH:mm:ss') });
+  if (e.created_at) {
+    metadata.push({ label: 'Created', value: formatDate(e.created_at as string, 'YYYY-MM-DD HH:mm:ss') });
   }
 
-  if ((entity as any).updated_at) {
-    metadata.push({ label: 'Updated', value: formatDate((entity as any).updated_at, 'YYYY-MM-DD HH:mm:ss') });
+  if (e.updated_at) {
+    metadata.push({ label: 'Updated', value: formatDate(e.updated_at as string, 'YYYY-MM-DD HH:mm:ss') });
   }
 
-  if ((entity as any).created_by) {
-    metadata.push({ label: 'Created By', value: (entity as any).created_by });
+  if (e.created_by) {
+    metadata.push({ label: 'Created By', value: e.created_by });
   }
 
-  if ((entity as any).updated_by) {
-    metadata.push({ label: 'Updated By', value: (entity as any).updated_by });
+  if (e.updated_by) {
+    metadata.push({ label: 'Updated By', value: e.updated_by });
   }
 
   return metadata;

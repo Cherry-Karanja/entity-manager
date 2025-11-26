@@ -1,15 +1,17 @@
-import { ViewConfig } from "@/components/entityManager";
+import type { EntityViewConfig } from "@/components/entityManager/composition/config/types";
 import { PenaltyRule, VIOLATION_TYPE_LABELS } from "../../types";
 
-export const penaltyRuleViewConfig: ViewConfig<PenaltyRule> = {
-  title: (item) => item.name || "Penalty Rule",
-  subtitle: (item) =>
-    item.violation_type
+export const penaltyRuleViewConfig: EntityViewConfig<PenaltyRule> = {
+  fields: [],
+  title: (item?: PenaltyRule) => item?.name || "Penalty Rule",
+  subtitle: (item?: PenaltyRule) =>
+    item?.violation_type
       ? VIOLATION_TYPE_LABELS[item.violation_type as keyof typeof VIOLATION_TYPE_LABELS]
-      : undefined,
+      : '',
   sections: [
     {
-      title: "Basic Information",
+      id: "basic",
+      label: "Basic Information",
       fields: [
         {
           key: "name",
@@ -22,8 +24,8 @@ export const penaltyRuleViewConfig: ViewConfig<PenaltyRule> = {
         {
           key: "violation_type",
           label: "Violation Type",
-          render: (value) =>
-            VIOLATION_TYPE_LABELS[value as keyof typeof VIOLATION_TYPE_LABELS] || value,
+          render: (value: unknown) =>
+            VIOLATION_TYPE_LABELS[value as keyof typeof VIOLATION_TYPE_LABELS] || String(value),
         },
         {
           key: "description",
@@ -32,7 +34,8 @@ export const penaltyRuleViewConfig: ViewConfig<PenaltyRule> = {
       ],
     },
     {
-      title: "Penalty Configuration",
+      id: "penalty",
+      label: "Penalty Configuration",
       fields: [
         {
           key: "base_penalty",
@@ -41,45 +44,45 @@ export const penaltyRuleViewConfig: ViewConfig<PenaltyRule> = {
         {
           key: "multiplier",
           label: "Multiplier",
-          render: (value) => `×${value}`,
+          render: (value: unknown) => `×${String(value)}`,
         },
         {
           key: "max_penalty",
           label: "Maximum Penalty",
-          render: (value) => (value ? String(value) : "No cap"),
+          render: (value: unknown) => (value ? String(value) : "No cap"),
         },
         {
           key: "threshold",
           label: "Threshold",
-          render: (value) =>
-            value ? `${value} violations before penalty applies` : "Penalty applies immediately",
+          render: (value: unknown) =>
+            value ? `${String(value)} violations before penalty applies` : "Penalty applies immediately",
         },
       ],
     },
     {
-      title: "Status",
+      id: "status",
+      label: "Status",
       fields: [
         {
           key: "is_active",
           label: "Status",
-          render: (value) => (value ? "Active" : "Inactive"),
+          render: (value: unknown) => (value ? "Active" : "Inactive"),
         },
       ],
     },
     {
-      title: "Timestamps",
+      id: "timestamps",
+      label: "Timestamps",
       fields: [
         {
           key: "created_at",
           label: "Created",
-          render: (value) =>
-            value ? new Date(value as string).toLocaleString() : "—",
+          render: (value: unknown) => (value ? new Date(value as string).toLocaleString() : "—"),
         },
         {
           key: "updated_at",
           label: "Last Updated",
-          render: (value) =>
-            value ? new Date(value as string).toLocaleString() : "—",
+          render: (value: unknown) => (value ? new Date(value as string).toLocaleDateString() : "—"),
         },
       ],
     },

@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { BaseEntity } from '../../primitives/types';
 import { ListQueryParams, UseEntityApiReturn } from './types';
 import { useEntityApiContext } from './EntityApiProvider';
+import { getListData, getEntityData } from '../api/responseUtils';
 
 /**
  * Use entity API hook
@@ -32,17 +33,18 @@ export function useEntityApi<T extends BaseEntity = BaseEntity>(
     setError(null);
     
     try {
-      const response = await client.list(queryParams);
-      
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-      
-      const entities = response.data;
+      const response = await client.list(queryParams) as any;
+
+      // Use shared normalization helpers to accept both canonical ApiResponse<T[]> and legacy DRF shapes
+      const entities = getListData<T>(response);
       setData(entities);
-      setTotal(response.meta?.total || entities.length);
+      // Attempt to read meta.total when present, fallback to array length
+      const total = response && typeof response === 'object' && response.meta?.total !== undefined
+        ? (response.meta.total as number)
+        : Array.isArray(entities) ? entities.length : 0;
+      setTotal(total);
       setParams(queryParams);
-      
+
       return entities;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to list entities');
@@ -61,13 +63,8 @@ export function useEntityApi<T extends BaseEntity = BaseEntity>(
     setError(null);
     
     try {
-      const response = await client.get(id);
-      
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-      
-      return response.data;
+      const response = await client.get(id) as any;
+      return getEntityData<T>(response) as T;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to get entity');
       setError(error);

@@ -3,9 +3,14 @@
  */
 
 import { createHttpClient } from '@/components/entityManager';
-import { Unit } from '../../types';
+import { Unit, Topic } from '../../types';
 
-export const unitsApiClient = createHttpClient<Unit>({
+export const unitsApiClient = createHttpClient<Unit, {
+  topics: Topic[];
+  activate: Unit;
+  deactivate: Unit;
+  'assign-trainer': Unit;
+}>({
   endpoint: '/api/v1/academics/units/',
 });
 

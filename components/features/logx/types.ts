@@ -123,7 +123,6 @@ export interface Timetable extends BaseEntity {
   working_hours_start: string;
   working_hours_end: string;
   break_periods: BreakPeriod[];
-  additional_breaks: BreakPeriod[];
   generation_task_id?: string;
   version: number;
 }

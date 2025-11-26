@@ -210,7 +210,7 @@ export function EntityForm<T extends BaseEntity = BaseEntity>({
     }
 
     try {
-      setState(prev => ({ ...prev, submitting: true }));
+      setState(prev => ({ ...prev, submitting: true, submitError: undefined }));
 
       // Transform values
       const transformedValues = transformValues(state.values, fields);

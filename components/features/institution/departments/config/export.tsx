@@ -55,6 +55,9 @@ export const DepartmentExporterConfig: EntityExporterConfig = {
       label: 'Updated At',
     },
   ],
-  filename: 'departments',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'departments',
+  },
+  showFormatSelector: true,
 };

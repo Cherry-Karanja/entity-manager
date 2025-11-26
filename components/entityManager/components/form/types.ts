@@ -23,6 +23,7 @@ export type FormLayout = 'vertical' | 'horizontal' | 'grid' | 'tabs' | 'wizard';
 export type FieldType =
   | 'text'
   | 'number'
+  | 'boolean'
   | 'email'
   | 'password'
   | 'url'
@@ -42,6 +43,7 @@ export type FieldType =
   | 'range'
   | 'json'
   | 'relation'
+  | 'relationship'
   | 'multirelation'
   | 'custom';
 
@@ -54,6 +56,8 @@ export interface FormField<T extends BaseEntity = BaseEntity> {
 
   /** Field label */
   label: string;
+  /** Legacy description field retained for compatibility */
+  description?: string;
 
   /** Field type */
   type: FieldType;
@@ -127,6 +131,7 @@ export interface FormField<T extends BaseEntity = BaseEntity> {
   /** Transform value before save */
   transform?: (value: unknown) => unknown;
 
+  /** Relation config (for relation fields) */
   /** Relation config (for relation fields) */
   relationConfig?: RelationConfig;
 }

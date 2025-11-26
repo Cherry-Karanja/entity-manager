@@ -1,5 +1,7 @@
 import { FieldConfig } from "@/components/entityManager";
 import { CONSTRAINT_TYPE_LABELS } from "../../types";
+import { timetablesClient } from '../../timetables/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const timetableConstraintFields: FieldConfig[] = [
   {
@@ -13,13 +15,20 @@ export const timetableConstraintFields: FieldConfig[] = [
   {
     name: "timetable",
     label: "Timetable",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select timetable",
     helpText: "The timetable this constraint applies to",
-    endpoint: "/api/v1/logx/timetabling/timetables/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: 'Timetable',
+      displayField: 'name',
+      valueField: 'id',
+      searchFields: ['name'],
+      fetchOptions: async (search?: string) => {
+        const response = await timetablesClient.list({ search, pageSize: 50 });
+        return getListData(response);
+      },
+    },
   },
   {
     name: "constraint_type",

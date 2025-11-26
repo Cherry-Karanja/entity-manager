@@ -34,8 +34,8 @@ export class ActionBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Set action icon
    */
-  icon(icon: string | React.ReactNode): this {
-    this.action.icon = icon;
+  icon(icon: string | React.ReactNode | React.ComponentType<any>): this {
+    this.action.icon = icon as any;
     return this;
   }
 
@@ -255,7 +255,8 @@ export class ActionBuilder<T extends BaseEntity = BaseEntity> {
    * Set bulk confirmation message
    */
   bulkConfirmMessage(message: string | ((count: number) => string)): this {
-    (this.action as Partial<BulkAction<T>>).bulkConfirmMessage = message;
+    // Legacy API: store on confirmMessage (BulkAction uses confirmMessage)
+    (this.action as Partial<BulkAction<T>>).confirmMessage = message as any;
     return this;
   }
 
@@ -272,8 +273,8 @@ export class ActionBuilder<T extends BaseEntity = BaseEntity> {
   /**
    * Set download handler
    */
-  downloadHandler(handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>): this {
-    (this.action as Partial<DownloadAction<T>>).handler = handler;
+  downloadHandler(handler: (entity?: T | T[], context?: ActionContext<T>) => void | Promise<void>): this {
+    (this.action as Partial<DownloadAction<T>>).handler = handler as any;
     return this;
   }
 
@@ -405,7 +406,7 @@ export class ActionBuilder<T extends BaseEntity = BaseEntity> {
     label: string,
     handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>
   ): ActionBuilder<T> {
-    return new ActionBuilder<T>(id, label, 'download').downloadHandler(handler);
+    return new ActionBuilder<T>(id, label, 'download').downloadHandler(handler as any);
   }
 
   /**

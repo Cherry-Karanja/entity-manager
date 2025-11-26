@@ -59,8 +59,8 @@ export interface ListQueryParams {
  * API client interface
  */
 export interface ApiClient<T extends BaseEntity = BaseEntity> {
-  /** List entities */
-  list(params?: ListQueryParams): Promise<ApiResponse<T[]>>;
+  /** List entities - supports either new ApiResponse<T[]> shape or legacy { results, count } shape */
+  list(params?: ListQueryParams): Promise<ApiResponse<T[]> | { results: T[]; count: number }>;
   
   /** Get single entity */
   get(id: string | number): Promise<ApiResponse<T>>;

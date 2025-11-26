@@ -58,6 +58,27 @@ export class HttpClient {
     this.setupInterceptors();
   }
 
+  // Convenience wrappers to match previous HttpClient surface used across feature clients
+  async get<T = unknown>(url: string, params?: Record<string, unknown>) {
+    const response = await this.authApi.get<T>(url, { params });
+    return response;
+  }
+
+  async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+    const response = await this.authApi.post<T>(url, data, config);
+    return response;
+  }
+
+  async patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+    const response = await this.authApi.patch<T>(url, data, config);
+    return response;
+  }
+
+  async delete(url: string, config?: AxiosRequestConfig) {
+    const response = await this.authApi.delete(url, config);
+    return response;
+  }
+
   /**
    * Get the main API instance
    */

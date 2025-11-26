@@ -7,17 +7,17 @@ import { Enrollment } from '../../types';
 import { Trash2, CheckCircle, XCircle, GraduationCap, UserMinus } from 'lucide-react';
 import { enrollmentActions as apiActions } from '../api/client';
 
-export const EnrollmentActionsConfig: EntityActionsConfig<Enrollment> = {
+export const EnrollmentActionsConfig: EntityActionsConfig<Enrollment> = ({
   actions: [
     {
       id: 'activate',
       label: 'Activate',
       icon: <CheckCircle className="h-4 w-4" />,
-      actionType: 'action',
+      actionType: 'immediate',
       variant: 'default',
       position: 'row',
       visible: (enrollment?: Enrollment) => !enrollment?.is_active,
-      onAction: async (enrollment?: Enrollment, context?) => {
+      handler: async (enrollment?: Enrollment, context?: any) => {
         if (!enrollment || !context?.refresh) return;
         await apiActions.activate(enrollment.id);
         await context.refresh();
@@ -27,11 +27,11 @@ export const EnrollmentActionsConfig: EntityActionsConfig<Enrollment> = {
       id: 'deactivate',
       label: 'Deactivate',
       icon: <XCircle className="h-4 w-4" />,
-      actionType: 'action',
+      actionType: 'immediate',
       variant: 'secondary',
       position: 'row',
       visible: (enrollment?: Enrollment) => enrollment?.is_active === true,
-      onAction: async (enrollment?: Enrollment, context?) => {
+      handler: async (enrollment?: Enrollment, context?: any) => {
         if (!enrollment || !context?.refresh) return;
         await apiActions.deactivate(enrollment.id);
         await context.refresh();
@@ -44,7 +44,7 @@ export const EnrollmentActionsConfig: EntityActionsConfig<Enrollment> = {
       actionType: 'modal',
       variant: 'outline',
       position: 'row',
-      visible: (enrollment?: Enrollment) => enrollment?.status === 'active' || enrollment?.status === 'completed',
+      visible: (enrollment?: Enrollment) => enrollment?.is_active === true || enrollment?.status === 'completed',
     },
     {
       id: 'withdraw',
@@ -53,7 +53,7 @@ export const EnrollmentActionsConfig: EntityActionsConfig<Enrollment> = {
       actionType: 'confirm',
       variant: 'destructive',
       position: 'row',
-      visible: (enrollment?: Enrollment) => enrollment?.status === 'active',
+      visible: (enrollment?: Enrollment) => enrollment?.is_active === true,
       confirmMessage: (enrollment?: Enrollment) => `Withdraw "${enrollment?.trainee_name}" from this class?`,
       confirmText: 'Withdraw',
       onConfirm: async (enrollment?: Enrollment, context?) => {
@@ -79,14 +79,14 @@ export const EnrollmentActionsConfig: EntityActionsConfig<Enrollment> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-activate',
       label: 'Activate Selected',
       icon: <CheckCircle className="h-4 w-4" />,
-      actionType: 'action',
+      actionType: 'immediate',
       variant: 'default',
-      onAction: async (items?: Enrollment[], context?) => {
+      handler: async (items?: Enrollment[], context?: any) => {
         if (!items?.length || !context?.refresh) return;
         await Promise.all(items.map(e => apiActions.activate(e.id)));
         await context.refresh();
@@ -107,4 +107,4 @@ export const EnrollmentActionsConfig: EntityActionsConfig<Enrollment> = {
       },
     },
   ],
-};
+} as any) as EntityActionsConfig<Enrollment>;

@@ -13,11 +13,11 @@ export const SubtopicActionsConfig: EntityActionsConfig<Subtopic> = {
       id: 'move-up',
       label: 'Move Up',
       icon: <ArrowUp className="h-4 w-4" />,
-      actionType: 'action',
+      actionType: 'immediate',
       variant: 'ghost',
       position: 'row',
       visible: (subtopic?: Subtopic) => (subtopic?.order || 1) > 1,
-      onAction: async (subtopic?: Subtopic, context?) => {
+      handler: async (subtopic?: Subtopic, context?: any) => {
         if (!subtopic || !context?.refresh) return;
         await apiActions.reorder(subtopic.id, (subtopic.order || 1) - 1);
         await context.refresh();
@@ -27,10 +27,10 @@ export const SubtopicActionsConfig: EntityActionsConfig<Subtopic> = {
       id: 'move-down',
       label: 'Move Down',
       icon: <ArrowDown className="h-4 w-4" />,
-      actionType: 'action',
+      actionType: 'immediate',
       variant: 'ghost',
       position: 'row',
-      onAction: async (subtopic?: Subtopic, context?) => {
+      handler: async (subtopic?: Subtopic, context?: any) => {
         if (!subtopic || !context?.refresh) return;
         await apiActions.reorder(subtopic.id, (subtopic.order || 1) + 1);
         await context.refresh();
@@ -45,7 +45,7 @@ export const SubtopicActionsConfig: EntityActionsConfig<Subtopic> = {
       position: 'row',
       confirmMessage: (subtopic?: Subtopic) => `Delete subtopic "${subtopic?.name}"?`,
       confirmText: 'Delete',
-      onConfirm: async (subtopic?: Subtopic, context?) => {
+      onConfirm: async (subtopic?: Subtopic, context?: any) => {
         if (!subtopic || !context?.delete || !context?.refresh) return;
         await context.delete(subtopic.id);
         await context.refresh();
@@ -53,7 +53,7 @@ export const SubtopicActionsConfig: EntityActionsConfig<Subtopic> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-delete',
       label: 'Delete Selected',
@@ -62,7 +62,7 @@ export const SubtopicActionsConfig: EntityActionsConfig<Subtopic> = {
       variant: 'destructive',
       confirmMessage: (items?: Subtopic[]) => `Delete ${items?.length || 0} subtopics?`,
       confirmText: 'Delete All',
-      onConfirm: async (items?: Subtopic[], context?) => {
+      onConfirm: async (items?: Subtopic[], context?: any) => {
         if (!items?.length || !context?.bulkDelete || !context?.refresh) return;
         await context.bulkDelete(items.map(s => s.id));
         await context.refresh();

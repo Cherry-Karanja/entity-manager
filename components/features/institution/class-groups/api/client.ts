@@ -5,7 +5,12 @@
 import { createHttpClient } from '@/components/entityManager';
 import { ClassGroup } from '../../types';
 
-export const classGroupsApiClient = createHttpClient<ClassGroup>({
+export const classGroupsApiClient = createHttpClient<ClassGroup, {
+  activate: ClassGroup;
+  deactivate: ClassGroup;
+  add_trainee: ClassGroup;
+  remove_trainee: ClassGroup;
+}>({
   endpoint: '/api/v1/institution/class-groups/',
 });
 

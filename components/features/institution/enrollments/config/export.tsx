@@ -16,6 +16,9 @@ export const EnrollmentExporterConfig: EntityExporterConfig = {
     { key: 'notes', label: 'Notes' },
     { key: 'created_at', label: 'Created At' },
   ],
-  filename: 'enrollments',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'enrollments',
+  },
+  showFormatSelector: true,
 };

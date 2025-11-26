@@ -303,7 +303,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
   autoExportFields(): this {
     this.config.exportFields = this.config.columns!.map(col => ({
       key: String(col.key),
-      label: col.label,
+      label: typeof col.label === 'string' ? col.label : String(col.label ?? ''),
       formatter: col.formatter as any
     }));
     return this;
@@ -318,7 +318,7 @@ export class EntityConfigBuilder<T extends BaseEntity = BaseEntity> {
       const viewType = col.type === 'select' ? 'text' : col.type;
       return {
         key: String(col.key),
-        label: col.label,
+        label: typeof col.label === 'string' ? col.label : String(col.label ?? ''),
         type: viewType as any,
         visible: col.visible,
         order: col.order

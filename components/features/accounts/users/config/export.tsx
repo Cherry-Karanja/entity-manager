@@ -71,8 +71,8 @@ export const UserExporterConfig: EntityExporterConfig = {
     ],
 
     options: {
-        format: 'xlsx',
-        filename: 'users_export',
+      format: 'xlsx',
+      filename: 'users_export',
         includeHeaders: true,
         // for json
         prettyPrint: true,

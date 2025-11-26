@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, X, File, Image as ImageIcon, FileText, CheckCircle } from 'lucide-react';
+import { Upload, X, File as FileIcon, Image as ImageIcon, FileText, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface FileUploadProps {
@@ -56,7 +56,7 @@ function getFileIcon(file: File): React.ReactNode {
   if (file.type.startsWith('application/pdf')) {
     return <FileText className="h-8 w-8 text-red-500" />;
   }
-  return <File className="h-8 w-8 text-muted-foreground" />;
+  return <FileIcon className="h-8 w-8 text-muted-foreground" />;
 }
 
 /**

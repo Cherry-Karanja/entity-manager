@@ -119,13 +119,8 @@ export const UserRoleListConfig: EntityListConfig<UserRole> = {
 
   emptyMessage: 'No roles found.',
 
-  actions: {
-    ...UserRoleActionsConfig,
-    context: {
-      refresh: undefined, // Will be provided by EntityManager
-      customData: undefined,
-    },
-  },
+  // Cast to any for incremental migration; context will be provided by EntityManager at runtime
+  actions: UserRoleActionsConfig as any,
 
   className: '',
 

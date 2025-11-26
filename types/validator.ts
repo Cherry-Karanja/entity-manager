@@ -41,7 +41,6 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
   type __IsExpected<Specific extends AppPageConfig<"/">> = Specific
   const handler = {} as typeof import("@/app/page")
   type __Check = __IsExpected<typeof handler>
-  // @ts-expect-error - Module augmentation for dynamic imports
   type __Unused = __Check
 }
 
@@ -56,6 +55,5 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
   type __IsExpected<Specific extends LayoutConfig<"/">> = Specific
   const handler = {} as typeof import("@/app/layout")
   type __Check = __IsExpected<typeof handler>
-  // @ts-expect-error - Module augmentation for dynamic imports
   type __Unused = __Check
 }

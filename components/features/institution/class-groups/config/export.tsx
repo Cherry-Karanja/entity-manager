@@ -18,6 +18,9 @@ export const ClassGroupExporterConfig: EntityExporterConfig = {
     { key: 'is_active', label: 'Active', formatter: (v: unknown) => (v as boolean) ? 'Yes' : 'No' },
     { key: 'created_at', label: 'Created At' },
   ],
-  filename: 'class-groups',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'class-groups',
+  },
+  showFormatSelector: true,
 };

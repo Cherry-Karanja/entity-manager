@@ -149,21 +149,57 @@ function handleAxiosError(error: unknown): never {
  * Create HTTP API Client
  * 
  * Factory function that creates a fully functional API client with authentication.
+ * Supports CRUD, bulk operations and custom actions. Custom actions can now be
+ * typed per-action using a mapping generic which makes `client.customAction(...)`
+ * return a correctly typed `ApiResponse` for each action key.
  * 
- * @example
+ * Examples
  * ```typescript
+ * // Basic (no special action types - actions default to returning the entity type)
  * const usersApiClient = createHttpClient<User>({
  *   endpoint: '/api/v1/accounts/users/',
- *   customActions: {
- *     approve: 'approve/',
- *     changeRole: 'change_role/',
- *   }
  * });
+ *
+ * // With action-specific typing: map action keys to result types
+ * const rolesClient = createHttpClient<UserRole, {
+ *   users: User[];            // users action returns an array of User
+ *   approve: User;            // approve returns the updated User
+ * }>(
+ *   {
+ *     endpoint: '/api/v1/accounts/user-roles/',
+ *     customActions: {
+ *       users: 'users/',
+ *       approve: 'approve/',
+ *     }
+ *   }
+ * );
+ *
+ * // Calling a typed action
+ * const usersRes = await rolesClient.customAction('role-id', 'users');
+ * // usersRes.data is typed as User[]
+ *
+ * const approveRes = await rolesClient.customAction('user-id', 'approve');
+ * // approveRes.data is typed as User
  * ```
+ *
+ * Notes:
+ * - The `Actions` generic is a mapping from action key (string literal) to the
+ *   expected response type. It improves compile-time safety but cannot
+ *   validate runtime responses — the axios response is cast to the declared
+ *   type.
+ * - The optional `config.customActions` lets you provide the endpoint suffix
+ *   used for each action (e.g. 'approve/'). Keys in `customActions` should
+ *   match the keys declared in the `Actions` mapping.
  */
-export function createHttpClient<T extends BaseEntity>(
-  config: HttpClientConfig
-): ApiClient<T> & { customAction: (id: string | number, action: string, data?: unknown) => Promise<ApiResponse<T>> } {
+export function createHttpClient<
+  T extends BaseEntity,
+  Actions extends Record<string, unknown> = Record<string, T>
+>(
+  config: HttpClientConfig & { customActions?: Record<Extract<keyof Actions, string>, string> }
+):
+  ApiClient<T> & {
+    customAction: <K extends Extract<keyof Actions, string>>(id: string | number, action: K, data?: unknown) => Promise<ApiResponse<Actions[K]>>;
+  } {
   const { endpoint } = config;
 
   return {
@@ -276,10 +312,11 @@ export function createHttpClient<T extends BaseEntity>(
      * await client.customAction(userId, 'change_role', { role: 'admin' });
      * ```
      */
-    async customAction(id: string | number, action: string, data?: unknown): Promise<ApiResponse<T>> {
+    async customAction<K extends Extract<keyof Actions, string>>(id: string | number, action: K, data?: unknown): Promise<ApiResponse<Actions[K]>> {
       try {
-        const response = await authApi.post(`${endpoint}${id}/${action}/`, data);
-        return handleAxiosResponse<T>(response.data);
+        const response = await authApi.post(`${endpoint}${id}/${String(action)}/`, data);
+        // We cannot know the runtime type; cast to the expected action result type
+        return handleAxiosResponse<any>(response.data) as ApiResponse<Actions[K]>;
       } catch (error) {
         return handleAxiosError(error);
       }

@@ -5,7 +5,12 @@
 import { createHttpClient } from '@/components/entityManager';
 import { Enrollment } from '../../types';
 
-export const enrollmentsApiClient = createHttpClient<Enrollment>({
+export const enrollmentsApiClient = createHttpClient<Enrollment, {
+  activate: Enrollment;
+  deactivate: Enrollment;
+  'update-grade': Enrollment;
+  withdraw: Enrollment;
+}>({
   endpoint: '/api/v1/academics/enrollments/',
 });
 

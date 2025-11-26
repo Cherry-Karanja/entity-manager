@@ -3,54 +3,54 @@
  * Defines the columns displayed in the timetables list view
  */
 
-import { ColumnDefinition } from '@/components/entityManager';
+import { Column } from '@/components/entityManager/components/list/types';
 import { Timetable, DAY_OF_WEEK_LABELS } from '../../types';
 import { Badge } from '@/components/ui/badge';
 
-export const timetableColumns: ColumnDefinition<Timetable>[] = [
+export const timetableColumns: Column<Timetable>[] = [
   {
     key: 'name',
-    header: 'Name',
+    label: 'Name',
     sortable: true,
     width: '200px',
   },
   {
     key: 'academic_year_name',
-    header: 'Academic Year',
+    label: 'Academic Year',
     sortable: true,
-    render: (value, row) => value || `Year ${row.academic_year}`,
+    render: (value: any, row?: Timetable) => (value as string) || `Year ${row?.academic_year}`,
   },
   {
     key: 'term_name',
-    header: 'Term',
+    label: 'Term',
     sortable: true,
-    render: (value, row) => value || `Term ${row.term}`,
+    render: (value: any, row?: Timetable) => (value as string) || `Term ${row?.term}`,
   },
   {
     key: 'start_date',
-    header: 'Start Date',
+    label: 'Start Date',
     sortable: true,
-    render: (value) => new Date(value).toLocaleDateString(),
+    render: (value: any) => new Date(value as string).toLocaleDateString(),
   },
   {
     key: 'end_date',
-    header: 'End Date',
+    label: 'End Date',
     sortable: true,
-    render: (value) => new Date(value).toLocaleDateString(),
+    render: (value: any) => new Date(value as string).toLocaleDateString(),
   },
   {
     key: 'working_days',
-    header: 'Working Days',
-    render: (value: string[]) => (
+    label: 'Working Days',
+    render: (value: any) => (
       <div className="flex flex-wrap gap-1">
-        {value?.slice(0, 3).map((day) => (
+        {(value as string[])?.slice(0, 3).map((day) => (
           <Badge key={day} variant="outline" className="text-xs">
             {DAY_OF_WEEK_LABELS[day as keyof typeof DAY_OF_WEEK_LABELS]?.slice(0, 3) || day}
           </Badge>
         ))}
-        {value?.length > 3 && (
+        {(value as string[])?.length > 3 && (
           <Badge variant="outline" className="text-xs">
-            +{value.length - 3}
+            +{(value as string[]).length - 3}
           </Badge>
         )}
       </div>
@@ -58,17 +58,17 @@ export const timetableColumns: ColumnDefinition<Timetable>[] = [
   },
   {
     key: 'version',
-    header: 'Version',
+    label: 'Version',
     sortable: true,
     width: '80px',
-    render: (value) => `v${value}`,
+    render: (value: any) => `v${value}`,
   },
   {
     key: 'is_active',
-    header: 'Status',
+    label: 'Status',
     sortable: true,
     width: '100px',
-    render: (value) => (
+    render: (value: any) => (
       <Badge variant={value ? 'default' : 'secondary'}>
         {value ? 'Active' : 'Inactive'}
       </Badge>

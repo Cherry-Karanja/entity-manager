@@ -58,7 +58,7 @@ export const IntakeActionsConfig: EntityActionsConfig<Intake> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-delete',
       label: 'Delete Selected',
@@ -67,7 +67,7 @@ export const IntakeActionsConfig: EntityActionsConfig<Intake> = {
       variant: 'destructive',
       confirmMessage: (items?: Intake[]) => `Delete ${items?.length || 0} intakes?`,
       confirmText: 'Delete All',
-      onConfirm: async (items?: Intake[], context?) => {
+      onConfirm: async (items?: Intake[], context?: any) => {
         if (!items?.length || !context?.bulkDelete || !context?.refresh) return;
         await context.bulkDelete(items.map(i => i.id));
         await context.refresh();

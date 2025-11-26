@@ -3,43 +3,47 @@
  * Defines export fields for rooms
  */
 
-import { ExportConfig } from '@/components/entityManager';
+import type { EntityExporterConfig } from '@/components/entityManager/composition/config/types';
 import { Room, ROOM_TYPE_LABELS } from '../../types';
 
-export const roomExportConfig: ExportConfig<Room> = {
-  filename: 'rooms',
+export const roomExportConfig: EntityExporterConfig<Room> = {
+  options: {
+    format: 'csv',
+    filename: 'rooms',
+    includeHeaders: true,
+  },
   fields: [
-    { key: 'id', header: 'ID' },
-    { key: 'code', header: 'Code' },
-    { key: 'name', header: 'Name' },
-    { key: 'department_name', header: 'Department' },
-    { 
-      key: 'room_type', 
-      header: 'Type',
-      transform: (value) => ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] || value,
+    { key: 'id', label: 'ID' },
+    { key: 'code', label: 'Code' },
+    { key: 'name', label: 'Name' },
+    { key: 'department_name', label: 'Department' },
+    {
+      key: 'room_type',
+      label: 'Type',
+      formatter: (value: unknown) => ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] || String(value),
     },
-    { key: 'capacity', header: 'Capacity' },
-    { key: 'building', header: 'Building' },
-    { key: 'floor', header: 'Floor' },
-    { key: 'operating_hours_start', header: 'Operating Hours Start' },
-    { key: 'operating_hours_end', header: 'Operating Hours End' },
-    { 
-      key: 'is_active', 
-      header: 'Status',
-      transform: (value) => value ? 'Active' : 'Inactive',
+    { key: 'capacity', label: 'Capacity' },
+    { key: 'building', label: 'Building' },
+    { key: 'floor', label: 'Floor' },
+    { key: 'operating_hours_start', label: 'Operating Hours Start' },
+    { key: 'operating_hours_end', label: 'Operating Hours End' },
+    {
+      key: 'is_active',
+      label: 'Status',
+      formatter: (value: unknown) => (value ? 'Active' : 'Inactive'),
     },
-    { 
-      key: 'allows_concurrent_bookings', 
-      header: 'Concurrent Bookings',
-      transform: (value) => value ? 'Yes' : 'No',
+    {
+      key: 'allows_concurrent_bookings',
+      label: 'Concurrent Bookings',
+      formatter: (value: unknown) => (value ? 'Yes' : 'No'),
     },
-    { 
-      key: 'requires_approval', 
-      header: 'Requires Approval',
-      transform: (value) => value ? 'Yes' : 'No',
+    {
+      key: 'requires_approval',
+      label: 'Requires Approval',
+      formatter: (value: unknown) => (value ? 'Yes' : 'No'),
     },
-    { key: 'notes', header: 'Notes' },
-    { key: 'created_at', header: 'Created At' },
-    { key: 'updated_at', header: 'Updated At' },
+    { key: 'notes', label: 'Notes' },
+    { key: 'created_at', label: 'Created At' },
+    { key: 'updated_at', label: 'Updated At' },
   ],
 };

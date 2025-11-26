@@ -6,6 +6,7 @@ import { EntityFormConfig } from '@/components/entityManager/composition/config/
 import { ClassGroup } from '../../types';
 import { programmesApiClient } from '../../programmes/api/client';
 import { intakesApiClient } from '../../intakes/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
   fields: [
@@ -37,7 +38,7 @@ export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
         searchFields: ['name', 'code'],
         fetchOptions: async (search?: string) => {
           const response = await programmesApiClient.list({ search, pageSize: 50 });
-          return response.data;
+          return getListData(response);
         },
       },
       width: '50%',
@@ -76,7 +77,7 @@ export const ClassGroupFormConfig: EntityFormConfig<ClassGroup> = {
         searchFields: ['name'],
         fetchOptions: async (search?: string) => {
           const response = await intakesApiClient.list({ search, pageSize: 50 });
-          return response.data;
+          return getListData(response);
         },
       },
       helpText: 'Academic intake (auto-filled if auto-fill is enabled)',

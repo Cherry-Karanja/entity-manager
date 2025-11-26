@@ -14,7 +14,7 @@ export const UnitListConfig: EntityListConfig<Unit> = {
       label: 'Code',
       sortable: true,
       width: '10%',
-      render: (value) => <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{value as string}</code>,
+      render: (value: unknown) => <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{value as string}</code>,
     },
     {
       key: 'name',
@@ -34,7 +34,7 @@ export const UnitListConfig: EntityListConfig<Unit> = {
       label: 'Credits',
       sortable: true,
       width: '10%',
-      render: (value) => value ? `${value} cr` : '-',
+      render: (value: unknown) => value ? `${value} cr` : '-',
     },
     {
       key: 'level',
@@ -42,7 +42,7 @@ export const UnitListConfig: EntityListConfig<Unit> = {
       sortable: true,
       filterable: true,
       width: '10%',
-      render: (value) => value ? `Year ${value}` : '-',
+      render: (value: unknown) => value ? `Year ${value}` : '-',
     },
     {
       key: 'is_core',
@@ -50,7 +50,7 @@ export const UnitListConfig: EntityListConfig<Unit> = {
       sortable: true,
       filterable: true,
       width: '10%',
-      render: (value) => (
+      render: (value: unknown) => (
         <Badge variant={value ? 'default' : 'outline'}>
           {value ? 'Core' : 'Elective'}
         </Badge>
@@ -63,7 +63,7 @@ export const UnitListConfig: EntityListConfig<Unit> = {
       filterable: true,
       width: '10%',
       type: 'boolean',
-      render: (value) => (
+      render: (value: unknown) => (
         <Badge variant={value ? 'default' : 'secondary'} className={value ? 'bg-green-600' : ''}>
           {value ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
           {value ? 'Active' : 'Inactive'}

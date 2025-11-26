@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { default as timetableSettingClient } from '@/components/features/logx/timetable-settings/api/client';
-import { TimetableSetting } from '@/components/features/logx/types';
+import { TimetableSettings } from '@/components/features/logx/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ export default function TimetableSettingViewPage() {
   const router = useRouter();
   const id = params.id as string;
   
-  const [setting, setSetting] = useState<TimetableSetting | null>(null);
+  const [setting, setSetting] = useState<TimetableSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

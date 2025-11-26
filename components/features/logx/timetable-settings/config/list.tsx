@@ -8,10 +8,10 @@ export const timetableSettingsColumns: ColumnConfig<TimetableSettings>[] = [
     key: "name",
     header: "Name",
     sortable: true,
-    render: (value, item) => (
+    render: (value: any, item?: TimetableSettings) => (
       <div className="flex items-center gap-2">
         <span className="font-medium">{value}</span>
-        {item.is_default && (
+        {item?.is_default && (
           <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
         )}
       </div>
@@ -40,8 +40,8 @@ export const timetableSettingsColumns: ColumnConfig<TimetableSettings>[] = [
   {
     key: "balance_daily_load",
     header: "Balance Load",
-    render: (value) =>
-      value ? (
+      render: (value: any) =>
+        value ? (
         <Check className="h-4 w-4 text-green-500" />
       ) : (
         <X className="h-4 w-4 text-gray-400" />
@@ -50,8 +50,8 @@ export const timetableSettingsColumns: ColumnConfig<TimetableSettings>[] = [
   {
     key: "avoid_gaps",
     header: "Avoid Gaps",
-    render: (value) =>
-      value ? (
+      render: (value: any) =>
+        value ? (
         <Check className="h-4 w-4 text-green-500" />
       ) : (
         <X className="h-4 w-4 text-gray-400" />
@@ -60,8 +60,8 @@ export const timetableSettingsColumns: ColumnConfig<TimetableSettings>[] = [
   {
     key: "is_default",
     header: "Status",
-    render: (value) => (
-      <Badge variant={value ? "default" : "secondary"}>
+    render: (value: any) => (
+        <Badge variant={value ? "default" : "secondary"}>
         {value ? "Default" : "Custom"}
       </Badge>
     ),

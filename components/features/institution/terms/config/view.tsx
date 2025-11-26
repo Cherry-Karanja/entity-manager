@@ -12,7 +12,7 @@ export const TermViewConfig: EntityViewConfig<Term> = {
     {
       key: 'term_number',
       label: 'Term Number',
-      render: (entity) => <span className="font-medium text-lg">Term {(entity as Term).term_number}</span>,
+      render: (entity?: Term) => <span className="font-medium text-lg">Term {entity?.term_number ?? '-'}</span>,
     },
     { key: 'academic_year_name', label: 'Academic Year' },
     { key: 'start_date', label: 'Start Date', type: 'date' },
@@ -30,8 +30,8 @@ export const TermViewConfig: EntityViewConfig<Term> = {
         );
       },
     },
-    { key: 'created_at', label: 'Created At', type: 'datetime' },
-    { key: 'updated_at', label: 'Last Updated', type: 'datetime' },
+    { key: 'created_at', label: 'Created At', type: 'date' },
+    { key: 'updated_at', label: 'Last Updated', type: 'date' },
   ],
   layout: 'grid',
   gridColumns: 2,

@@ -10,13 +10,10 @@ import { CheckCircle, XCircle } from 'lucide-react';
 export const TermListConfig: EntityListConfig<Term> = {
   columns: [
     {
-      key: 'term_number',
+      key: 'name',
       label: 'Term',
       sortable: true,
       width: '15%',
-      render: (value) => (
-        <span className="font-semibold">Term {value as number}</span>
-      ),
     },
     {
       key: 'academic_year_name',
@@ -45,7 +42,7 @@ export const TermListConfig: EntityListConfig<Term> = {
       filterable: true,
       width: '15%',
       type: 'boolean',
-      render: (value) => (
+      render: (value: unknown) => (
         <Badge variant={value ? 'default' : 'secondary'} className={value ? 'bg-green-600' : ''}>
           {value ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
           {value ? 'Active' : 'Inactive'}

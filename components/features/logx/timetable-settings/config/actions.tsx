@@ -1,54 +1,70 @@
-import { ActionConfig } from "@/components/entityManager";
+import { Action } from "@/components/entityManager/components/actions/types";
 import { TimetableSettings } from "../../types";
 import { Eye, Pencil, Trash2, Star, Copy } from "lucide-react";
+import { timetableSettingsApi } from "../api/client";
 
-export const timetableSettingsActions: ActionConfig<TimetableSettings>[] = [
+export const timetableSettingsActions: Action<TimetableSettings>[] = [
   {
-    key: "view",
+    id: "view",
     label: "View Details",
+    actionType: "navigation",
     icon: <Eye className="h-4 w-4" />,
-    type: "view",
+    // navigation URL builder - update if your routes differ
+    url: (entity) => `/dashboard/(scheduling)/timetable-settings/${entity?.id}`,
+    position: "row",
   },
   {
-    key: "edit",
+    id: "edit",
     label: "Edit Settings",
+    actionType: "navigation",
     icon: <Pencil className="h-4 w-4" />,
-    type: "edit",
+    url: (entity) => `/dashboard/(scheduling)/timetable-settings/${entity?.id}/edit`,
+    position: "row",
   },
   {
-    key: "set_default",
+    id: "set_default",
     label: "Set as Default",
+    actionType: "immediate",
     icon: <Star className="h-4 w-4" />,
-    type: "custom",
-    hidden: (item) => item.is_default,
-    handler: async (item, { api, refresh }) => {
-      await api.update(item.id, { is_default: true });
-      refresh?.();
+    position: "row",
+    visible: (entity) => !entity?.is_default,
+    handler: async (entity, context) => {
+      if (!entity) return;
+      await timetableSettingsApi.update(entity.id, { is_default: true });
+      await context?.refresh?.();
     },
   },
   {
-    key: "duplicate",
+    id: "duplicate",
     label: "Duplicate Settings",
+    actionType: "immediate",
     icon: <Copy className="h-4 w-4" />,
-    type: "custom",
-    handler: async (item, { api, refresh }) => {
-      const { ...data } = item;
-      await api.create({
+    position: "row",
+    handler: async (entity, context) => {
+      if (!entity) return;
+      const { id: _id, ...data } = entity as any;
+      await timetableSettingsApi.create({
         ...data,
-        name: `${item.name} (Copy)`,
+        name: `${entity.name} (Copy)`,
         is_default: false,
       });
-      refresh?.();
+      await context?.refresh?.();
     },
   },
   {
-    key: "delete",
+    id: "delete",
     label: "Delete Settings",
+    actionType: "confirm",
     icon: <Trash2 className="h-4 w-4" />,
-    type: "delete",
     variant: "destructive",
-    hidden: (item) => item.is_default,
-    confirmMessage: (item) =>
-      `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
+    position: "row",
+    visible: (entity) => !entity?.is_default,
+    confirmMessage: (entity) =>
+      `Are you sure you want to delete "${entity?.name}"? This action cannot be undone.`,
+    onConfirm: async (entity, context) => {
+      if (!entity) return;
+      await timetableSettingsApi.delete(entity.id);
+      await context?.refresh?.();
+    },
   },
 ];

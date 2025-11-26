@@ -1,0 +1,527 @@
+/**
+ * Entity Manager Orchestrator
+ *
+ * Thin orchestrator that coordinates all components.
+ * Maximum ~150 lines - all logic delegated to hooks and components.
+ */
+'use client';
+"use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+exports.__esModule = true;
+exports.EntityManager = void 0;
+var react_1 = require("react");
+var list_1 = require("../components/list");
+var form_1 = require("../components/form");
+var view_1 = require("../components/view");
+var exports_1 = require("../composition/exports");
+var exports_2 = require("../composition/exports");
+var sonner_1 = require("sonner");
+/**
+ * Build query parameters for API calls
+ */
+function buildQueryParams(page, pageSize, sort, search, filters) {
+    var queryParams = {
+        page: page,
+        pageSize: pageSize
+    };
+    if (sort) {
+        queryParams.sortField = sort.field;
+        queryParams.sortDirection = sort.direction;
+    }
+    if (search) {
+        queryParams.search = search;
+    }
+    if (filters && filters.length > 0) {
+        queryParams.filters = filters;
+    }
+    return queryParams;
+}
+/**
+ * Parse error message from unknown error
+ */
+function getErrorMessage(error, defaultMessage) {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    if (typeof error === 'string') {
+        return error;
+    }
+    return defaultMessage;
+}
+/**
+ * Entity Manager Content (with hooks)
+ */
+function EntityManagerContent(props) {
+    var _this = this;
+    var _a;
+    var rawConfig = props.config;
+    // Normalize legacy/compact config shapes into canonical EntityManagerConfig
+    var normalizedConfig = react_1["default"].useMemo(function () {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+        var raw = rawConfig;
+        var base = __assign({}, raw);
+        var entity = base.config || {};
+        var normalizedEntity = {
+            name: entity.name || entity.entityName || entity.label || 'Entity',
+            label: entity.label || entity.entityName || entity.name || 'Entity',
+            labelPlural: entity.labelPlural || entity.entityNamePlural || entity.pluralName || "" + (entity.name || entity.entityName || 'Entities'),
+            description: entity.description,
+            apiEndpoint: entity.apiEndpoint || entity.api || undefined,
+            permissions: entity.permissions,
+            metadata: entity.metadata,
+            icon: entity.icon
+        };
+        // Normalize list
+        var list = (_c = (_b = (_a = entity.list) !== null && _a !== void 0 ? _a : entity.columns) !== null && _b !== void 0 ? _b : entity.listConfig) !== null && _c !== void 0 ? _c : entity.listColumns;
+        if (Array.isArray(list)) {
+            normalizedEntity.list = { columns: list };
+        }
+        else {
+            normalizedEntity.list = list || { columns: [] };
+        }
+        // Normalize view
+        var view = (_e = (_d = entity.view) !== null && _d !== void 0 ? _d : entity.viewFields) !== null && _e !== void 0 ? _e : entity.viewConfig;
+        if (Array.isArray(view)) {
+            normalizedEntity.view = { fields: view };
+        }
+        else {
+            normalizedEntity.view = view || { fields: [] };
+        }
+        // Normalize form fields
+        normalizedEntity.form = (_f = entity.form) !== null && _f !== void 0 ? _f : { fields: (_g = entity.fields) !== null && _g !== void 0 ? _g : [] };
+        // Normalize actions
+        var actions = (_j = (_h = entity.actions) !== null && _h !== void 0 ? _h : entity.actionConfig) !== null && _j !== void 0 ? _j : {};
+        if (Array.isArray(actions)) {
+            normalizedEntity.actions = { actions: actions };
+        }
+        else if (actions.actions || actions.row || actions.bulk) {
+            normalizedEntity.actions = {
+                actions: actions.actions || actions.row || [],
+                bulk: actions.bulk || []
+            };
+        }
+        else {
+            normalizedEntity.actions = actions;
+        }
+        // Normalize exporter
+        var exporter = (_l = (_k = entity.exporter) !== null && _k !== void 0 ? _k : entity["export"]) !== null && _l !== void 0 ? _l : entity.exportConfig;
+        if (Array.isArray(exporter)) {
+            normalizedEntity.exporter = { fields: exporter };
+        }
+        else {
+            normalizedEntity.exporter = exporter || { fields: [] };
+        }
+        return __assign(__assign({}, base), { config: normalizedEntity });
+    }, [rawConfig]);
+    // Use normalized config in place of raw config
+    var config = normalizedConfig;
+    // Use initialView/initialId from config or props (props take precedence)
+    var initialViewToUse = (_a = config.initialView) !== null && _a !== void 0 ? _a : 'list';
+    var initialIdToUse = config.initialId;
+    var onViewChangeToUse = config.onViewChange;
+    var _b = react_1.useState(initialViewToUse), view = _b[0], setView = _b[1];
+    var _c = react_1.useState(initialIdToUse || null), selectedId = _c[0], setSelectedId = _c[1];
+    var fetchAttempted = react_1.useRef(false);
+    var initialListFetchCompleted = react_1.useRef(false);
+    var state = exports_1.useEntityState();
+    var mutations = exports_2.useEntityMutations();
+    // Memoize pagination config to prevent unnecessary re-renders
+    var memoizedPaginationConfig = react_1.useMemo(function () { return (__assign(__assign({}, config.config.list.paginationConfig), { page: state.state.page, pageSize: state.state.pageSize, totalCount: state.state.total })); }, [config.config.list.paginationConfig, state.state.page, state.state.pageSize, state.state.total]);
+    // Watch for initialView and initialId changes from parent
+    react_1.useEffect(function () {
+        setView(initialViewToUse);
+        if (initialViewToUse === 'list') {
+            setSelectedId(null);
+        }
+        else if (initialIdToUse !== undefined && initialIdToUse !== null) {
+            setSelectedId(initialIdToUse);
+        }
+        // Reset fetch flag when view changes to allow refetching if needed
+        if (initialViewToUse !== 'list') {
+            fetchAttempted.current = false;
+        }
+    }, [initialViewToUse, initialIdToUse]);
+    /**
+     * Fetch entities from API with given parameters
+     */
+    var fetchEntities = react_1.useCallback(function (page, pageSize, sort, search, filters) { return __awaiter(_this, void 0, void 0, function () {
+        var queryParams, response_1, normalized, data, error_1, errorMessage;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    if (!config.apiClient)
+                        return [2 /*return*/];
+                    state.setLoading(true);
+                    queryParams = buildQueryParams(page, pageSize, sort, search, filters);
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 3, 4, 5]);
+                    return [4 /*yield*/, config.apiClient.list(queryParams)];
+                case 2:
+                    response_1 = _b.sent();
+                    normalized = (function () {
+                        var _a;
+                        if (response_1 && typeof response_1 === 'object') {
+                            if ('data' in response_1)
+                                return { data: response_1.data, meta: response_1.meta };
+                            if ('results' in response_1)
+                                return { data: response_1.results, meta: { total: (_a = response_1.count) !== null && _a !== void 0 ? _a : response_1.results.length } };
+                        }
+                        return { data: Array.isArray(response_1) ? response_1 : [] };
+                    })();
+                    data = normalized.data || [];
+                    state.setEntities(data);
+                    if (((_a = normalized.meta) === null || _a === void 0 ? void 0 : _a.total) !== undefined) {
+                        state.setTotal(normalized.meta.total);
+                    }
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_1 = _b.sent();
+                    errorMessage = getErrorMessage(error_1, 'Failed to load data');
+                    state.setError(errorMessage);
+                    return [3 /*break*/, 5];
+                case 4:
+                    state.setLoading(false);
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    }); }, [config, state]);
+    /**
+     * Fetch a single entity by ID
+     */
+    var fetchSingleEntity = react_1.useCallback(function (id, merge) {
+        if (merge === void 0) { merge = false; }
+        return __awaiter(_this, void 0, void 0, function () {
+            var response, entity, error_2, errorMessage;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!config.apiClient)
+                            return [2 /*return*/];
+                        state.setLoading(true);
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, 4, 5]);
+                        return [4 /*yield*/, config.apiClient.get(id)];
+                    case 2:
+                        response = _a.sent();
+                        entity = ('data' in response) ? response.data : response;
+                        if (merge) {
+                            state.updateEntity(entity);
+                        }
+                        else {
+                            state.setEntities([entity]);
+                            state.setTotal(1);
+                        }
+                        return [3 /*break*/, 5];
+                    case 3:
+                        error_2 = _a.sent();
+                        errorMessage = getErrorMessage(error_2, 'Failed to load entity');
+                        state.setError(errorMessage);
+                        return [3 /*break*/, 5];
+                    case 4:
+                        state.setLoading(false);
+                        return [7 /*endfinally*/];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        });
+    }, [config.apiClient, state]);
+    // Auto-fetch data on mount if API client is available
+    react_1.useEffect(function () {
+        if (!config.apiClient || fetchAttempted.current) {
+            // If no API client or fetch already attempted, mark as completed to allow filter/sort changes
+            initialListFetchCompleted.current = true;
+            return;
+        }
+        fetchAttempted.current = true;
+        // If starting in edit/view mode with an ID, fetch that specific entity
+        if ((initialViewToUse === 'edit' || initialViewToUse === 'view') && initialIdToUse) {
+            initialListFetchCompleted.current = true;
+            fetchSingleEntity(initialIdToUse);
+        }
+        // If starting in list mode with an initial ID, fetch only that entity
+        else if (initialViewToUse === 'list' && initialIdToUse) {
+            fetchSingleEntity(initialIdToUse).then(function () {
+                initialListFetchCompleted.current = true;
+            });
+        }
+        // If starting in list mode or create mode, fetch all entities
+        else if (initialViewToUse === 'list' || initialViewToUse === 'create') {
+            var _a = state.state, page = _a.page, pageSize = _a.pageSize, sort = _a.sort, search = _a.search, filters = _a.filters;
+            fetchEntities(page, pageSize, sort !== null && sort !== void 0 ? sort : null, search, filters).then(function () {
+                initialListFetchCompleted.current = true;
+            });
+        }
+        else {
+            // No initial fetch needed (e.g., initialData provided), mark as completed
+            initialListFetchCompleted.current = true;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config.apiClient, initialViewToUse, initialIdToUse]);
+    // Use ref to track previous filters and only update when content actually changes
+    var prevFiltersRef = react_1.useRef('');
+    var prevFiltersObjectRef = react_1.useRef([]);
+    var stableFilters = react_1.useMemo(function () {
+        var filtersJson = JSON.stringify(state.state.filters);
+        if (filtersJson !== prevFiltersRef.current) {
+            prevFiltersRef.current = filtersJson;
+            prevFiltersObjectRef.current = state.state.filters;
+            return state.state.filters;
+        }
+        // Return the same reference if content hasn't changed
+        return prevFiltersObjectRef.current;
+    }, [state.state.filters]);
+    // Refetch data when sorting, search, or filters change (but not pagination, handled directly)
+    // Track previous values to prevent unnecessary refetches
+    var prevSortRef = react_1.useRef(null);
+    var prevSearchRef = react_1.useRef('');
+    react_1.useEffect(function () {
+        // Don't fetch if:
+        // - No API client
+        // - Not in list view
+        // - Initial list fetch is still in progress (loading and not yet completed)
+        if (!config.apiClient || view !== 'list')
+            return;
+        if (!initialListFetchCompleted.current)
+            return;
+        var _a = state.state, page = _a.page, pageSize = _a.pageSize, sort = _a.sort, search = _a.search;
+        // Create stable sort key for comparison
+        var sortKey = sort ? sort.field + "-" + sort.direction : null;
+        // Only refetch if sort, search, or filters actually changed
+        var sortChanged = sortKey !== prevSortRef.current;
+        var searchChanged = search !== prevSearchRef.current;
+        var filtersKey = JSON.stringify(stableFilters);
+        if (!sortChanged && !searchChanged) {
+            // Check if filters changed by comparing with ref
+            if (filtersKey === prevFiltersRef.current) {
+                return; // Nothing changed, skip fetch
+            }
+        }
+        // Update refs
+        prevSortRef.current = sortKey;
+        prevSearchRef.current = search;
+        fetchEntities(page, pageSize, sort !== null && sort !== void 0 ? sort : null, search, stableFilters);
+        // Using specific state properties to prevent infinite loop - state.state changes on every update
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config.apiClient, view, state.state.sort, state.state.search, state.state.page, state.state.pageSize, stableFilters, fetchEntities]);
+    // listen for view change and call onviewchange callback
+    react_1.useEffect(function () {
+        onViewChangeToUse === null || onViewChangeToUse === void 0 ? void 0 : onViewChangeToUse(view);
+    }, [view, onViewChangeToUse]);
+    // Get selected entity
+    var selectedEntity = selectedId ? state.getEntity(selectedId) : undefined;
+    // Refresh function for actions
+    var refreshData = react_1.useCallback(function () { return __awaiter(_this, void 0, void 0, function () {
+        var _a, page, pageSize, sort, search;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    if (!config.apiClient || view !== 'list')
+                        return [2 /*return*/];
+                    _a = state.state, page = _a.page, pageSize = _a.pageSize, sort = _a.sort, search = _a.search;
+                    return [4 /*yield*/, fetchEntities(page, pageSize, sort !== null && sort !== void 0 ? sort : null, search, stableFilters)];
+                case 1:
+                    _b.sent();
+                    return [2 /*return*/];
+            }
+        });
+    }); }, [config.apiClient, view, state.state.page, state.state.pageSize, state.state.sort, state.state.search, stableFilters, fetchEntities]);
+    // Memoize actions with context to prevent re-renders
+    var actionsWithContext = react_1.useMemo(function () {
+        if (!config.config.list.actions)
+            return undefined;
+        return __assign(__assign({}, config.config.list.actions), { context: __assign(__assign({}, config.config.list.actions.context), { refresh: refreshData, customData: {
+                    allData: state.state.entities
+                } }) });
+    }, [config.config.list.actions, refreshData, state.state.entities]);
+    // Handle edit
+    var handleEdit = react_1.useCallback(function (entity) {
+        setView('edit');
+        setSelectedId(entity.id);
+        fetchSingleEntity(entity.id, true);
+    }, [fetchSingleEntity]);
+    // Handle view
+    var handleView = react_1.useCallback(function (entity) {
+        setView('view');
+        setSelectedId(entity.id);
+        fetchSingleEntity(entity.id, true);
+    }, [fetchSingleEntity]);
+    // Handle back to list
+    var handleBack = react_1.useCallback(function () {
+        setView('list');
+        setSelectedId(null);
+    }, []);
+    // Handle form submit
+    var handleSubmit = react_1.useCallback(function (values) { return __awaiter(_this, void 0, void 0, function () {
+        var created, updated, error_3, errorMessage;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 5, , 6]);
+                    if (!(view === 'create')) return [3 /*break*/, 2];
+                    return [4 /*yield*/, mutations.create(values)];
+                case 1:
+                    created = _a.sent();
+                    state.addEntity(created);
+                    sonner_1.toast.success('Created successfully');
+                    return [3 /*break*/, 4];
+                case 2:
+                    if (!(view === 'edit' && selectedId)) return [3 /*break*/, 4];
+                    return [4 /*yield*/, mutations.update(selectedId, values)];
+                case 3:
+                    updated = _a.sent();
+                    state.updateEntity(updated);
+                    sonner_1.toast.success('Updated successfully');
+                    _a.label = 4;
+                case 4:
+                    handleBack();
+                    return [3 /*break*/, 6];
+                case 5:
+                    error_3 = _a.sent();
+                    errorMessage = getErrorMessage(error_3, 'Operation failed');
+                    state.setError(errorMessage);
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
+            }
+        });
+    }); }, [view, selectedId, mutations, state, handleBack]);
+    // Handle pagination change
+    var handlePaginationChange = react_1.useCallback(function (paginationConfig) { return __awaiter(_this, void 0, void 0, function () {
+        var newPage, newPageSize, _a, sort, search, filters;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    newPage = paginationConfig.page || 1;
+                    newPageSize = paginationConfig.pageSize || 10;
+                    // Update state immediately
+                    state.setPage(newPage);
+                    state.setPageSize(newPageSize);
+                    if (!(config.apiClient && view === 'list')) return [3 /*break*/, 2];
+                    _a = state.state, sort = _a.sort, search = _a.search, filters = _a.filters;
+                    return [4 /*yield*/, fetchEntities(newPage, newPageSize, sort !== null && sort !== void 0 ? sort : null, search, filters)];
+                case 1:
+                    _b.sent();
+                    _b.label = 2;
+                case 2: return [2 /*return*/];
+            }
+        });
+    }); }, [config.apiClient, view, state, fetchEntities]);
+    // Render breadcrumbs
+    var renderBreadcrumbs = function () {
+        return (react_1["default"].createElement("nav", { className: "flex mb-3 sm:mb-4 text-xs sm:text-sm overflow-x-auto", "aria-label": "Breadcrumb" },
+            react_1["default"].createElement("ol", { className: "inline-flex items-center space-x-1 md:space-x-2 min-w-max px-1" },
+                react_1["default"].createElement("li", { className: "inline-flex items-center" },
+                    react_1["default"].createElement("button", { onClick: handleBack, className: "inline-flex items-center font-medium transition-colors " + (view === 'list'
+                            ? 'text-primary cursor-default'
+                            : 'text-muted-foreground hover:text-primary'), disabled: view === 'list', "aria-current": view === 'list' ? 'page' : undefined }, config.config.name || 'Items')),
+                view !== 'list' && (react_1["default"].createElement(react_1["default"].Fragment, null,
+                    react_1["default"].createElement("li", { "aria-hidden": "true" },
+                        react_1["default"].createElement("div", { className: "flex items-center" },
+                            react_1["default"].createElement("svg", { className: "w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground mx-1", fill: "none", viewBox: "0 0 6 10" },
+                                react_1["default"].createElement("path", { stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "m1 9 4-4-4-4" })))),
+                    react_1["default"].createElement("li", null,
+                        react_1["default"].createElement("span", { className: "ml-0.5 sm:ml-1 font-medium text-primary" },
+                            view === 'create' && 'Create New',
+                            view === 'edit' && 'Edit',
+                            view === 'view' && 'View Details')))))));
+    };
+    // Render list view
+    if (view === 'list') {
+        return (react_1["default"].createElement("div", { className: "space-y-4" },
+            renderBreadcrumbs(),
+            react_1["default"].createElement(list_1.EntityList, { data: state.state.entities, columns: config.config.list.columns, view: "table", toolbar: config.config.list.toolbar, selectable: config.config.list.selectable, multiSelect: config.config.list.multiSelect, selectedIds: state.state.selectedIds, onSelectionChange: state.setSelected, onRowClick: handleView, onRowDoubleClick: handleEdit, pagination: true, paginationConfig: memoizedPaginationConfig, onPaginationChange: handlePaginationChange, sortable: config.config.list.sortable, sortConfig: state.state.sort, onSortChange: state.setSort, filterable: config.config.list.filterable, filterConfigs: state.state.filters, onFilterChange: state.setFilters, searchable: config.config.list.searchable, searchValue: state.state.search, onSearchChange: state.setSearch, searchPlaceholder: config.config.list.searchPlaceholder, emptyMessage: config.config.list.emptyMessage, loading: state.state.loading, error: state.state.error, actions: actionsWithContext, className: config.config.list.className, hover: config.config.list.hover, striped: config.config.list.striped, bordered: config.config.list.bordered, titleField: config.config.list.titleField, subtitleField: config.config.list.subtitleField, imageField: config.config.list.imageField, dateField: config.config.list.dateField })));
+    }
+    // Render form view (create/edit)
+    if (view === 'create' || view === 'edit') {
+        var currentMode = view === 'create' ? 'create' : 'edit';
+        var formLayout = config.config.form.layout;
+        var formSections = config.config.form.sections;
+        var formFields = config.config.form.fields;
+        return (react_1["default"].createElement("div", { className: "space-y-3 sm:space-y-4" },
+            renderBreadcrumbs(),
+            react_1["default"].createElement("div", { className: "bg-card rounded-lg border shadow-sm p-4 sm:p-6" },
+                react_1["default"].createElement(form_1.EntityForm, { fields: formFields, entity: view === 'edit' ? selectedEntity : undefined, mode: currentMode, layout: formLayout, sections: formSections, onSubmit: handleSubmit, onCancel: handleBack, onValidate: config.config.onValidate }))));
+    }
+    // Render detail view
+    if (view === 'view') {
+        if (!selectedEntity) {
+            return (react_1["default"].createElement("div", { className: "space-y-3 sm:space-y-4" },
+                renderBreadcrumbs(),
+                react_1["default"].createElement("div", { className: "bg-card rounded-lg border shadow-sm p-4 sm:p-6 text-center" },
+                    react_1["default"].createElement("p", { className: "text-sm sm:text-base text-muted-foreground mb-4" }, "No entity selected"),
+                    react_1["default"].createElement("button", { onClick: handleBack, className: "px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors" }, "Back to List"))));
+        }
+        return (react_1["default"].createElement("div", { className: "space-y-3 sm:space-y-4" },
+            renderBreadcrumbs(),
+            react_1["default"].createElement("div", { className: "bg-card rounded-lg border shadow-sm p-4 sm:p-6" },
+                react_1["default"].createElement(view_1.EntityView, { entity: selectedEntity, fields: config.config.view.fields, groups: config.config.view.groups, mode: config.config.view.mode || "detail", showMetadata: config.config.view.showMetadata, tabs: config.config.view.tabs, titleField: config.config.view.titleField, subtitleField: config.config.view.subtitleField, imageField: config.config.view.imageField, loading: state.state.loading, error: state.state.error, className: config.config.view.className, onCopy: function () {
+                        sonner_1.toast.success('Successfully copied to clipboard');
+                    }, actions: config.config.view.actions }))));
+    }
+    return null;
+}
+/**
+ * Entity Manager Component
+ */
+function EntityManager(props) {
+    var _a;
+    var config = props.config, _b = props.className, className = _b === void 0 ? '' : _b, children = props.children;
+    // Custom layout via children
+    if (children) {
+        return react_1["default"].createElement("div", { className: "entity-manager " + className }, children);
+    }
+    // Default layout with providers
+    return (react_1["default"].createElement("div", { className: "entity-manager " + className },
+        react_1["default"].createElement(exports_1.EntityStateProvider, { initialEntities: config.initialData, initialPageSize: ((_a = config.config.list.paginationConfig) === null || _a === void 0 ? void 0 : _a.pageSize) || 10, initialSort: config.config.list.sortConfig }, config.apiClient ? (react_1["default"].createElement(exports_2.EntityApiProvider, { client: config.apiClient },
+            react_1["default"].createElement(EntityManagerContent, __assign({}, props)))) : (react_1["default"].createElement(EntityManagerContent, __assign({}, props))))));
+}
+exports.EntityManager = EntityManager;

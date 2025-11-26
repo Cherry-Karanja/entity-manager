@@ -15,6 +15,7 @@
 
 import { createHttpClient } from '@/components/entityManager';
 import { UserRole } from '../types';
+import { User } from '../../types';
 
 /**
  * UserRole API Client
@@ -40,7 +41,9 @@ import { UserRole } from '../types';
  * await userRolesApiClient.bulkDelete(['uuid1', 'uuid2', 'uuid3']);
  * ```
  */
-export const userRolesApiClient = createHttpClient<UserRole>({
+export const userRolesApiClient = createHttpClient<UserRole, {
+  users: User[];
+}>({
   endpoint: '/api/v1/accounts/user-roles/',
 });
 

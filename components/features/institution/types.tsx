@@ -27,6 +27,8 @@ export interface Term extends BaseEntity {
   academic_year_display?: string;
   start_date: string;
   end_date: string;
+  /** Legacy numeric term identifier (optional) */
+  term_number?: number;
   is_active: boolean;
   duration?: number; // days
   is_current?: boolean;
@@ -171,6 +173,13 @@ export interface Unit extends BaseEntity {
   topics_count?: number;
   created_at: string;
   updated_at?: string;
+  /** Legacy/compat fields */
+  credits?: number;
+  level?: number;
+  term_number?: number;
+  is_core?: boolean;
+  is_active?: boolean;
+  programme?: string;
 }
 
 export interface Topic extends BaseEntity {
@@ -179,6 +188,8 @@ export interface Topic extends BaseEntity {
   unit_code?: string;
   unit_name?: string;
   title: string;
+  /** Legacy alias used in some configs */
+  name?: string;
   description?: string;
   duration_hours: number;
   order: number;
@@ -193,6 +204,12 @@ export interface Subtopic extends BaseEntity {
   topic_title?: string;
   unit_code?: string;
   title: string;
+  /** Legacy alias */
+  name?: string;
+  /** Legacy duration in minutes used by older configs */
+  duration_minutes?: number;
+  /** Legacy content type field */
+  content_type?: string;
   description?: string;
   order: number;
   created_at?: string;

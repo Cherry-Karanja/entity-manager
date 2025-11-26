@@ -1,4 +1,4 @@
-import { ExportConfig } from "@/components/entityManager";
+import type { EntityExporterConfig } from "@/components/entityManager/composition/config/types";
 import { VirtualResource, RESOURCE_TYPE_LABELS } from "../../types";
 
 const formatTime = (time: string | undefined): string => {
@@ -10,46 +10,49 @@ const formatTime = (time: string | undefined): string => {
   return `${displayHour}:${minutes} ${ampm}`;
 };
 
-export const virtualResourceExportConfig: ExportConfig<VirtualResource> = {
-  filename: "virtual-resources",
+export const virtualResourceExportConfig: EntityExporterConfig<VirtualResource> = {
+  options: {
+    format: "csv",
+    filename: "virtual-resources",
+    includeHeaders: true,
+  },
   fields: [
-    { key: "id", header: "ID" },
-    { key: "name", header: "Name" },
-    { key: "code", header: "Code" },
-    { key: "timetable_name", header: "Timetable" },
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+    { key: "code", label: "Code" },
+    { key: "timetable_name", label: "Timetable" },
     {
       key: "resource_type",
-      header: "Type",
-      transform: (value) =>
-        RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value,
+      label: "Type",
+      formatter: (value: unknown) =>
+        RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || String(value),
     },
-    { key: "capacity", header: "Capacity" },
+    { key: "capacity", label: "Capacity" },
     {
       key: "availability_start",
-      header: "Available From",
-      transform: (value) => formatTime(value as string | undefined),
+      label: "Available From",
+      formatter: (value: unknown) => formatTime(value as string | undefined),
     },
     {
       key: "availability_end",
-      header: "Available Until",
-      transform: (value) => formatTime(value as string | undefined),
+      label: "Available Until",
+      formatter: (value: unknown) => formatTime(value as string | undefined),
     },
     {
       key: "is_shared",
-      header: "Shared",
-      transform: (value) => (value ? "Yes" : "No"),
+      label: "Shared",
+      formatter: (value: unknown) => (value ? "Yes" : "No"),
     },
     {
       key: "is_active",
-      header: "Active",
-      transform: (value) => (value ? "Yes" : "No"),
+      label: "Active",
+      formatter: (value: unknown) => (value ? "Yes" : "No"),
     },
-    { key: "description", header: "Description" },
+    { key: "description", label: "Description" },
     {
       key: "created_at",
-      header: "Created",
-      transform: (value) =>
-        value ? new Date(value as string).toLocaleDateString() : "",
+      label: "Created",
+      formatter: (value: unknown) => (value ? new Date(value as string).toLocaleDateString() : ""),
     },
   ],
 };

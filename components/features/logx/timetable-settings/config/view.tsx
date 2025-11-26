@@ -1,12 +1,14 @@
-import { ViewConfig } from "@/components/entityManager";
+import type { EntityViewConfig } from '@/components/entityManager/composition/config/types';
 import { TimetableSettings } from "../../types";
 
-export const timetableSettingsViewConfig: ViewConfig<TimetableSettings> = {
-  title: (item) => item.name || "Timetable Settings",
-  subtitle: (item) => (item.is_default ? "Default Settings" : "Custom Settings"),
+export const timetableSettingsViewConfig: EntityViewConfig<TimetableSettings> = {
+  fields: [],
+  title: (item) => item?.name || "Timetable Settings",
+  subtitle: (item) => (item?.is_default ? "Default Settings" : "Custom Settings"),
   sections: [
     {
-      title: "Basic Information",
+      id: 'basic-information',
+      label: "Basic Information",
       fields: [
         {
           key: "name",
@@ -19,12 +21,13 @@ export const timetableSettingsViewConfig: ViewConfig<TimetableSettings> = {
         {
           key: "is_default",
           label: "Default Settings",
-          render: (value) => (value ? "Yes" : "No"),
+          render: (value: any) => (value ? "Yes" : "No"),
         },
       ],
     },
     {
-      title: "Lesson Constraints",
+      id: 'lesson-constraints',
+      label: "Lesson Constraints",
       fields: [
         {
           key: "max_lessons_per_day",
@@ -37,27 +40,28 @@ export const timetableSettingsViewConfig: ViewConfig<TimetableSettings> = {
         {
           key: "min_break_duration",
           label: "Minimum Break Duration",
-          render: (value) => (value ? `${value} minutes` : "—"),
+          render: (value: any) => (value ? `${value} minutes` : "—"),
         },
         {
           key: "allow_split_lessons",
           label: "Allow Split Lessons",
-          render: (value) => (value ? "Yes" : "No"),
+          render: (value: any) => (value ? "Yes" : "No"),
         },
       ],
     },
     {
-      title: "Scheduling Preferences",
+      id: 'scheduling-preferences',
+      label: "Scheduling Preferences",
       fields: [
         {
           key: "prefer_morning_classes",
           label: "Prefer Morning Classes",
-          render: (value) => (value ? "Yes" : "No"),
+          render: (value: any) => (value ? "Yes" : "No"),
         },
         {
           key: "balance_daily_load",
           label: "Balance Daily Load",
-          render: (value) => (value ? "Yes" : "No"),
+          render: (value: any) => (value ? "Yes" : "No"),
         },
         {
           key: "avoid_gaps",
@@ -72,12 +76,13 @@ export const timetableSettingsViewConfig: ViewConfig<TimetableSettings> = {
       ],
     },
     {
-      title: "Algorithm Settings",
+      id: 'algorithm-settings',
+      label: "Algorithm Settings",
       fields: [
         {
           key: "algorithm_timeout",
           label: "Algorithm Timeout",
-          render: (value) => (value ? `${value} seconds` : "—"),
+          render: (value: any) => (value ? `${value} seconds` : "—"),
         },
         {
           key: "optimization_iterations",
@@ -86,18 +91,19 @@ export const timetableSettingsViewConfig: ViewConfig<TimetableSettings> = {
       ],
     },
     {
-      title: "Timestamps",
+      id: 'timestamps',
+      label: "Timestamps",
       fields: [
         {
           key: "created_at",
           label: "Created",
-          render: (value) =>
+          render: (value: any) =>
             value ? new Date(value as string).toLocaleString() : "—",
         },
         {
           key: "updated_at",
           label: "Last Updated",
-          render: (value) =>
+          render: (value: any) =>
             value ? new Date(value as string).toLocaleString() : "—",
         },
       ],

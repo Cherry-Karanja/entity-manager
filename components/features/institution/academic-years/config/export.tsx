@@ -12,6 +12,9 @@ export const AcademicYearExporterConfig: EntityExporterConfig = {
     { key: 'created_at', label: 'Created At' },
     { key: 'updated_at', label: 'Updated At' },
   ],
-  filename: 'academic-years',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'academic-years',
+  },
+  showFormatSelector: true,
 };

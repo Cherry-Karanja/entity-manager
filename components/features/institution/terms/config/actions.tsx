@@ -58,7 +58,7 @@ export const TermActionsConfig: EntityActionsConfig<Term> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-delete',
       label: 'Delete Selected',
@@ -67,7 +67,7 @@ export const TermActionsConfig: EntityActionsConfig<Term> = {
       variant: 'destructive',
       confirmMessage: (items?: Term[]) => `Delete ${items?.length || 0} terms?`,
       confirmText: 'Delete All',
-      onConfirm: async (items?: Term[], context?) => {
+      onConfirm: async (items?: Term[], context?: any) => {
         if (!items?.length || !context?.bulkDelete || !context?.refresh) return;
         await context.bulkDelete(items.map(t => t.id));
         await context.refresh();

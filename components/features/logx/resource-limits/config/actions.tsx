@@ -1,109 +1,89 @@
-import type { ActionsConfig } from "@/components/entityManager";
+import type { EntityActionsConfig } from "@/components/entityManager/composition/config/types";
+import type { ActionContext, ActionResult } from "@/components/entityManager/components/actions/types";
+import type { ApiClient } from "@/components/entityManager/composition/api/types";
 import type { ResourceLimit } from "../../types";
 import { Gauge, ToggleLeft, ToggleRight } from "lucide-react";
 
-export const resourceLimitActionsConfig: ActionsConfig<ResourceLimit> = {
-  rowActions: [
+/**
+ * Canonical actions config for resource limits
+ * Converted from legacy rowActions/bulkActions/handlers shape to canonical actions array.
+ */
+export const resourceLimitActionsConfig: EntityActionsConfig<ResourceLimit> = {
+  actions: [
     {
+      id: "checkLimit",
       label: "Check Limit",
       icon: Gauge,
-      action: "checkLimit",
+      actionType: "immediate",
       variant: "outline",
-      requiresConfirmation: false,
-      description: "Check if the current limit would be exceeded",
+      handler: async (entity?: ResourceLimit, context?: ActionContext<ResourceLimit>): Promise<void> => {
+        if (!entity) return;
+        // Try known custom hooks on the context (compatibility)
+        const client = (context as any)?.customApi ?? (context as any)?.api ?? undefined;
+        if (client?.checkLimit) {
+          await client.checkLimit(entity.id);
+        }
+        // do not return structured result - component handles notifications via context
+      },
     },
     {
-      label: (item) => (item.is_active ? "Deactivate" : "Activate"),
-      icon: (item) => (item.is_active ? ToggleRight : ToggleLeft),
-      action: "toggleActive",
+      id: "toggleActive",
+      label: (entity?: ResourceLimit) => (entity?.is_active ? "Deactivate" : "Activate"),
+      icon: ToggleRight,
+      actionType: "confirm",
       variant: "outline",
-      requiresConfirmation: true,
-      confirmationMessage: (item) =>
-        `Are you sure you want to ${item.is_active ? "deactivate" : "activate"} this resource limit?`,
-      description: (item) =>
-        item.is_active
-          ? "Deactivate this resource limit"
-          : "Activate this resource limit",
+      confirmMessage: (entity?: ResourceLimit) =>
+        `Are you sure you want to ${entity?.is_active ? "deactivate" : "activate"} this resource limit?`,
+      onConfirm: async (entity?: ResourceLimit, context?: ActionContext<ResourceLimit>): Promise<void> => {
+        if (!entity) return;
+        const apiClient = (context as any)?.api as ApiClient<ResourceLimit> | undefined;
+        if (!apiClient?.update) return;
+        const updatedResp = await apiClient.update(entity.id, { is_active: !entity.is_active });
+        const updated = (updatedResp as any)?.data ?? (updatedResp as any);
+        await Promise.resolve(context?.refresh?.());
+        // no explicit return
+      },
     },
-  ],
-  bulkActions: [
     {
+      id: "bulkActivate",
       label: "Activate Selected",
-      action: "bulkActivate",
+      actionType: "bulk",
       variant: "default",
-      requiresConfirmation: true,
-      confirmationMessage: "Are you sure you want to activate the selected resource limits?",
-      description: "Activate multiple resource limits at once",
+      confirmMessage: "Are you sure you want to activate the selected resource limits?",
+      handler: async (items: ResourceLimit[], context?: ActionContext<ResourceLimit>): Promise<void> => {
+        const apiClient = (context as any)?.api as ApiClient<ResourceLimit> | undefined;
+        if (!apiClient?.update) return;
+        await Promise.all(items.map((item) => apiClient.update(item.id, { is_active: true })));
+        await Promise.resolve(context?.refresh?.());
+      },
     },
     {
+      id: "bulkDeactivate",
       label: "Deactivate Selected",
-      action: "bulkDeactivate",
+      actionType: "bulk",
       variant: "secondary",
-      requiresConfirmation: true,
-      confirmationMessage: "Are you sure you want to deactivate the selected resource limits?",
-      description: "Deactivate multiple resource limits at once",
+      confirmMessage: "Are you sure you want to deactivate the selected resource limits?",
+      handler: async (items: ResourceLimit[], context?: ActionContext<ResourceLimit>): Promise<void> => {
+        const apiClient = (context as any)?.api as ApiClient<ResourceLimit> | undefined;
+        if (!apiClient?.update) return;
+        await Promise.all(items.map((item) => apiClient.update(item.id, { is_active: false })));
+        await Promise.resolve(context?.refresh?.());
+      },
     },
     {
+      id: "bulkDelete",
       label: "Delete Selected",
-      action: "bulkDelete",
+      actionType: "bulk",
       variant: "destructive",
-      requiresConfirmation: true,
-      confirmationMessage: "Are you sure you want to delete the selected resource limits? This action cannot be undone.",
-      description: "Delete multiple resource limits at once",
+      confirmMessage: "Are you sure you want to delete the selected resource limits? This action cannot be undone.",
+      handler: async (items: ResourceLimit[], context?: ActionContext<ResourceLimit>): Promise<void> => {
+        const apiClient = (context as any)?.api as ApiClient<ResourceLimit> | undefined;
+        if (!apiClient?.delete) return;
+        await Promise.all(items.map((item) => apiClient.delete(item.id)));
+        await Promise.resolve(context?.refresh?.());
+      },
     },
   ],
-  handlers: {
-    checkLimit: async (item, client) => {
-      if (client.customActions?.checkLimit) {
-        const result = await client.customActions.checkLimit(item.id);
-        return {
-          success: true,
-          message: result.within_limit 
-            ? `Within limit: ${result.current_usage}/${result.max_value} ${result.resource_type}`
-            : `Exceeds limit: ${result.current_usage}/${result.max_value} ${result.resource_type}`,
-          data: result,
-        };
-      }
-      throw new Error("Check limit action not available");
-    },
-    toggleActive: async (item, client) => {
-      const updated = await client.update(item.id, {
-        is_active: !item.is_active,
-      });
-      return {
-        success: true,
-        message: `Resource limit ${updated.is_active ? "activated" : "deactivated"} successfully`,
-        data: updated,
-      };
-    },
-    bulkActivate: async (items, client) => {
-      const results = await Promise.all(
-        items.map((item) => client.update(item.id, { is_active: true }))
-      );
-      return {
-        success: true,
-        message: `${results.length} resource limit(s) activated successfully`,
-        data: results,
-      };
-    },
-    bulkDeactivate: async (items, client) => {
-      const results = await Promise.all(
-        items.map((item) => client.update(item.id, { is_active: false }))
-      );
-      return {
-        success: true,
-        message: `${results.length} resource limit(s) deactivated successfully`,
-        data: results,
-      };
-    },
-    bulkDelete: async (items, client) => {
-      await Promise.all(items.map((item) => client.delete(item.id)));
-      return {
-        success: true,
-        message: `${items.length} resource limit(s) deleted successfully`,
-      };
-    },
-  },
 };
 
 export default resourceLimitActionsConfig;

@@ -16,6 +16,9 @@ export const ProgrammeExporterConfig: EntityExporterConfig = {
     { key: 'created_at', label: 'Created At' },
     { key: 'updated_at', label: 'Updated At' },
   ],
-  filename: 'programmes',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'programmes',
+  },
+  showFormatSelector: true,
 };

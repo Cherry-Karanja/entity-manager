@@ -10,15 +10,15 @@ import { BaseEntity } from '../../primitives/types';
 /**
  * Action type enumeration
  */
-export type ActionType = 
-  | 'immediate'     // Execute immediately
-  | 'confirm'       // Show confirmation dialog
-  | 'form'          // Show form modal
-  | 'modal'         // Show custom modal
-  | 'navigation'    // Navigate to URL
-  | 'bulk'          // Batch operation
-  | 'download'      // Download/export
-  | 'custom';       // Custom handler
+export type ActionType =
+  | 'immediate'
+  | 'confirm'
+  | 'form'
+  | 'modal'
+  | 'navigation'
+  | 'bulk'
+  | 'download'
+  | 'custom';
 
 /**
  * Action variant (visual style)
@@ -27,6 +27,7 @@ export type ActionVariant =
   | 'primary' 
   | 'secondary' 
   | 'destructive'
+  | 'default'
   | 'outline'
   | 'ghost'
   | 'link';
@@ -41,17 +42,22 @@ export type ActionPosition = 'toolbar' | 'row' | 'dropdown' | 'context-menu';
  */
 export interface ActionDefinition<T extends BaseEntity = BaseEntity> {
   /** Unique action ID */
+  /** Unique action ID (legacy configs sometimes use 'key') */
   id: string;
+  /** Legacy 'key' alias (optional) */
+  key?: string;
   
-  /** Display label */
-  label: string;
+  /** Display label. Can be a React node or a function that returns a node for the given entity. */
+  label: React.ReactNode | ((entity?: T) => React.ReactNode);
   
-  /** Action type */
-  actionType: ActionType;
+  /** Action type (preferred) */
+  actionType?: ActionType;
+  /** Legacy 'type' alias used in older configs */
+  type?: ActionType;
   
-  /** Icon (optional) */
-  icon?: string | React.ReactNode;
-  
+  /** Icon (optional) - either a React node, a component type, or a function that returns a node or component type for the given entity. */
+  icon?: React.ReactNode | React.ComponentType<any>;
+
   /** Visual variant */
   variant?: ActionVariant;
   
@@ -60,7 +66,7 @@ export interface ActionDefinition<T extends BaseEntity = BaseEntity> {
   
   /** Visibility condition */
   visible?: boolean | ((entity?: T, context?: ActionContext<T>) => boolean);
-  
+
   /** Disabled condition */
   disabled?: boolean | ((entity?: T, context?: ActionContext<T>) => boolean);
   
@@ -82,9 +88,9 @@ export interface ActionDefinition<T extends BaseEntity = BaseEntity> {
  */
 export interface ImmediateAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'immediate';
-  
-  /** Handler function */
-  handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>;
+
+  /** Handler function receiving the entity and action context (context typed as any for compatibility) */
+  handler: (entity?: T, context?: any) => void | Promise<void>;
 }
 
 /**
@@ -92,19 +98,22 @@ export interface ImmediateAction<T extends BaseEntity = BaseEntity> extends Acti
  */
 export interface ConfirmAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'confirm';
-  
-  /** Confirmation message */
+
+  /** Confirmation message - static or generated from the entity */
   confirmMessage: string | ((entity?: T) => string);
-  
+
+  /** Optional confirmation title */
+  confirmTitle?: string;
+
   /** Confirm button text */
   confirmText?: string;
-  
+
   /** Cancel button text */
   cancelText?: string;
-  
-  /** Handler on confirm */
-  onConfirm: (entity?: T, context?: ActionContext<T>) => void | Promise<void>;
-  
+
+  /** Handler executed when confirmed */
+  onConfirm: (entity?: T, context?: any) => void | Promise<void>;
+
   /** Handler on cancel */
   onCancel?: () => void;
 }
@@ -114,22 +123,22 @@ export interface ConfirmAction<T extends BaseEntity = BaseEntity> extends Action
  */
 export interface FormAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'form';
-  
+
   /** Form title */
   formTitle: string;
-  
+
   /** Form fields */
   fields: FormFieldDefinition[];
-  
+
   /** Initial values */
   initialValues?: Record<string, unknown> | ((entity?: T) => Record<string, unknown>);
-  
+
   /** Form submit handler */
-  onSubmit: (values: Record<string, unknown>, entity?: T, context?: ActionContext<T>) => void | Promise<void>;
-  
+  onSubmit: (values: Record<string, unknown>, entity?: T, context?: any) => void | Promise<void>;
+
   /** Form cancel handler */
   onCancel?: () => void;
-  
+
   /** Submit button text */
   submitText?: string;
 }
@@ -139,16 +148,16 @@ export interface FormAction<T extends BaseEntity = BaseEntity> extends ActionDef
  */
 export interface ModalAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'modal';
-  
+
   /** Modal title */
   modalTitle: string;
-  
+
   /** Modal content component */
-  content: React.ComponentType<{ entity?: T; context?: ActionContext<T>; onClose: () => void }>;
-  
+  content: React.ComponentType<{ entity?: T; context?: any; onClose: () => void }>;
+
   /** Modal size */
   size?: 'small' | 'medium' | 'large' | 'fullscreen';
-  
+
   /** On modal close */
   onClose?: () => void;
 }
@@ -158,15 +167,15 @@ export interface ModalAction<T extends BaseEntity = BaseEntity> extends ActionDe
  */
 export interface NavigationAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'navigation';
-  
+
   /** URL or URL builder */
-  url: string | ((entity?: T, context?: ActionContext<T>) => string);
-  
+  url?: string | ((entity?: T) => string);
+
   /** Open in new tab */
   newTab?: boolean;
-  
+
   /** Before navigation handler */
-  beforeNavigate?: (entity?: T, context?: ActionContext<T>) => boolean | Promise<boolean>;
+  beforeNavigate?: (entity?: T, context?: any) => boolean | Promise<boolean>;
 }
 
 /**
@@ -174,16 +183,19 @@ export interface NavigationAction<T extends BaseEntity = BaseEntity> extends Act
  */
 export interface BulkAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'bulk';
-  
+
   /** Batch handler */
-  handler: (entities: T[], context?: ActionContext<T>) => void | Promise<void>;
-  
+  handler: (items: T[], context?: any) => void | Promise<void>;
+
   /** Confirmation for bulk */
   confirmBulk?: boolean;
-  
+
   /** Bulk confirmation message */
-  bulkConfirmMessage?: string | ((count: number) => string);
-  
+  confirmMessage?: string | ((items?: T[]) => string);
+
+  /** Require explicit confirmation */
+  requireConfirm?: boolean;
+
   /** Max items for bulk */
   maxItems?: number;
 }
@@ -193,13 +205,13 @@ export interface BulkAction<T extends BaseEntity = BaseEntity> extends ActionDef
  */
 export interface DownloadAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'download';
-  
+
   /** Download handler */
-  handler: (entity?: T, context?: ActionContext<T>) => void | Promise<void>;
-  
+  handler: (entity?: T | T[], context?: any) => void | Promise<void>;
+
   /** Download URL */
   downloadUrl?: string | ((entity?: T) => string);
-  
+
   /** Filename */
   filename?: string | ((entity?: T) => string);
 }
@@ -209,12 +221,12 @@ export interface DownloadAction<T extends BaseEntity = BaseEntity> extends Actio
  */
 export interface CustomAction<T extends BaseEntity = BaseEntity> extends ActionDefinition<T> {
   actionType: 'custom';
-  
-  /** Custom component to render */
-  component: React.ComponentType<{ entity?: T; context?: ActionContext<T> }>;
-  
+
+  /** Custom component to render (optional) */
+  component?: React.ComponentType<{ entity?: T; context?: ActionContext<T> }>;
+
   /** Custom handler */
-  handler?: (entity?: T, context?: ActionContext<T>) => void | Promise<void>;
+  handler?: (entity?: T, context?: any) => void | Promise<void>;
 }
 
 /**
@@ -293,6 +305,13 @@ export interface ActionContext<T extends BaseEntity = BaseEntity> {
   
   /** Custom data */
   customData?: Record<string, unknown>;
+  
+  /** Legacy convenience API surface kept for compatibility with older action handlers */
+  api?: any;
+  delete?: (id: string | number) => Promise<void>;
+  bulkDelete?: (ids: Array<string | number>) => Promise<void>;
+  showDialog?: (options: any) => Promise<boolean>;
+  customApi?: any;
 }
 
 /**

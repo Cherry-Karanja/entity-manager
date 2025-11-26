@@ -13,20 +13,20 @@ export const TopicActionsConfig: EntityActionsConfig<Topic> = {
       id: 'view-subtopics',
       label: 'View Subtopics',
       icon: <BookOpen className="h-4 w-4" />,
-      actionType: 'navigate',
+      actionType: 'navigation',
       variant: 'secondary',
       position: 'row',
-      route: (topic?: Topic) => `/dashboard/academics/topics/${topic?.id}/subtopics`,
+      url: (topic?: Topic) => `/dashboard/academics/topics/${topic?.id}/subtopics`,
     },
     {
       id: 'move-up',
       label: 'Move Up',
       icon: <ArrowUp className="h-4 w-4" />,
-      actionType: 'action',
+      actionType: 'immediate',
       variant: 'ghost',
       position: 'row',
       visible: (topic?: Topic) => (topic?.order || 1) > 1,
-      onAction: async (topic?: Topic, context?) => {
+      handler: async (topic?: Topic, context?: any) => {
         if (!topic || !context?.refresh) return;
         await apiActions.reorder(topic.id, (topic.order || 1) - 1);
         await context.refresh();
@@ -36,10 +36,10 @@ export const TopicActionsConfig: EntityActionsConfig<Topic> = {
       id: 'move-down',
       label: 'Move Down',
       icon: <ArrowDown className="h-4 w-4" />,
-      actionType: 'action',
+      actionType: 'immediate',
       variant: 'ghost',
       position: 'row',
-      onAction: async (topic?: Topic, context?) => {
+      handler: async (topic?: Topic, context?: any) => {
         if (!topic || !context?.refresh) return;
         await apiActions.reorder(topic.id, (topic.order || 1) + 1);
         await context.refresh();
@@ -62,7 +62,7 @@ export const TopicActionsConfig: EntityActionsConfig<Topic> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-delete',
       label: 'Delete Selected',
@@ -71,7 +71,7 @@ export const TopicActionsConfig: EntityActionsConfig<Topic> = {
       variant: 'destructive',
       confirmMessage: (items?: Topic[]) => `Delete ${items?.length || 0} topics and their subtopics?`,
       confirmText: 'Delete All',
-      onConfirm: async (items?: Topic[], context?) => {
+      onConfirm: async (items?: Topic[], context?: any) => {
         if (!items?.length || !context?.bulkDelete || !context?.refresh) return;
         await context.bulkDelete(items.map(t => t.id));
         await context.refresh();

@@ -1,48 +1,48 @@
-import { ColumnConfig } from "@/components/entityManager";
+import type { Column } from "@/components/entityManager/components/list/types";
 import { Badge } from "@/components/ui/badge";
 import { VirtualResource, RESOURCE_TYPE_LABELS } from "../../types";
 import { X, Share2 } from "lucide-react";
 
-export const virtualResourceColumns: ColumnConfig<VirtualResource>[] = [
+export const virtualResourceColumns: Column<VirtualResource>[] = [
   {
     key: "name",
-    header: "Name",
+    label: "Name",
     sortable: true,
-    render: (value) => <span className="font-medium">{value}</span>,
+    render: (value: unknown) => <span className="font-medium">{String(value)}</span>,
   },
   {
     key: "code",
-    header: "Code",
+    label: "Code",
     sortable: true,
-    render: (value) => (
-      <code className="bg-muted px-2 py-0.5 rounded text-sm">{value}</code>
+    render: (value: unknown) => (
+      <code className="bg-muted px-2 py-0.5 rounded text-sm">{String(value)}</code>
     ),
   },
   {
     key: "timetable_name",
-    header: "Timetable",
+    label: "Timetable",
     sortable: true,
   },
   {
     key: "resource_type",
-    header: "Type",
+    label: "Type",
     sortable: true,
-    render: (value) => (
+    render: (value: unknown) => (
       <Badge variant="outline">
-        {RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value}
+        {RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || String(value)}
       </Badge>
     ),
   },
   {
     key: "capacity",
-    header: "Capacity",
+    label: "Capacity",
     sortable: true,
-    render: (value) => (value ? value : "—"),
+    render: (value: unknown) => (value ? String(value) : "—"),
   },
   {
     key: "is_shared",
-    header: "Shared",
-    render: (value) =>
+    label: "Shared",
+    render: (value: unknown) =>
       value ? (
         <Share2 className="h-4 w-4 text-blue-500" />
       ) : (
@@ -51,10 +51,10 @@ export const virtualResourceColumns: ColumnConfig<VirtualResource>[] = [
   },
   {
     key: "is_active",
-    header: "Status",
-    render: (value) => (
-      <Badge variant={value ? "default" : "secondary"}>
-        {value ? "Active" : "Inactive"}
+    label: "Status",
+    render: (value: unknown) => (
+      <Badge variant={(value as boolean) ? "default" : "secondary"}>
+        {(value as boolean) ? "Active" : "Inactive"}
       </Badge>
     ),
   },

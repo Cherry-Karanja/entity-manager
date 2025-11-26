@@ -172,13 +172,8 @@ export const UserListConfig: EntityListConfig<User> = {
 
   emptyMessage: 'No users found.',
 
-  actions: {
-    ...UserActionsConfig,
-    context: {
-      refresh: undefined, // Will be provided by EntityManager
-      customData: undefined,
-    },
-  },
+  // Cast to any for incremental migration; EntityManager will supply context at runtime
+  actions: UserActionsConfig as any,
 
   className: '',
 

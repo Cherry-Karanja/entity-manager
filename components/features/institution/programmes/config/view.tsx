@@ -11,21 +11,21 @@ export const ProgrammeViewConfig: EntityViewConfig<Programme> = {
     {
       key: 'name',
       label: 'Programme Name',
-      render: (entity) => (
-        <span className="font-medium text-lg">{(entity as Programme).name}</span>
+      render: (entity?: Programme) => (
+        <span className="font-medium text-lg">{(entity as Programme | undefined)?.name}</span>
       ),
     },
     {
       key: 'code',
       label: 'Programme Code',
       type: 'text',
-      formatter: (value) => (value as string) || '-',
+      formatter: (value: unknown) => (value as string) || '-',
     },
     {
       key: 'level',
       label: 'Level',
-      render: (entity) => (
-        <Badge variant="outline">Level {(entity as Programme).level}</Badge>
+      render: (entity?: Programme) => (
+        <Badge variant="outline">Level {(entity as Programme | undefined)?.level}</Badge>
       ),
     },
     {
@@ -37,16 +37,16 @@ export const ProgrammeViewConfig: EntityViewConfig<Programme> = {
       key: 'total_class_groups',
       label: 'Total Classes',
       type: 'number',
-      render: (entity) => (
-        <Badge variant="secondary">{(entity as Programme).total_class_groups || 0}</Badge>
+      render: (entity?: Programme) => (
+        <Badge variant="secondary">{(entity as Programme | undefined)?.total_class_groups || 0}</Badge>
       ),
     },
     {
       key: 'total_trainees',
       label: 'Total Trainees',
       type: 'number',
-      render: (entity) => (
-        <Badge variant="outline">{(entity as Programme).total_trainees || 0}</Badge>
+      render: (entity?: Programme) => (
+        <Badge variant="outline">{(entity as Programme | undefined)?.total_trainees || 0}</Badge>
       ),
     },
     { key: 'created_at', label: 'Created At', type: 'datetime' },

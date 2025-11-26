@@ -15,6 +15,9 @@ export const IntakeExporterConfig: EntityExporterConfig = {
     { key: 'is_active', label: 'Active', formatter: (v: unknown) => (v as boolean) ? 'Yes' : 'No' },
     { key: 'created_at', label: 'Created At' },
   ],
-  filename: 'intakes',
-  formats: ['csv', 'json'],
+  options: {
+    format: 'csv',
+    filename: 'intakes',
+  },
+  showFormatSelector: true,
 };

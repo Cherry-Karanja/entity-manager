@@ -8,14 +8,16 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Copy, Check, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { BaseEntity } from '../../primitives/types';
 import {
   EntityViewProps,
   ViewState,
   FieldRenderProps,
 } from './types';
+import { ViewField, ViewTab, FieldGroup } from './types';
 import {
   getVisibleFields,
   renderField,
@@ -31,6 +33,24 @@ import {
   getFieldValue,
 } from './utils';
 import { ViewSkeleton } from './ViewSkeleton';
+
+/**
+ * Safely render an icon which may be a string, a React element, or a component type
+ */
+function renderIcon(icon: unknown): React.ReactNode {
+  if (!icon) return null;
+  // String or number
+  if (typeof icon === 'string' || typeof icon === 'number') return <span>{String(icon)}</span>;
+  // React element
+  if (React.isValidElement(icon)) return icon as React.ReactNode;
+  // Component type (function or class)
+  try {
+    const Comp = icon as React.ElementType;
+    return <Comp />;
+  } catch (e) {
+    return null;
+  }
+}
 
 /**
  * EntityView Component
@@ -177,6 +197,16 @@ export function EntityView<T extends BaseEntity = BaseEntity>({
   }
 }
 
+// Internal props used by the various sub-views
+type InternalViewProps<T extends BaseEntity> = EntityViewProps<T> & {
+  state?: ViewState;
+  /** Backwards-compatible aliases: some call sites use toggleGroup, others use onToggleGroup */
+  toggleGroup?: (groupId: string) => void;
+  onToggleGroup?: (groupId: string) => void;
+  onTabChange?: (tabId: string) => void;
+  copiedField?: string;
+};
+
 /**
  * Detail View (default mode)
  */
@@ -194,7 +224,7 @@ function DetailView<T extends BaseEntity>({
   onCopy,
   onTabChange,
   copiedField,
-}: any) {
+}: InternalViewProps<T>) {
   const title = getEntityTitle(entity, titleField);
   const groupedFields = groupFields(fields, groups);
   const sortedGroups = groups ? sortGroups(groups) : [];
@@ -225,23 +255,23 @@ function DetailView<T extends BaseEntity>({
           )}
 
           {/* Grouped fields */}
-          {sortedGroups.map((group: any) => {
+          {sortedGroups.map((group: FieldGroup) => {
             const groupFields = groupedFields.get(group.id);
             if (!groupFields || groupFields.length === 0) return null;
 
-            const isCollapsed = state.collapsedGroups.has(group.id);
+            const isCollapsed = state?.collapsedGroups?.has(group.id) ?? false;
 
             return (
               <div key={group.id} className="border rounded-lg overflow-hidden">
                 <div
                   className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
                     }`}
-                  onClick={() => group.collapsible && onToggleGroup(group.id)}
+                  onClick={() => group.collapsible && onToggleGroup?.(group.id)}
                   {...(group.collapsible ? { role: 'button' as const, 'aria-expanded': (!isCollapsed ? 'true' : 'false') as 'true' | 'false' } : {})}
                 >
 
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{renderIcon(group?.icon)} {group.label}</h3>
                     {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
                   </div>
                   {group.collapsible && (
@@ -291,8 +321,8 @@ function DetailView<T extends BaseEntity>({
       {tabs && tabs.length > 0 && (
         <div className="border rounded-lg overflow-hidden">
           <div className="border-b bg-muted/50 overflow-x-auto flex min-w-max" role="tablist">
-            {tabs.map((tab: any) => {
-              const isSelected = state.activeTab === tab.id;
+            {tabs.map((tab: ViewTab<T>) => {
+              const isSelected = state?.activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
@@ -301,7 +331,7 @@ function DetailView<T extends BaseEntity>({
                     ? 'border-primary text-primary bg-background'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted'
                     }`}
-                  onClick={() => onTabChange(tab.id)}
+                  onClick={() => onTabChange?.(tab.id)}
                   role="tab"
                   {...(isSelected ? { 'aria-selected': 'true' } : {})}
                   id={`tab-${tab.id}`}
@@ -319,13 +349,16 @@ function DetailView<T extends BaseEntity>({
             })}
           </div>
           <div className="p-3 sm:p-4 bg-card">
-            {tabs.map((tab: any) => {
-              if (tab.id !== state.activeTab) return null;
+            {tabs.map((tab: ViewTab<T>) => {
+              if (tab.id !== state?.activeTab) return null;
 
-              const TabContent = tab.content as any;
+              const TabContent = tab.content as React.ComponentType<{ entity: T }> | React.ReactNode;
               return (
                 <div key={tab.id} role="tabpanel" id={`tabpanel-${tab.id}`} aria-labelledby={`tab-${tab.id}`}>
-                  {typeof TabContent === 'function' ? <TabContent entity={entity} /> : TabContent}
+                  {typeof TabContent === 'function' ? (() => {
+                    const Component = TabContent as React.ComponentType<{ entity: T }>;
+                    return <Component entity={entity} />;
+                  })() : TabContent}
                 </div>
               );
             })}
@@ -388,7 +421,7 @@ function FieldRow<T extends BaseEntity>({ field, entity, onCopy, copiedField }: 
 /**
  * Card View
  */
-function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleField, imageField, actions, className }: any) {
+function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleField, imageField, actions, className }: InternalViewProps<T>) {
   const title = getEntityTitle(entity, titleField);
   const subtitle = getEntitySubtitle(entity, subtitleField);
   const image = getEntityImage(entity, imageField);
@@ -396,8 +429,15 @@ function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleFi
   return (
     <div className={`bg-card rounded-lg border shadow-sm overflow-hidden ${className}`}>
       {image && (
-        <div className="aspect-video w-full overflow-hidden bg-muted">
-          <img src={image} alt={title} className="w-full h-full object-cover" loading="lazy" />
+        <div className="aspect-video w-full overflow-hidden bg-muted relative">
+          <Image
+            src={String(image)}
+            alt={title}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            style={{ objectFit: 'cover' }}
+            className="w-full h-full"
+          />
         </div>
       )}
       <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
@@ -406,7 +446,7 @@ function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleFi
           {subtitle && <p className="text-xs sm:text-sm text-muted-foreground mt-1">{subtitle}</p>}
         </div>
         <div className="space-y-1.5 sm:space-y-2">
-          {fields.slice(0, 5).map((field: any) => (
+          {fields.slice(0, 5).map((field: ViewField<T>) => (
             <div key={String(field.key)} className="flex flex-col sm:flex-row items-start gap-0.5 sm:gap-0">
               <span className="text-xs sm:text-sm font-medium text-muted-foreground w-full sm:w-1/3">{field.label}:</span>
               <span className="text-xs sm:text-sm text-foreground w-full sm:w-2/3 break-words">{renderField(field, entity)}</span>
@@ -422,10 +462,10 @@ function CardView<T extends BaseEntity>({ entity, fields, titleField, subtitleFi
 /**
  * Summary View
  */
-function SummaryView<T extends BaseEntity>({ entity, fields, className }: any) {
+function SummaryView<T extends BaseEntity>({ entity, fields, className }: InternalViewProps<T>) {
   return (
     <div className={`bg-card rounded-lg border shadow-sm p-3 sm:p-4 space-y-1.5 sm:space-y-2 ${className}`}>
-      {fields.map((field: any) => (
+      {fields.map((field: ViewField<T>) => (
         <div key={String(field.key)} className="flex flex-col sm:flex-row items-start py-0.5 sm:py-1 gap-0.5 sm:gap-0">
           <span className="text-xs sm:text-sm font-medium text-muted-foreground w-full sm:w-1/3">{field.label}:</span>
           <span className="text-xs sm:text-sm text-foreground w-full sm:w-2/3 break-words">{renderField(field, entity)}</span>
@@ -438,8 +478,8 @@ function SummaryView<T extends BaseEntity>({ entity, fields, className }: any) {
 /**
  * Timeline View
  */
-function TimelineView<T extends BaseEntity>({ entity, fields, showMetadata, className }: any) {
-  const events = [...fields];
+function TimelineView<T extends BaseEntity>({ entity, fields, showMetadata, className }: InternalViewProps<T>) {
+  const events: Array<ViewField<T> | { key: string; label: string; type?: ViewField<T>['type']; value?: unknown }> = [...fields];
   if (showMetadata) {
     getMetadataFields(entity).forEach(({ label, value }) => {
       events.push({ key: label, label, type: 'date', value });
@@ -449,7 +489,7 @@ function TimelineView<T extends BaseEntity>({ entity, fields, showMetadata, clas
   return (
     <div className={`relative space-y-4 sm:space-y-6 ${className}`}>
       <div className="absolute left-3 sm:left-4 top-0 bottom-0 w-0.5 bg-border"></div>
-      {events.map((field: any, index: number) => (
+      {events.map((field) => (
         <div key={String(field.key)} className="relative pl-8 sm:pl-12">
           <div className="absolute left-1.5 sm:left-2.5 top-2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-primary border-2 border-background shadow-sm"></div>
           <div className="bg-card rounded-lg border shadow-sm p-3 sm:p-4">
@@ -465,14 +505,14 @@ function TimelineView<T extends BaseEntity>({ entity, fields, showMetadata, clas
 /**
  * Compact View - Minimal space usage
  */
-function CompactView<T extends BaseEntity>({ entity, fields, titleField, className, onCopy, copiedField }: any) {
+function CompactView<T extends BaseEntity>({ entity, fields, titleField, className }: InternalViewProps<T>) {
   const title = getEntityTitle(entity, titleField);
 
   return (
     <div className={`bg-card rounded-lg border p-3 sm:p-4 ${className}`}>
       <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2 sm:mb-3">{title}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
-        {fields.map((field: any) => (
+        {fields.map((field: ViewField<T>) => (
           <div key={String(field.key)} className="flex items-start gap-1.5 text-xs sm:text-sm">
             <span className="font-medium text-muted-foreground whitespace-nowrap">{field.label}:</span>
             <span className="text-foreground truncate flex-1">{renderField(field, entity)}</span>
@@ -486,7 +526,7 @@ function CompactView<T extends BaseEntity>({ entity, fields, titleField, classNa
 /**
  * Profile View - User-centric layout with avatar
  */
-function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField, subtitleField, imageField, actions, className, state, toggleGroup, onCopy, copiedField }: any) {
+function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField, subtitleField, imageField, actions, className, state, toggleGroup, onCopy, copiedField }: InternalViewProps<T>) {
   const title = getEntityTitle(entity, titleField);
   const subtitle = getEntitySubtitle(entity, subtitleField);
   const image = getEntityImage(entity, imageField);
@@ -500,6 +540,7 @@ function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField,
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
             {image ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={image}
                 alt={title}
@@ -525,7 +566,6 @@ function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField,
         {groupedFields.get(null) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 p-4 sm:p-6 border-t">
             {groupedFields.get(null)!.slice(0, 6).map(field => {
-              const value = getFieldValue(entity, field.key);
               return (
                 <div key={String(field.key)} className="flex flex-col">
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">{field.label}</span>
@@ -538,18 +578,18 @@ function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField,
       </div>
 
       {/* Grouped Information */}
-      {sortedGroups.map((group: any) => {
+      {sortedGroups.map((group: FieldGroup) => {
         const groupFields = groupedFields.get(group.id);
         if (!groupFields || groupFields.length === 0) return null;
 
-        const isCollapsed = state.collapsedGroups.has(group.id);
+        const isCollapsed = state?.collapsedGroups?.has(group.id) ?? false;
 
         return (
           <div key={group.id} className="bg-card rounded-lg border shadow-sm overflow-hidden">
             <div
               className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
                 }`}
-              onClick={() => group.collapsible && toggleGroup(group.id)}
+              onClick={() => group.collapsible && toggleGroup?.(group.id)}
               {...(group.collapsible ? { role: 'button' as const, 'aria-expanded': (!isCollapsed ? 'true' : 'false') as 'true' | 'false', tabIndex: 0 } : {})}
             >
               <div>
@@ -579,7 +619,7 @@ function ProfileView<T extends BaseEntity>({ entity, fields, groups, titleField,
 /**
  * Split View - Two column layout
  */
-function SplitView<T extends BaseEntity>({ entity, fields, groups, titleField, subtitleField, className, state, toggleGroup, onCopy, copiedField }: any) {
+function SplitView<T extends BaseEntity>({ entity, fields, groups, titleField, subtitleField, className, state, toggleGroup, onCopy, copiedField }: InternalViewProps<T>) {
   const title = getEntityTitle(entity, titleField);
   const subtitle = getEntitySubtitle(entity, subtitleField);
   const groupedFields = groupFields(fields, groups);
@@ -590,18 +630,18 @@ function SplitView<T extends BaseEntity>({ entity, fields, groups, titleField, s
   const leftGroups = sortedGroups.slice(0, midpoint);
   const rightGroups = sortedGroups.slice(midpoint);
 
-  const renderGroupContent = (group: any) => {
+  const renderGroupContent = (group: FieldGroup) => {
     const groupFields = groupedFields.get(group.id);
     if (!groupFields || groupFields.length === 0) return null;
 
-    const isCollapsed = state.collapsedGroups.has(group.id);
+    const isCollapsed = state?.collapsedGroups?.has(group.id) ?? false;
 
     return (
       <div key={group.id} className="border rounded-lg overflow-hidden">
         <div
           className={`flex items-center justify-between px-3 py-2.5 bg-muted/50 transition-colors ${group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
             }`}
-          onClick={() => group.collapsible && toggleGroup(group.id)}
+          onClick={() => group.collapsible && toggleGroup?.(group.id)}
         >
           <h4 className="text-sm font-semibold text-foreground">{group.label}</h4>
           {group.collapsible && (
@@ -645,7 +685,7 @@ function SplitView<T extends BaseEntity>({ entity, fields, groups, titleField, s
 /**
  * Table View - Data in table format
  */
-function TableView<T extends BaseEntity>({ entity, fields, groups, className, state, toggleGroup, onCopy, copiedField }: any) {
+function TableView<T extends BaseEntity>({ entity, fields, groups, className, state, toggleGroup, onCopy, copiedField }: InternalViewProps<T>) {
   const groupedFields = groupFields(fields, groups);
   const sortedGroups = groups ? sortGroups(groups) : [];
 
@@ -695,18 +735,18 @@ function TableView<T extends BaseEntity>({ entity, fields, groups, className, st
       )}
 
       {/* Grouped fields */}
-      {sortedGroups.map((group: any) => {
+      {sortedGroups.map((group: FieldGroup) => {
         const groupFields = groupedFields.get(group.id);
         if (!groupFields || groupFields.length === 0) return null;
 
-        const isCollapsed = state.collapsedGroups.has(group.id);
+        const isCollapsed = state?.collapsedGroups?.has(group.id) ?? false;
 
         return (
           <div key={group.id} className="bg-card rounded-lg border overflow-hidden">
             <div
               className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/50 transition-colors ${group.collapsible ? 'cursor-pointer hover:bg-muted' : ''
                 }`}
-              onClick={() => group.collapsible && toggleGroup(group.id)}
+              onClick={() => group.collapsible && toggleGroup?.(group.id)}
             >
               <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
               {group.collapsible && (

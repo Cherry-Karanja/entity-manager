@@ -4,6 +4,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { Unit } from '../../types';
+import { programmesApiClient } from '../../programmes/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const UnitFormConfig: EntityFormConfig<Unit> = {
   fields: [
@@ -51,14 +53,19 @@ export const UnitFormConfig: EntityFormConfig<Unit> = {
     {
       name: 'programme',
       label: 'Programme',
-      type: 'select',
+      type: 'relation',
       required: true,
       group: 'associations',
       validation: [{ type: 'required', message: 'Programme is required' }],
-      optionsConfig: {
-        endpoint: '/api/v1/institution/programmes/',
-        labelField: 'name',
+      relationConfig: {
+        entity: 'Programme',
+        displayField: 'name',
         valueField: 'id',
+        searchFields: ['name', 'code'],
+        fetchOptions: async (search?: string) => {
+          const response = await programmesApiClient.list({ search, pageSize: 50 });
+          return getListData(response);
+        },
       },
       width: '50%',
     },
@@ -137,5 +144,5 @@ export const UnitFormConfig: EntityFormConfig<Unit> = {
     { id: 'details', title: 'Details', collapsible: true, defaultExpanded: false },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

@@ -68,9 +68,71 @@ function getErrorMessage(error: unknown, defaultMessage: string): string {
 function EntityManagerContent<T extends BaseEntity = BaseEntity>(
   props: EntityManagerProps<T>
 ) {
-  const {
-    config,
-  } = props;
+  const { config: rawConfig } = props;
+
+  // Normalize legacy/compact config shapes into canonical EntityManagerConfig
+  const normalizedConfig = React.useMemo(() => {
+    const raw = rawConfig as any;
+    const base = { ...raw } as any;
+
+    const entity = base.config || {};
+
+    const normalizedEntity: any = {
+      name: entity.name || entity.entityName || entity.label || 'Entity',
+      label: entity.label || entity.entityName || entity.name || 'Entity',
+      labelPlural: entity.labelPlural || entity.entityNamePlural || entity.pluralName || `${entity.name || entity.entityName || 'Entities'}`,
+      description: entity.description,
+      apiEndpoint: entity.apiEndpoint || entity.api || undefined,
+      permissions: entity.permissions,
+      metadata: entity.metadata,
+      icon: entity.icon,
+    };
+
+    // Normalize list
+    const list = entity.list ?? entity.columns ?? entity.listConfig ?? entity.listColumns;
+    if (Array.isArray(list)) {
+      normalizedEntity.list = { columns: list };
+    } else {
+      normalizedEntity.list = list || { columns: [] };
+    }
+
+    // Normalize view
+    const view = entity.view ?? entity.viewFields ?? entity.viewConfig;
+    if (Array.isArray(view)) {
+      normalizedEntity.view = { fields: view };
+    } else {
+      normalizedEntity.view = view || { fields: [] };
+    }
+
+    // Normalize form fields
+    normalizedEntity.form = entity.form ?? { fields: entity.fields ?? [] };
+
+    // Normalize actions
+    const actions = entity.actions ?? entity.actionConfig ?? {};
+    if (Array.isArray(actions)) {
+      normalizedEntity.actions = { actions };
+    } else if (actions.actions || actions.row || actions.bulk) {
+      normalizedEntity.actions = {
+        actions: actions.actions || actions.row || [],
+        bulk: actions.bulk || [],
+      };
+    } else {
+      normalizedEntity.actions = actions;
+    }
+
+    // Normalize exporter
+    const exporter = entity.exporter ?? entity.export ?? entity.exportConfig;
+    if (Array.isArray(exporter)) {
+      normalizedEntity.exporter = { fields: exporter };
+    } else {
+      normalizedEntity.exporter = exporter || { fields: [] };
+    }
+
+    return { ...base, config: normalizedEntity } as typeof rawConfig;
+  }, [rawConfig]);
+
+  // Use normalized config in place of raw config
+  const config = normalizedConfig as typeof rawConfig;
 
   // Use initialView/initialId from config or props (props take precedence)
   const initialViewToUse = config.initialView ?? 'list';
@@ -125,11 +187,20 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     const queryParams = buildQueryParams(page, pageSize, sort, search, filters);
 
     try {
-      const response = await config.apiClient.list(queryParams as Parameters<typeof config.apiClient.list>[0]);
-      const data = response.data || [];
+      const response = await config.apiClient.list(queryParams as Parameters<typeof config.apiClient.list>[0]) as any;
+      // Normalize legacy DRF responses if necessary
+      const normalized = ((): { data: any[]; meta?: { total?: number } } => {
+        if (response && typeof response === 'object') {
+          if ('data' in response) return { data: response.data, meta: response.meta };
+          if ('results' in response) return { data: response.results, meta: { total: response.count ?? response.results.length } };
+        }
+        return { data: Array.isArray(response) ? response : [] };
+      })();
+
+      const data = normalized.data || [];
       state.setEntities(data);
-      if (response.meta?.total !== undefined) {
-        state.setTotal(response.meta.total);
+      if (normalized.meta?.total !== undefined) {
+        state.setTotal(normalized.meta.total);
       }
     } catch (error) {
       const errorMessage = getErrorMessage(error, 'Failed to load data');
@@ -148,8 +219,8 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
     state.setLoading(true);
 
     try {
-      const response = await config.apiClient.get(id);
-      const entity = response.data;
+      const response = await config.apiClient.get(id) as any;
+      const entity = ('data' in response) ? response.data : response;
 
       if (merge) {
         state.updateEntity(entity);

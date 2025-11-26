@@ -27,8 +27,11 @@ export interface Column<T extends BaseEntity = BaseEntity> {
   /** Column key */
   key: keyof T | string;
   
-  /** Column label */
-  label: string;
+  /** Column label (preferred) */
+  label?: string;
+
+  /** Legacy header alias for label (kept for backward compatibility) */
+  header?: string;
   
   /** Column width */
   width?: number | string;
@@ -43,13 +46,13 @@ export interface Column<T extends BaseEntity = BaseEntity> {
   align?: 'left' | 'center' | 'right';
   
   /** Custom renderer */
-  render?: (value: unknown, entity: T, index: number) => React.ReactNode;
+  render?: (value: any, entity?: T, index?: number) => React.ReactNode;
   
   /** Custom formatter */
   formatter?: (value: unknown, entity: T) => string | number;
   
   /** Field type (for filtering) */
-  type?: 'text' | 'number' | 'date' | 'boolean' | 'select';
+  type?: 'text' | 'number' | 'date' | 'datetime' | 'boolean' | 'select';
   
   /** Filter options (for select type) */
   filterOptions?: Array<{ label: string; value: unknown }>;
@@ -91,6 +94,14 @@ export interface ToolbarConfig {
 }
 
 /**
+ * Legacy pagination shape used across some feature configs
+ */
+export interface LegacyPagination {
+  defaultPageSize?: number;
+  pageSizeOptions?: number[];
+}
+
+/**
  * EntityList component props
  */
 export interface EntityListProps<T extends BaseEntity = BaseEntity> {
@@ -124,10 +135,10 @@ export interface EntityListProps<T extends BaseEntity = BaseEntity> {
   /** Row double click handler */
   onRowDoubleClick?: (entity: T, index: number) => void;
   
-  /** Enable pagination */
-  pagination?: boolean;
+  /** Enable pagination. Can be a boolean, full PaginationConfig, or legacy pagination object */
+  pagination?: boolean | PaginationConfig | LegacyPagination;
   
-  /** Pagination config */
+  /** Pagination config (preferred) */
   paginationConfig?: PaginationConfig;
   
   /** Pagination change handler */

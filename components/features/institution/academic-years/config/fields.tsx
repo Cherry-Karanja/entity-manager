@@ -40,5 +40,5 @@ export const AcademicYearFormConfig: EntityFormConfig<AcademicYear> = {
     { id: 'basic', title: 'Academic Year Information', collapsible: false },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

@@ -19,14 +19,14 @@ export const profileColumns: Column<UserProfile>[] = [
     render: (_value, profile) => (
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={profile.avatar_url || undefined} alt={profile.user_name} />
+          <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.user_name} />
           <AvatarFallback>
             <User className="h-5 w-5" />
           </AvatarFallback>
         </Avatar>
         <div>
-          <div className="font-medium">{profile.user_name || 'Unknown User'}</div>
-          <div className="text-xs text-muted-foreground">{profile.user_email}</div>
+          <div className="font-medium">{profile?.user_name || 'Unknown User'}</div>
+          <div className="text-xs text-muted-foreground">{profile?.user_email}</div>
         </div>
       </div>
     ),
@@ -38,8 +38,8 @@ export const profileColumns: Column<UserProfile>[] = [
     width: '20%',
     render: (_value, profile) => (
       <div>
-        <div className="font-medium">{profile.job_title || '-'}</div>
-        {profile.department && (
+        <div className="font-medium">{profile?.job_title || '-'}</div>
+        {profile?.department && (
           <div className="text-xs text-muted-foreground">{profile.department}</div>
         )}
       </div>
@@ -51,7 +51,7 @@ export const profileColumns: Column<UserProfile>[] = [
     sortable: false,
     width: '15%',
     render: (_value, profile) => (
-      <span className="text-sm">{profile.phone_number || '-'}</span>
+      <span className="text-sm">{profile?.phone_number || '-'}</span>
     ),
   },
   {
@@ -84,7 +84,11 @@ export const profileColumns: Column<UserProfile>[] = [
         },
       };
       
-      const config = statusConfig[profile.status];
+      const config = statusConfig[(profile?.status ?? 'pending') as keyof typeof statusConfig] ?? {
+        icon: Clock,
+        label: 'Unknown',
+        className: 'bg-gray-600 text-white',
+      };
       const Icon = config.icon;
       
       return (
@@ -110,7 +114,7 @@ export const profileColumns: Column<UserProfile>[] = [
     width: '10%',
     render: (_value, profile) => (
       <span className="text-sm">
-        {profile.approved_at ? new Date(profile.approved_at).toLocaleDateString() : '-'}
+        {profile?.approved_at ? new Date(profile.approved_at).toLocaleDateString() : '-'}
       </span>
     ),
   },

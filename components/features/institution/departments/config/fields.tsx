@@ -6,6 +6,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { Department } from '../../types';
+import { usersApiClient } from '@/components/features/accounts/users/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const DepartmentFormConfig: EntityFormConfig<Department> = {
   fields: [
@@ -46,7 +48,11 @@ export const DepartmentFormConfig: EntityFormConfig<Department> = {
         entity: 'user',
         displayField: 'full_name',
         valueField: 'id',
-        searchFields: ['email','first_name','last_name'],
+        searchFields: ['email', 'first_name', 'last_name'],
+        fetchOptions: async (search?: string) => {
+          const res = await usersApiClient.list({ search, pageSize: 50 });
+          return getListData(res);
+        },
       },
       helpText: 'User assigned as the Head of Department',
       width: '100%',
@@ -54,30 +60,35 @@ export const DepartmentFormConfig: EntityFormConfig<Department> = {
     {
       name: 'trainers',
       label: 'Trainers',
-      type: 'relationship',
+      type: 'relation',
       required: false,
       placeholder: 'Select trainers',
       group: 'basic',
       multiple: true,
-      relationshipConfig: {
-        endpoint: '/api/v1/accounts/users/',
-        labelField: 'full_name',
+      relationConfig: {
+        entity: 'user',
+        displayField: 'full_name',
         valueField: 'id',
-        searchField: 'search',
+        searchFields: ['search'],
+        fetchOptions: async (search?: string) => {
+          const res = await usersApiClient.list({ search, pageSize: 50 });
+          return getListData(res);
+        },
       },
       helpText: 'Trainers assigned to this department',
       width: '100%',
     },
   ],
 
-  fieldGroups: [
+  sections: [
     {
       id: 'basic',
-      title: 'Department Information',
+      label: 'Department Information',
       description: 'Basic department details',
       collapsible: false,
+      fields: ['name', 'hod', 'trainers'],
     },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

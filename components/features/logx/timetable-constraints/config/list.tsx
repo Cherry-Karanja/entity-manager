@@ -8,7 +8,7 @@ export const timetableConstraintColumns: ColumnConfig<TimetableConstraint>[] = [
     key: "name",
     header: "Name",
     sortable: true,
-    render: (value) => <span className="font-medium">{value}</span>,
+    render: (value: any) => <span className="font-medium">{value}</span>,
   },
   {
     key: "timetable_name",
@@ -19,7 +19,7 @@ export const timetableConstraintColumns: ColumnConfig<TimetableConstraint>[] = [
     key: "constraint_type",
     header: "Type",
     sortable: true,
-    render: (value) => (
+    render: (value: any) => (
       <Badge variant="outline">
         {CONSTRAINT_TYPE_LABELS[value as keyof typeof CONSTRAINT_TYPE_LABELS] || value}
       </Badge>
@@ -28,7 +28,7 @@ export const timetableConstraintColumns: ColumnConfig<TimetableConstraint>[] = [
   {
     key: "is_hard_constraint",
     header: "Constraint Level",
-    render: (value) => (
+    render: (value: any) => (
       <Badge
         variant={value ? "destructive" : "secondary"}
         className="flex items-center gap-1 w-fit"
@@ -60,7 +60,7 @@ export const timetableConstraintColumns: ColumnConfig<TimetableConstraint>[] = [
   {
     key: "is_active",
     header: "Active",
-    render: (value) =>
+    render: (value: any) =>
       value ? (
         <Check className="h-4 w-4 text-green-500" />
       ) : (

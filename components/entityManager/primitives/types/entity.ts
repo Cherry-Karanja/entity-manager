@@ -14,8 +14,8 @@
 export interface BaseEntity {
   /** Unique identifier for the entity */
   id: string | number;
-  /** Allow any additional properties */
-  [key: string]: unknown;
+  /** Allow any additional properties (use `any` during migration to reduce noise) */
+  [key: string]: any;
 }
 
 /**

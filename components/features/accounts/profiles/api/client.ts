@@ -40,7 +40,11 @@ import { UserProfile } from '../types';
  * await userProfilesApiClient.bulkDelete(['uuid1', 'uuid2', 'uuid3']);
  * ```
  */
-export const userProfilesApiClient = createHttpClient<UserProfile>({
+export const userProfilesApiClient = createHttpClient<UserProfile, {
+  approve: UserProfile;
+  reject: UserProfile;
+  suspend: UserProfile;
+}>({
   endpoint: '/api/v1/accounts/user-profiles/',
 });
 

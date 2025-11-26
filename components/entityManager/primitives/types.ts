@@ -5,21 +5,17 @@
  */
 
 import { LucideIcon } from 'lucide-react';
+import type { BaseEntity } from './types/entity';
 import { ReactNode } from 'react';
 import { FormField } from '../components/form/types';
 import { Column } from '../components/list/types';
 import { FormLayout as FormLayoutType } from '../components/form/types';
 import { FieldSection } from '../components/form/types';
 
-// Re-export from types/entity.ts
+// Re-export core entity primitives from the dedicated module to avoid
+// duplicate BaseEntity declarations and to provide a single source of truth.
 export type { FilterConfig, SortConfig, PaginationConfig, FilterOperator } from './types/entity';
-
-// Base Entity
-export interface BaseEntity {
-  id: string | number;
-  created_at?: string;
-  updated_at?: string;
-}
+export type { BaseEntity } from './types/entity';
 
 // Field Configuration
 export interface FieldConfig<T = any> {

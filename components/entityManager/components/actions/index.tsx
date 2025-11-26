@@ -79,6 +79,59 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
     overflowOpen: false,
   });
 
+  // Helper to coerce an action label/confirmText (which may be a function or ReactNode)
+  const getActionLabelString = (maybeLabel: any, fallback: any) => {
+    // If explicit string provided
+    if (typeof maybeLabel === 'string') return maybeLabel;
+    // If it's a function, call it
+    if (typeof maybeLabel === 'function') {
+      try {
+        const v = maybeLabel(entity);
+        return typeof v === 'string' ? v : String(v ?? '');
+      } catch {
+        return String(fallback ?? '');
+      }
+    }
+    // Fallback ReactNode or other
+    if (maybeLabel !== undefined && maybeLabel !== null) return String(maybeLabel);
+    if (typeof fallback === 'function') {
+      try {
+        const v = fallback(entity);
+        return typeof v === 'string' ? v : String(v ?? '');
+      } catch {
+        return '';
+      }
+    }
+    return String(fallback ?? '');
+  };
+
+  const renderActionLabel = (maybeLabel: any) => {
+    if (typeof maybeLabel === 'function') {
+      try {
+        return maybeLabel(entity);
+      } catch {
+        return null;
+      }
+    }
+    return maybeLabel;
+  };
+
+  // Render icon which may be a React node or a component type
+  const renderIcon = (icon: any) => {
+    if (!icon) return null;
+    // If it's a component type (function/class), instantiate it
+    if (typeof icon === 'function') {
+      const IconComp = icon as React.ComponentType<any>;
+      try {
+        return <IconComp />;
+      } catch {
+        return null;
+      }
+    }
+    // Otherwise assume it's already a React node
+    return icon;
+  };
+
 
   /**
    * Handle immediate action
@@ -92,15 +145,19 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
    */
   const handleConfirmAction = useCallback(async (action: ConfirmAction<T>) => {
     // Show confirmation dialog
+    const titleText = getActionLabelString(action.confirmText, action.label);
+    const confirmText = getActionLabelString(action.confirmText, 'Confirm') || 'Confirm';
+    const cancelText = getActionLabelString(action.cancelText, 'Cancel') || 'Cancel';
+
     setState(prev => ({
       ...prev,
       modalOpen: true,
       modalContent: (
         <ConfirmDialog
-          title={action.confirmText || action.label}
+          title={titleText}
           message={getConfirmMessage(action.confirmMessage, entity)}
-          confirmText={action.confirmText || 'Confirm'}
-          cancelText={action.cancelText || 'Cancel'}
+          confirmText={confirmText}
+          cancelText={cancelText}
           onConfirm={async () => {
             setState(prev => ({ ...prev, modalOpen: false, modalContent: undefined }));
             await action.onConfirm(entity, context);
@@ -173,9 +230,12 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
       const canNavigate = await action.beforeNavigate(entity, context);
       if (!canNavigate) return;
     }
+    if (!action.url) return; // nothing to navigate to
 
-    const url = buildNavigationUrl(action.url, entity, context);
-    
+    const url = buildNavigationUrl(action.url as any, entity, context);
+
+    if (!url) return;
+
     if (action.newTab) {
       window.open(url, '_blank');
     } else {
@@ -199,7 +259,7 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
 
     // Confirm bulk operation
     if (action.confirmBulk) {
-      const message = getBulkConfirmMessage(action.bulkConfirmMessage, entities.length);
+      const message = getBulkConfirmMessage(action.confirmMessage as any, entities);
       const confirmed = window.confirm(message);
       if (!confirmed) return;
     }
@@ -367,8 +427,8 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
                       action.variant === 'destructive' ? 'text-destructive hover:bg-destructive/10' : ''
                     }`}
                   >
-                    {action.icon && <span className="flex-shrink-0">{action.icon}</span>}
-                    <span className="flex-1 text-left">{action.label}</span>
+                    {action.icon && <span className="flex-shrink-0">{renderIcon(action.icon)}</span>}
+                    <span className="flex-1 text-left">{renderActionLabel(action.label)}</span>
                     {state.loading && state.executing === action.id && (
                       <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -390,10 +450,13 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
   return (
     <div className={`inline-flex items-center gap-1 ${className}`}>
       {/* Visible actions */}
-      {visibleActions.map(action => (
-        action.actionType === 'custom' && (action as CustomAction<T>).component ? (
-          <action.component key={action.id} entity={entity} context={context} />
-        ) : (
+      {visibleActions.map(action => {
+        if (action.actionType === 'custom' && (action as CustomAction<T>).component) {
+          const Comp = (action as CustomAction<T>).component as React.ComponentType<{ entity?: T; context?: any }>;
+          return <Comp key={action.id} entity={entity} context={context} />;
+        }
+
+        return (
           <button
             key={action.id}
             onClick={() => executeAction(action)}
@@ -401,8 +464,8 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
             title={getActionTooltip(action, entity, context)}
             className={getButtonClasses(action.variant, state.loading && state.executing === action.id)}
           >
-            {action.icon && <span className="flex-shrink-0">{action.icon}</span>}
-            {position !== 'row' && <span>{action.label}</span>}
+            {action.icon && <span className="flex-shrink-0">{renderIcon(action.icon)}</span>}
+            {position !== 'row' && <span>{renderActionLabel(action.label)}</span>}
             {state.loading && state.executing === action.id && (
               <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -410,8 +473,8 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
               </svg>
             )}
           </button>
-        )
-      ))}
+        );
+      })}
 
       {/* Overflow menu (three dots) */}
       {hasOverflow && (
@@ -447,8 +510,8 @@ export function EntityActions<T extends BaseEntity = BaseEntity>({
                         action.variant === 'destructive' ? 'text-destructive hover:bg-destructive/10' : ''
                       }`}
                     >
-                      {action.icon && <span className="flex-shrink-0">{action.icon}</span>}
-                      <span className="flex-1 text-left">{action.label}</span>
+                      {action.icon && <span className="flex-shrink-0">{renderIcon(action.icon)}</span>}
+                      <span className="flex-1 text-left">{renderActionLabel(action.label)}</span>
                       {state.loading && state.executing === action.id && (
                         <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

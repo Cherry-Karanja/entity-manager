@@ -5,7 +5,10 @@
 import { createHttpClient } from '@/components/entityManager';
 import { Subtopic } from '../../types';
 
-export const subtopicsApiClient = createHttpClient<Subtopic>({
+export const subtopicsApiClient = createHttpClient<Subtopic, {
+  reorder: Subtopic[];
+  complete: Subtopic;
+}>({
   endpoint: '/api/v1/academics/subtopics/',
 });
 

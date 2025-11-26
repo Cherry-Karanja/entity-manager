@@ -1,34 +1,33 @@
-import { ExportConfig } from "@/components/entityManager";
+import type { EntityExporterConfig } from "@/components/entityManager/composition/config/types";
 import { TimetableConstraint, CONSTRAINT_TYPE_LABELS } from "../../types";
 
-export const timetableConstraintExportConfig: ExportConfig<TimetableConstraint> = {
-  filename: "timetable-constraints",
+export const timetableConstraintExportConfig: EntityExporterConfig<TimetableConstraint> = {
   fields: [
-    { key: "id", header: "ID" },
-    { key: "name", header: "Name" },
-    { key: "timetable_name", header: "Timetable" },
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+    { key: "timetable_name", label: "Timetable" },
     {
       key: "constraint_type",
-      header: "Type",
-      transform: (value) =>
-        CONSTRAINT_TYPE_LABELS[value as keyof typeof CONSTRAINT_TYPE_LABELS] || value,
+      label: "Type",
+      formatter: (value) =>
+        CONSTRAINT_TYPE_LABELS[value as keyof typeof CONSTRAINT_TYPE_LABELS] || String(value),
     },
     {
       key: "is_hard_constraint",
-      header: "Constraint Level",
-      transform: (value) => (value ? "Hard" : "Soft"),
+      label: "Constraint Level",
+      formatter: (value) => (value ? "Hard" : "Soft"),
     },
-    { key: "priority", header: "Priority" },
-    { key: "weight", header: "Weight" },
+    { key: "priority", label: "Priority" },
+    { key: "weight", label: "Weight" },
     {
       key: "is_active",
-      header: "Active",
-      transform: (value) => (value ? "Yes" : "No"),
+      label: "Active",
+      formatter: (value) => (value ? "Yes" : "No"),
     },
     {
       key: "parameters",
-      header: "Parameters",
-      transform: (value) => {
+      label: "Parameters",
+      formatter: (value) => {
         if (!value) return "";
         try {
           return JSON.stringify(value);
@@ -37,12 +36,12 @@ export const timetableConstraintExportConfig: ExportConfig<TimetableConstraint> 
         }
       },
     },
-    { key: "description", header: "Description" },
+    { key: "description", label: "Description" },
     {
       key: "created_at",
-      header: "Created",
-      transform: (value) =>
-        value ? new Date(value as string).toLocaleDateString() : "",
+      label: "Created",
+      formatter: (value) => (value ? new Date(value as string).toLocaleDateString() : ""),
     },
   ],
+  options: { format: 'csv', filename: "timetable-constraints" },
 };

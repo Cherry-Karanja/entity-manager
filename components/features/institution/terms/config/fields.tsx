@@ -4,6 +4,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { Term } from '../../types';
+import { academicYearsApiClient } from '../../academic-years/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const TermFormConfig: EntityFormConfig<Term> = {
   fields: [
@@ -25,14 +27,19 @@ export const TermFormConfig: EntityFormConfig<Term> = {
     {
       name: 'academic_year',
       label: 'Academic Year',
-      type: 'select',
+      type: 'relation',
       required: true,
       group: 'basic',
       validation: [{ type: 'required', message: 'Academic year is required' }],
-      optionsConfig: {
-        endpoint: '/api/v1/institution/academic-years/',
-        labelField: 'year',
+      relationConfig: {
+        entity: 'AcademicYear',
+        displayField: 'year',
         valueField: 'id',
+        searchFields: ['year', 'name'],
+        fetchOptions: async (search?: string) => {
+          const response = await academicYearsApiClient.list({ search, pageSize: 50 });
+          return getListData(response);
+        },
       },
       width: '33%',
     },
@@ -71,5 +78,5 @@ export const TermFormConfig: EntityFormConfig<Term> = {
     { id: 'dates', title: 'Term Dates', collapsible: true, defaultExpanded: true },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

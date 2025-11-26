@@ -58,7 +58,7 @@ export const ClassGroupActionsConfig: EntityActionsConfig<ClassGroup> = {
     },
   ],
 
-  bulkActions: [
+  bulk: [
     {
       id: 'bulk-delete',
       label: 'Delete Selected',
@@ -67,7 +67,7 @@ export const ClassGroupActionsConfig: EntityActionsConfig<ClassGroup> = {
       variant: 'destructive',
       confirmMessage: (items?: ClassGroup[]) => `Delete ${items?.length || 0} classes?`,
       confirmText: 'Delete All',
-      onConfirm: async (items?: ClassGroup[], context?) => {
+      onConfirm: async (items?: ClassGroup[], context?: any) => {
         if (!items?.length || !context?.bulkDelete || !context?.refresh) return;
         await context.bulkDelete(items.map(c => c.id));
         await context.refresh();
@@ -77,9 +77,9 @@ export const ClassGroupActionsConfig: EntityActionsConfig<ClassGroup> = {
       id: 'bulk-export',
       label: 'Export Selected',
       icon: <Download className="h-4 w-4" />,
-      actionType: 'custom',
+      actionType: 'bulk',
       variant: 'secondary',
-      onAction: async (items?: ClassGroup[]) => {
+      handler: async (items?: ClassGroup[]) => {
         console.log('Export classes:', items);
       },
     },

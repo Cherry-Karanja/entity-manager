@@ -13,7 +13,7 @@ export const SubtopicListConfig: EntityListConfig<Subtopic> = {
       label: '#',
       sortable: true,
       width: '8%',
-      render: (value) => (
+      render: (value: unknown) => (
         <span className="text-muted-foreground font-mono">{value as number || '-'}</span>
       ),
     },
@@ -36,7 +36,7 @@ export const SubtopicListConfig: EntityListConfig<Subtopic> = {
       sortable: true,
       filterable: true,
       width: '15%',
-      render: (value) => {
+      render: (value: unknown) => {
         if (!value) return '-';
         const colors: Record<string, string> = {
           lecture: 'bg-blue-100 text-blue-800',
@@ -46,8 +46,8 @@ export const SubtopicListConfig: EntityListConfig<Subtopic> = {
           'self-study': 'bg-yellow-100 text-yellow-800',
         };
         return (
-          <Badge variant="outline" className={colors[value as string] || ''}>
-            {(value as string).charAt(0).toUpperCase() + (value as string).slice(1)}
+            <Badge variant="outline" className={colors[value as string] || ''}>
+              {(value as string).charAt(0).toUpperCase() + (value as string).slice(1)}
           </Badge>
         );
       },

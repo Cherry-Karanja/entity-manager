@@ -7,7 +7,13 @@
 import { createHttpClient } from '@/components/entityManager';
 import { UserSession } from '../../types';
 
-export const userSessionsApiClient = createHttpClient<UserSession>({
+// Some session actions return numeric stats (e.g., active-count). Annotate the
+// client so customAction('stats','active-count') is typed as ApiResponse<number>.
+export const userSessionsApiClient = createHttpClient<UserSession, {
+  expire: void;
+  'expire-all': void;
+  'active-count': number;
+}>({
   endpoint: '/api/v1/accounts/user-sessions/',
 });
 

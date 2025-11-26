@@ -13,12 +13,12 @@ export const ProgrammeListConfig: EntityListConfig<Programme> = {
       label: 'Programme',
       sortable: true,
       width: '30%',
-      render: (value, entity) => {
-        const prog = entity as Programme;
+      render: (value: unknown, entity?: Programme) => {
+        const prog = entity as Programme | undefined;
         return (
           <div className="flex flex-col">
             <span className="font-medium">{value as string}</span>
-            {prog.code && (
+            {prog?.code && (
               <span className="text-xs text-muted-foreground">{prog.code}</span>
             )}
           </div>
@@ -40,7 +40,7 @@ export const ProgrammeListConfig: EntityListConfig<Programme> = {
       filterable: true,
       width: '10%',
       type: 'number',
-      render: (value) => (
+      render: (value: unknown) => (
         <Badge variant="outline">Level {value as number}</Badge>
       ),
     },
@@ -50,7 +50,7 @@ export const ProgrammeListConfig: EntityListConfig<Programme> = {
       sortable: true,
       width: '15%',
       type: 'number',
-      render: (value) => (
+      render: (value: unknown) => (
         <Badge variant="secondary">{value as number || 0}</Badge>
       ),
     },
@@ -60,7 +60,7 @@ export const ProgrammeListConfig: EntityListConfig<Programme> = {
       sortable: true,
       width: '15%',
       type: 'number',
-      render: (value) => (
+      render: (value: unknown) => (
         <Badge variant="outline">{value as number || 0}</Badge>
       ),
     },

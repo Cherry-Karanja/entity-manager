@@ -28,7 +28,7 @@ export function getColumnValue<T extends BaseEntity>(
   // Handle nested paths (e.g., 'user.name')
   if (typeof columnKey === 'string' && columnKey.includes('.')) {
     const parts = columnKey.split('.');
-    let value: unknown = entity;
+    let value: any = entity;
     for (const part of parts) {
       value = value?.[part];
       if (value === undefined) break;
@@ -53,9 +53,9 @@ export function formatCellValue<T extends BaseEntity>(
   }
   
   // Type-based formatting
-  if (column.type === 'date') {
-    if (value instanceof Date) {
-      return value.toLocaleDateString();
+    if (column.type === 'date') {
+    if ((value as any) instanceof Date) {
+      return (value as Date).toLocaleDateString();
     }
     if (typeof value === 'string' && value) {
       try {
@@ -309,7 +309,7 @@ export function getEntityDate<T extends BaseEntity>(
 ): Date | null {
   if (dateField) {
     const value = getColumnValue(entity, dateField);
-    if (value instanceof Date) return value;
+    if ((value as any) instanceof Date) return value as Date;
     if (typeof value === 'string' || typeof value === 'number') {
       const date = new Date(value);
       return isNaN(date.getTime()) ? null : date;
@@ -321,7 +321,7 @@ export function getEntityDate<T extends BaseEntity>(
   for (const candidate of dateCandidates) {
     if (candidate in entity) {
       const value = entity[candidate as keyof T];
-      if (value instanceof Date) return value;
+      if ((value as any) instanceof Date) return value as Date;
       if (typeof value === 'string' || typeof value === 'number') {
         const date = new Date(value);
         if (!isNaN(date.getTime())) return date;

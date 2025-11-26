@@ -1,41 +1,44 @@
-import { ExportConfig } from "@/components/entityManager";
+import type { EntityExporterConfig } from "@/components/entityManager/composition/config/types";
 import { PenaltyRule, VIOLATION_TYPE_LABELS } from "../../types";
 
-export const penaltyRuleExportConfig: ExportConfig<PenaltyRule> = {
-  filename: "penalty-rules",
+export const penaltyRuleExportConfig: EntityExporterConfig<PenaltyRule> = {
+  options: {
+    format: "csv",
+    filename: "penalty-rules",
+    includeHeaders: true,
+  },
   fields: [
-    { key: "id", header: "ID" },
-    { key: "name", header: "Name" },
-    { key: "timetable_name", header: "Timetable" },
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+    { key: "timetable_name", label: "Timetable" },
     {
       key: "violation_type",
-      header: "Violation Type",
-      transform: (value) =>
-        VIOLATION_TYPE_LABELS[value as keyof typeof VIOLATION_TYPE_LABELS] || value,
+      label: "Violation Type",
+      formatter: (value: unknown) =>
+        VIOLATION_TYPE_LABELS[value as keyof typeof VIOLATION_TYPE_LABELS] || String(value),
     },
-    { key: "base_penalty", header: "Base Penalty" },
-    { key: "multiplier", header: "Multiplier" },
+    { key: "base_penalty", label: "Base Penalty" },
+    { key: "multiplier", label: "Multiplier" },
     {
       key: "max_penalty",
-      header: "Max Penalty",
-      transform: (value) => (value ? String(value) : "No cap"),
+      label: "Max Penalty",
+      formatter: (value: unknown) => (value ? String(value) : "No cap"),
     },
     {
       key: "threshold",
-      header: "Threshold",
-      transform: (value) => (value ? String(value) : "0"),
+      label: "Threshold",
+      formatter: (value: unknown) => (value ? String(value) : "0"),
     },
     {
       key: "is_active",
-      header: "Active",
-      transform: (value) => (value ? "Yes" : "No"),
+      label: "Active",
+      formatter: (value: unknown) => (value ? "Yes" : "No"),
     },
-    { key: "description", header: "Description" },
+    { key: "description", label: "Description" },
     {
       key: "created_at",
-      header: "Created",
-      transform: (value) =>
-        value ? new Date(value as string).toLocaleDateString() : "",
+      label: "Created",
+      formatter: (value: unknown) => (value ? new Date(value as string).toLocaleDateString() : ""),
     },
   ],
 };

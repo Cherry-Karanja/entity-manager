@@ -1,45 +1,44 @@
-import { ColumnConfig } from "@/components/entityManager";
+import type { Column } from "@/components/entityManager/components/list/types";
 import { Badge } from "@/components/ui/badge";
 import { ClassGroupSchedule, DAY_OF_WEEK_LABELS } from "../../types";
 import { Lock, Unlock } from "lucide-react";
 
-export const classGroupScheduleColumns: ColumnConfig<ClassGroupSchedule>[] = [
+export const classGroupScheduleColumns: Column<ClassGroupSchedule>[] = [
   {
     key: "class_group_name",
-    header: "Class Group",
+    label: "Class Group",
     sortable: true,
-    render: (value) => <span className="font-medium">{value || "—"}</span>,
+    render: (value: any, row?: ClassGroupSchedule, index?: number) => <span className="font-medium">{value || "—"}</span>,
   },
   {
     key: "unit_name",
-    header: "Unit",
+    label: "Unit",
     sortable: true,
   },
   {
     key: "instructor_name",
-    header: "Instructor",
+    label: "Instructor",
     sortable: true,
   },
   {
     key: "room_name",
-    header: "Room",
+    label: "Room",
     sortable: true,
   },
   {
     key: "day_of_week",
-    header: "Day",
+    label: "Day",
     sortable: true,
-    render: (value) => (
-      <Badge variant="outline">{DAY_OF_WEEK_LABELS[value as keyof typeof DAY_OF_WEEK_LABELS] || value}</Badge>
+    render: (value: any, row?: ClassGroupSchedule, index?: number) => (
+      <Badge variant="outline">{String(DAY_OF_WEEK_LABELS[value as keyof typeof DAY_OF_WEEK_LABELS] || value)}</Badge>
     ),
   },
   {
     key: "start_time",
-    header: "Start Time",
+    label: "Start Time",
     sortable: true,
-    render: (value) => {
+    render: (value: any, row?: ClassGroupSchedule, index?: number) => {
       if (!value) return "—";
-      // Format time string (HH:MM:SS to HH:MM AM/PM)
       const [hours, minutes] = (value as string).split(":");
       const hour = parseInt(hours);
       const ampm = hour >= 12 ? "PM" : "AM";
@@ -49,9 +48,9 @@ export const classGroupScheduleColumns: ColumnConfig<ClassGroupSchedule>[] = [
   },
   {
     key: "end_time",
-    header: "End Time",
+    label: "End Time",
     sortable: true,
-    render: (value) => {
+    render: (value: any, row?: ClassGroupSchedule, index?: number) => {
       if (!value) return "—";
       const [hours, minutes] = (value as string).split(":");
       const hour = parseInt(hours);
@@ -62,8 +61,8 @@ export const classGroupScheduleColumns: ColumnConfig<ClassGroupSchedule>[] = [
   },
   {
     key: "is_locked",
-    header: "Status",
-    render: (value) => (
+    label: "Status",
+    render: (value: any, row?: ClassGroupSchedule, index?: number) => (
       <Badge variant={value ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
         {value ? (
           <>

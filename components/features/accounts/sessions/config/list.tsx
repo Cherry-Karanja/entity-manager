@@ -15,8 +15,8 @@ export const sessionColumns: Column<UserSession>[] = [
     width: '20%',
     render: (_value, session) => (
       <div>
-        <div className="font-medium">{session.user_full_name}</div>
-        <div className="text-xs text-muted-foreground">{session.user_email}</div>
+        <div className="font-medium">{session?.user_full_name}</div>
+        <div className="text-xs text-muted-foreground">{session?.user_email}</div>
       </div>
     ),
   },
@@ -34,9 +34,9 @@ export const sessionColumns: Column<UserSession>[] = [
     width: '20%',
     render: (_value, session) => (
       <div>
-        <div className="text-sm">{session.device_type || 'Unknown'}</div>
+        <div className="text-sm">{session?.device_type || 'Unknown'}</div>
         <div className="text-xs text-muted-foreground">
-          {session.browser} • {session.device_os}
+          {session?.browser} • {session?.device_os}
         </div>
       </div>
     ),
@@ -49,8 +49,8 @@ export const sessionColumns: Column<UserSession>[] = [
     width: '10%',
     type: 'boolean',
     render: (_value, session) => (
-      <Badge variant={session.is_active ? 'default' : 'secondary'}>
-        {session.is_active ? 'Active' : 'Expired'}
+      <Badge variant={session?.is_active ? 'default' : 'secondary'}>
+        {session?.is_active ? 'Active' : 'Expired'}
       </Badge>
     ),
   },
@@ -62,7 +62,7 @@ export const sessionColumns: Column<UserSession>[] = [
     type: 'date',
     render: (_value, session) => (
       <span className="text-sm">
-        {formatDistanceToNow(new Date(session.last_activity), { addSuffix: true })}
+        {session?.last_activity ? formatDistanceToNow(new Date(session.last_activity), { addSuffix: true }) : '-'}
       </span>
     ),
   },
@@ -74,7 +74,7 @@ export const sessionColumns: Column<UserSession>[] = [
     type: 'date',
     render: (_value, session) => (
       <span className="text-sm">
-        {formatDistanceToNow(new Date(session.created_at), { addSuffix: true })}
+        {session?.created_at ? formatDistanceToNow(new Date(session.created_at), { addSuffix: true }) : '-'}
       </span>
     ),
   },

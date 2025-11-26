@@ -13,7 +13,7 @@ export const TopicListConfig: EntityListConfig<Topic> = {
       label: '#',
       sortable: true,
       width: '8%',
-      render: (value) => (
+      render: (value: unknown) => (
         <span className="text-muted-foreground font-mono">{value as number || '-'}</span>
       ),
     },
@@ -35,14 +35,14 @@ export const TopicListConfig: EntityListConfig<Topic> = {
       label: 'Duration',
       sortable: true,
       width: '12%',
-      render: (value) => value ? `${value}h` : '-',
+      render: (value: unknown) => value ? `${value}h` : '-',
     },
     {
       key: 'weight',
       label: 'Weight',
       sortable: true,
       width: '12%',
-      render: (value) => value ? (
+      render: (value: unknown) => value ? (
         <Badge variant="outline">{value as number}%</Badge>
       ) : '-',
     },
@@ -51,7 +51,7 @@ export const TopicListConfig: EntityListConfig<Topic> = {
       label: 'Subtopics',
       sortable: true,
       width: '12%',
-      render: (value) => (
+      render: (value: unknown) => (
         <span className="text-muted-foreground">{value as number || 0}</span>
       ),
     },

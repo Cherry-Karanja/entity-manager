@@ -4,36 +4,47 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { Enrollment } from '../../types';
+import { usersApiClient } from '@/components/features/accounts/users/api/client';
+import { classGroupsApiClient } from '../../class-groups/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const EnrollmentFormConfig: EntityFormConfig<Enrollment> = {
   fields: [
     {
       name: 'trainee',
       label: 'Trainee',
-      type: 'select',
+      type: 'relation',
       required: true,
       group: 'enrollment',
       validation: [{ type: 'required', message: 'Trainee is required' }],
-      optionsConfig: {
-        endpoint: '/api/v1/accounts/trainees/',
-        labelField: 'full_name',
+      relationConfig: {
+        entity: 'User',
+        displayField: 'full_name',
         valueField: 'id',
-        searchable: true,
+        searchFields: ['full_name', 'email'],
+        fetchOptions: async (search?: string) => {
+          const response = await usersApiClient.list({ search, pageSize: 50 });
+          return getListData(response);
+        },
       },
       width: '50%',
     },
     {
       name: 'class_group',
       label: 'Class Group',
-      type: 'select',
+      type: 'relation',
       required: true,
       group: 'enrollment',
       validation: [{ type: 'required', message: 'Class group is required' }],
-      optionsConfig: {
-        endpoint: '/api/v1/institution/class-groups/',
-        labelField: 'name',
+      relationConfig: {
+        entity: 'ClassGroup',
+        displayField: 'name',
         valueField: 'id',
-        searchable: true,
+        searchFields: ['name'],
+        fetchOptions: async (search?: string) => {
+          const response = await classGroupsApiClient.list({ search, pageSize: 50 });
+          return getListData(response);
+        },
       },
       width: '50%',
     },
@@ -100,5 +111,5 @@ export const EnrollmentFormConfig: EntityFormConfig<Enrollment> = {
     { id: 'additional', title: 'Additional Information', collapsible: true, defaultExpanded: false },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

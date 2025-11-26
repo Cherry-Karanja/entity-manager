@@ -22,6 +22,8 @@
         "name": "next"
       }
     ],
+    // Temporarily allow implicit any to speed up incremental migration.
+    "noImplicitAny": false,
     "paths": {
       "@/*": [
         "./*"

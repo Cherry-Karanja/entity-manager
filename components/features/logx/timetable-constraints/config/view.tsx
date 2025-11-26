@@ -1,4 +1,4 @@
-import { ViewConfig } from "@/components/entityManager";
+import type { EntityViewConfig } from '@/components/entityManager/composition/config/types';
 import { TimetableConstraint, CONSTRAINT_TYPE_LABELS } from "../../types";
 
 const formatParameters = (params: Record<string, unknown> | undefined): string => {
@@ -10,13 +10,15 @@ const formatParameters = (params: Record<string, unknown> | undefined): string =
   }
 };
 
-export const timetableConstraintViewConfig: ViewConfig<TimetableConstraint> = {
-  title: (item) => item.name || "Timetable Constraint",
+export const timetableConstraintViewConfig: EntityViewConfig<TimetableConstraint> = {
+  fields: [],
+  title: (item) => item?.name || "Timetable Constraint",
   subtitle: (item) =>
-    item.is_hard_constraint ? "Hard Constraint (Must be satisfied)" : "Soft Constraint (Can be violated with penalty)",
+    item?.is_hard_constraint ? "Hard Constraint (Must be satisfied)" : "Soft Constraint (Can be violated with penalty)",
   sections: [
     {
-      title: "Basic Information",
+      id: 'basic-information',
+      label: "Basic Information",
       fields: [
         {
           key: "name",
@@ -29,7 +31,7 @@ export const timetableConstraintViewConfig: ViewConfig<TimetableConstraint> = {
         {
           key: "constraint_type",
           label: "Constraint Type",
-          render: (value) =>
+          render: (value: any) =>
             CONSTRAINT_TYPE_LABELS[value as keyof typeof CONSTRAINT_TYPE_LABELS] || value,
         },
         {
@@ -39,17 +41,18 @@ export const timetableConstraintViewConfig: ViewConfig<TimetableConstraint> = {
       ],
     },
     {
-      title: "Constraint Configuration",
+      id: 'constraint-configuration',
+      label: "Constraint Configuration",
       fields: [
         {
           key: "is_hard_constraint",
           label: "Constraint Level",
-          render: (value) => (value ? "Hard (Mandatory)" : "Soft (Preferred)"),
+          render: (value: any) => (value ? "Hard (Mandatory)" : "Soft (Preferred)"),
         },
         {
           key: "priority",
           label: "Priority",
-          render: (value) => `${value} (${Number(value) <= 3 ? "High" : Number(value) <= 6 ? "Medium" : "Low"})`,
+          render: (value: any) => `${value} (${Number(value) <= 3 ? "High" : Number(value) <= 6 ? "Medium" : "Low"})`,
         },
         {
           key: "weight",
@@ -58,17 +61,18 @@ export const timetableConstraintViewConfig: ViewConfig<TimetableConstraint> = {
         {
           key: "is_active",
           label: "Status",
-          render: (value) => (value ? "Active" : "Inactive"),
+          render: (value: any) => (value ? "Active" : "Inactive"),
         },
       ],
     },
     {
-      title: "Parameters",
+      id: 'parameters',
+      label: "Parameters",
       fields: [
         {
           key: "parameters",
           label: "Constraint Parameters",
-          render: (value) => (
+          render: (value: any) => (
             <pre className="bg-muted p-2 rounded text-sm overflow-auto max-h-48">
               {formatParameters(value as Record<string, unknown>)}
             </pre>
@@ -77,18 +81,19 @@ export const timetableConstraintViewConfig: ViewConfig<TimetableConstraint> = {
       ],
     },
     {
-      title: "Timestamps",
+      id: 'timestamps',
+      label: "Timestamps",
       fields: [
         {
           key: "created_at",
           label: "Created",
-          render: (value) =>
+          render: (value: any) =>
             value ? new Date(value as string).toLocaleString() : "—",
         },
         {
           key: "updated_at",
           label: "Last Updated",
-          render: (value) =>
+          render: (value: any) =>
             value ? new Date(value as string).toLocaleString() : "—",
         },
       ],

@@ -4,6 +4,8 @@
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { Subtopic } from '../../types';
+import { topicsApiClient } from '../../topics/api/client';
+import { getListData } from '@/components/entityManager/composition/api/responseUtils';
 
 export const SubtopicFormConfig: EntityFormConfig<Subtopic> = {
   fields: [
@@ -36,15 +38,19 @@ export const SubtopicFormConfig: EntityFormConfig<Subtopic> = {
     {
       name: 'topic',
       label: 'Topic',
-      type: 'select',
+      type: 'relation',
       required: true,
       group: 'associations',
       validation: [{ type: 'required', message: 'Topic is required' }],
-      optionsConfig: {
-        endpoint: '/api/v1/academics/topics/',
-        labelField: 'name',
+      relationConfig: {
+        entity: 'Topic',
+        displayField: 'name',
         valueField: 'id',
-        searchable: true,
+        searchFields: ['name'],
+        fetchOptions: async (search?: string) => {
+          const response = await topicsApiClient.list({ search, pageSize: 50 });
+          return getListData(response);
+        },
       },
       width: '100%',
     },
@@ -105,5 +111,5 @@ export const SubtopicFormConfig: EntityFormConfig<Subtopic> = {
     { id: 'details', title: 'Details', collapsible: true, defaultExpanded: false },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

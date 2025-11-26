@@ -18,6 +18,9 @@ export const UnitExporterConfig: EntityExporterConfig = {
     { key: 'description', label: 'Description' },
     { key: 'created_at', label: 'Created At' },
   ],
-  filename: 'units',
-  formats: ['csv', 'json', 'xlsx'],
+  options: {
+    format: 'csv',
+    filename: 'units',
+  },
+  showFormatSelector: true,
 };
