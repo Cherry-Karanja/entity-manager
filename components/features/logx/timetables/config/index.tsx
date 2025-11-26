@@ -16,10 +16,23 @@ import { timetableActionsConfig } from './actions';
 import { timetableExportConfig } from './export';
 
 // Combined config object for EntityManager
-export const timetableConfig = {
-  fields: timetableFields,
-  columns: timetableColumns,
+import type { EntityConfig } from '@/components/entityManager/composition/config/types';
+import type { Timetable } from '../../types';
+
+export const timetableConfig: EntityConfig<Timetable> = {
+  name: 'timetable',
+  label: 'Timetable',
+  labelPlural: 'Timetables',
+  description: 'Academic timetables and schedules',
+  list: { columns: timetableColumns },
+  form: { fields: timetableFields },
   view: timetableViewConfig,
   actions: timetableActionsConfig,
-  export: timetableExportConfig,
+  exporter: timetableExportConfig,
+  apiEndpoint: '/api/v1/logx/timetabling/timetables/',
+  icon: 'Calendar',
+  permissions: { create: true, read: true, update: true, delete: true, export: true },
+  metadata: { category: 'scheduling', tags: ['timetables'] },
 };
+
+export default timetableConfig;
