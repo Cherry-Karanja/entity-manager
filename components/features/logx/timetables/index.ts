@@ -3,9 +3,23 @@
  * Main export file for timetables feature
  */
 
-export * from './config';
-export * from './api/client';
-export { timetableConfig } from './config';
+export { timetablesApiClient, timetablesClient, timetableActions } from './api/client';
+export {
+  timetableConfig,
+  timetableFields,
+  TimetableFormConfig,
+  TimetableListConfig,
+  timetableListConfig,
+  timetableColumns,
+  TimetableViewConfig,
+  timetableViewConfig,
+  timetableViewFields,
+  timetableViewGroups,
+  TimetableActionsConfig,
+  timetableActionsConfig,
+  TimetableExporterConfig,
+  timetableExportConfig,
+} from './config';
 
-// Re-export API client with expected name
-export { timetablesClient as timetableClient } from './api/client';
+// Re-export API client with expected name for backward compatibility
+export { timetablesApiClient as timetableClient } from './api/client';
