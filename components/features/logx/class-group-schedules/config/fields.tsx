@@ -17,7 +17,7 @@ export const classGroupScheduleFields: FormField<ClassGroupSchedule>[] = [
       valueField: "id",
       fetchOptions: async (search?: string) => {
         const params = search ? { params: { search } } : undefined;
-        const resp = await authApi.get('/api/v1/logx/timetabling/timetables/', params as Record<string, unknown> | undefined);
+        const resp = await authApi.get('/api/v1/timetabling/timetables/', params as Record<string, unknown> | undefined);
         const data = resp.data;
         return Array.isArray(data) ? data : data.results ?? data.data ?? [];
       },
@@ -93,7 +93,7 @@ export const classGroupScheduleFields: FormField<ClassGroupSchedule>[] = [
       valueField: "id",
       fetchOptions: async (search?: string) => {
         const params = search ? { params: { search } } : undefined;
-        const resp = await authApi.get('/api/v1/logx/resources/rooms/', params as Record<string, unknown> | undefined);
+        const resp = await authApi.get('/api/v1/resources/rooms/', params as Record<string, unknown> | undefined);
         const data = resp.data;
         return Array.isArray(data) ? data : data.results ?? data.data ?? [];
       },

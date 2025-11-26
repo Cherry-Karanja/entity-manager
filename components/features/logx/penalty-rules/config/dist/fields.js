@@ -66,7 +66,7 @@ exports.penaltyRuleFields = [
                     switch (_c.label) {
                         case 0:
                             params = search ? { params: { search: search } } : undefined;
-                            return [4 /*yield*/, client_1.authApi.get('/api/v1/logx/timetabling/timetables/', params)];
+                            return [4 /*yield*/, client_1.authApi.get('/api/v1/timetabling/timetables/', params)];
                         case 1:
                             resp = _c.sent();
                             data = resp.data;

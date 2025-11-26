@@ -204,7 +204,7 @@ const sidebarItems = [
       },
       {
         title: "Schedules",
-        href: "/dashboard/class-group-schedules",
+        href: "/dashboard/class-schedules",
         icon: Calendar,
       },
       {
