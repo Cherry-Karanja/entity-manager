@@ -1,8 +1,10 @@
-export { default as resourceLimitClient } from "./api/client";
+export { resourceLimitsApiClient, resourceLimitActions } from "./api/client";
 export {
+  resourceLimitConfig,
   resourceLimitFields,
-  resourceLimitListConfig,
-  resourceLimitViewConfig,
-  resourceLimitActionsConfig,
-  resourceLimitExportConfig,
+  ResourceLimitFormConfig,
+  ResourceLimitListConfig,
+  ResourceLimitViewConfig,
+  ResourceLimitActionsConfig,
+  ResourceLimitExporterConfig,
 } from "./config";

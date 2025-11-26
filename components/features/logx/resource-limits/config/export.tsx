@@ -1,58 +1,74 @@
+/**
+ * Resource Limit Exporter Configuration
+ * 
+ * Defines export fields and options for resource limits.
+ */
+
 import { EntityExporterConfig } from '@/components/entityManager/composition/config/types';
-import type { ResourceLimit } from "../../types";
+import { ResourceLimit } from "../../types";
 import { 
   ENTITY_TYPE_LABELS, 
   RESOURCE_TYPE_LABELS, 
   PERIOD_TYPE_LABELS 
 } from "../../types";
 
-export const resourceLimitExportConfig: EntityExporterConfig<ResourceLimit> = {
+export const ResourceLimitExporterConfig: EntityExporterConfig<ResourceLimit> = {
   fields: [
     { key: 'id', label: 'ID' },
     {
-      key: 'timetable_details',
+      key: 'timetable_name',
       label: 'Timetable',
-      formatter: (value: unknown) => {
-        if (value && typeof value === 'object' && 'name' in (value as any)) {
-          return (value as any).name;
-        }
-        return '-';
-      },
     },
     {
       key: 'entity_type',
       label: 'Entity Type',
       formatter: (value: unknown) =>
-        ENTITY_TYPE_LABELS[value as keyof typeof ENTITY_TYPE_LABELS] || value,
+        String(ENTITY_TYPE_LABELS[value as keyof typeof ENTITY_TYPE_LABELS] || value || ''),
     },
     {
       key: 'resource_type',
       label: 'Resource Type',
       formatter: (value: unknown) =>
-        RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value,
+        String(RESOURCE_TYPE_LABELS[value as keyof typeof RESOURCE_TYPE_LABELS] || value || ''),
     },
-    { key: 'max_value', label: 'Maximum Value' },
+    { key: 'max_limit', label: 'Maximum Limit' },
+    { key: 'current_usage', label: 'Current Usage' },
     {
       key: 'period_type',
       label: 'Period Type',
       formatter: (value: unknown) =>
-        PERIOD_TYPE_LABELS[value as keyof typeof PERIOD_TYPE_LABELS] || value,
+        String(PERIOD_TYPE_LABELS[value as keyof typeof PERIOD_TYPE_LABELS] || value || ''),
     },
-    { key: 'is_active', label: 'Status', formatter: (value: unknown) => ((value as boolean) ? 'Active' : 'Inactive') },
-    { key: 'created_at', label: 'Created At', formatter: (value: unknown) => (value ? new Date(value as string).toLocaleString() : '-') },
-    { key: 'updated_at', label: 'Updated At', formatter: (value: unknown) => (value ? new Date(value as string).toLocaleString() : '-') },
+    { 
+      key: 'is_active', 
+      label: 'Status', 
+      formatter: (value: unknown) => ((value as boolean) ? 'Active' : 'Inactive'),
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created At', 
+      formatter: (value: unknown) => value ? new Date(value as string).toLocaleString() : '-',
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Updated At', 
+      formatter: (value: unknown) => value ? new Date(value as string).toLocaleString() : '-',
+    },
   ],
-  options: { format: 'csv', filename: 'resource-limits', includeHeaders: true },
-  // defaultColumns is a feature-specific hint for UI; keep as metadata
-  // @ts-ignore
-  defaultColumns: [
-    'timetable_details',
-    'entity_type',
-    'resource_type',
-    'max_value',
-    'period_type',
-    'is_active',
-  ],
-};
 
-export default resourceLimitExportConfig;
+  options: {
+    format: 'xlsx',
+    filename: 'resource_limits_export',
+    includeHeaders: true,
+    prettyPrint: true,
+    dateFormat: 'MM/DD/YYYY HH:mm:ss',
+    delimiter: ',',
+    sheetName: 'Resource Limits',
+  },
+
+  buttonLabel: 'Export Resource Limits',
+  showFormatSelector: true,
+  showFieldSelector: true,
+  className: 'btn btn-primary',
+  disabled: false,
+};

@@ -1,23 +1,26 @@
 /**
  * Resource Limits Management Page
+ * 
+ * Main page for managing resource limits using Entity Manager with Django backend integration.
  */
 
 'use client';
 
 import React, { useEffect } from 'react';
-import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { resourceLimitListConfig, resourceLimitViewConfig, resourceLimitActionsConfig, resourceLimitExportConfig } from '@/components/features/logx/resource-limits/config';
-import { resourceLimitFields } from '@/components/features/logx/resource-limits/config/fields';
-import { default as resourceLimitClient } from '@/components/features/logx/resource-limits/api/client';
+import { EntityManager } from '@/components/entityManager';
+import { resourceLimitConfig } from '@/components/features/logx/resource-limits/config';
+import { resourceLimitsApiClient } from '@/components/features/logx/resource-limits/api/client';
 import { Gauge } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';
+import { EntityManagerView } from '@/components/entityManager';
 
 export default function ResourceLimitsPage() {
   const { setPageActions } = usePageActions();
   const [initialView, setInitialView] = React.useState<EntityManagerView>('list');
   const [initialId, setInitialId] = React.useState<string | number | undefined>(undefined);
 
+  // Set actions to display in the layout header
   useEffect(() => {
     setPageActions(
       <div className="flex gap-2">
@@ -25,6 +28,7 @@ export default function ResourceLimitsPage() {
           variant="default" 
           size="sm"
           onClick={() => {
+            console.log('Add Resource Limit button clicked');
             setInitialView('create');
             setInitialId(undefined);
           }}
@@ -34,10 +38,14 @@ export default function ResourceLimitsPage() {
         </Button>
       </div>
     );
+
+    // Cleanup on unmount
     return () => setPageActions(null);
   }, [setPageActions]);
 
+  // Callback when view changes internally (e.g., back to list after submit)
   const handleViewChange = React.useCallback((newView: EntityManagerView) => {
+    console.log('View changed to:', newView);
     setInitialView(newView);
     if (newView === 'list') {
       setInitialId(undefined);
@@ -47,16 +55,8 @@ export default function ResourceLimitsPage() {
   return (
     <EntityManager
       config={{
-        config: {
-          entityName: 'Resource Limit',
-          entityNamePlural: 'Resource Limits',
-          fields: resourceLimitFields,
-          list: resourceLimitListConfig,
-          view: resourceLimitViewConfig,
-          actions: resourceLimitActionsConfig,
-          export: resourceLimitExportConfig,
-        },
-        apiClient: resourceLimitClient,
+        config: resourceLimitConfig,
+        apiClient: resourceLimitsApiClient,
         initialView: initialView,
         initialId: initialId,
         initialData: [],

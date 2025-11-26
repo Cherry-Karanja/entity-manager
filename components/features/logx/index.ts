@@ -74,10 +74,13 @@ export {
 
 // Export Resource Limits feature
 export {
-  resourceLimitClient,
+  resourceLimitsApiClient,
+  resourceLimitActions,
+  resourceLimitConfig,
   resourceLimitFields,
-  resourceLimitListConfig,
-  resourceLimitViewConfig,
-  resourceLimitActionsConfig,
-  resourceLimitExportConfig,
+  ResourceLimitFormConfig,
+  ResourceLimitListConfig,
+  ResourceLimitViewConfig,
+  ResourceLimitActionsConfig,
+  ResourceLimitExporterConfig,
 } from "./resource-limits";

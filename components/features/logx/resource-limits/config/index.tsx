@@ -1,39 +1,83 @@
-export { resourceLimitFields } from "./fields";
-export { resourceLimitListConfig } from "./list";
-export { resourceLimitViewConfig } from "./view";
-export { resourceLimitActionsConfig } from "./actions";
-export { resourceLimitExportConfig } from "./export";
+/**
+ * Resource Limit Configuration Index
+ * 
+ * Main configuration file that exports all resource limit management configurations.
+ */
 
-import type { EntityConfig } from '@/components/entityManager/composition/config/types';
-import type { ResourceLimit } from '../../types';
+import { EntityConfig } from '@/components/entityManager/composition/config/types';
+import { ResourceLimit } from '../../types';
+import { ResourceLimitFormConfig } from './fields';
+import { ResourceLimitListConfig } from './list';
+import { ResourceLimitViewConfig } from './view';
+import { ResourceLimitActionsConfig } from './actions';
+import { ResourceLimitExporterConfig } from './export';
 
 /**
- * Canonical EntityConfig for Resource Limits
- * This mirrors the pattern used by the accounts module (e.g. userConfig)
+ * Complete resource limit entity configuration for the Entity Manager
  */
 export const resourceLimitConfig: EntityConfig<ResourceLimit> = {
-	name: 'resource_limit',
-	label: 'Resource Limit',
-	labelPlural: 'Resource Limits',
-	description: 'Limits for resource usage within timetables',
-	list: resourceLimitListConfig,
-	form: { fields: resourceLimitFields },
-	view: resourceLimitViewConfig,
-	actions: resourceLimitActionsConfig,
-	exporter: resourceLimitExportConfig,
-	apiEndpoint: '/api/v1/timetabling/resource-limits',
-	icon: 'Gauge',
-	permissions: {
-		create: true,
-		read: true,
-		update: true,
-		delete: true,
-		export: true,
-	},
-	metadata: {
-		category: 'scheduling',
-		tags: ['resource', 'limits', 'timetabling'],
-	},
+  // ===========================
+  // Basic Metadata
+  // ===========================
+  name: 'resourceLimit',
+  label: 'Resource Limit',
+  labelPlural: 'Resource Limits',
+  description: 'Limits for resource usage within timetables',
+
+  // ===========================
+  // List View Configuration
+  // ===========================
+  list: ResourceLimitListConfig,
+
+  // ===========================
+  // Form Configuration
+  // ===========================
+  form: ResourceLimitFormConfig,
+
+  // ===========================
+  // Detail View Configuration
+  // ===========================
+  view: ResourceLimitViewConfig,
+
+  // ===========================
+  // Actions Configuration
+  // ===========================
+  actions: ResourceLimitActionsConfig,
+
+  // ===========================
+  // Export Configuration
+  // ===========================
+  exporter: ResourceLimitExporterConfig,
+
+  // Api endpoint
+  apiEndpoint: '/api/v1/timetabling/resource-limits/',
+
+  // icon
+  icon: 'Gauge',
+
+  // ===========================
+  // Permissions
+  // ===========================
+  permissions: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+    export: true,
+  },
+
+  // ===========================
+  // Additional Metadata
+  // ===========================
+  metadata: {
+    category: 'scheduling',
+    tags: ['resource', 'limits', 'timetabling'],
+  },
 };
 
-export default resourceLimitConfig;
+// Export all configurations
+export * from './fields';
+export * from './list';
+export * from './view';
+export * from './actions';
+export * from './export';
