@@ -1,27 +1,50 @@
 /**
- * Room API Client
- * Handles all HTTP operations for room management
+ * Rooms API Client
+ * 
+ * API client for Django rooms endpoint using the HTTP client factory.
  */
 
 import { createHttpClient } from '@/components/entityManager';
 import { authApi } from '@/components/connectionManager/http/client';
 import { Room } from '../../types';
 
-const API_BASE = '/api/v1/resources/rooms/';
-
-// Create the base HTTP client for rooms
-export const roomsClient = createHttpClient<Room>({
-  endpoint: API_BASE,
+/**
+ * Rooms API Client
+ * 
+ * Example usage:
+ * ```typescript
+ * // List rooms with pagination
+ * const result = await roomsApiClient.list({ page: 1, pageSize: 10 });
+ * 
+ * // Get single room
+ * const room = await roomsApiClient.get(123);
+ * 
+ * // Create room
+ * const newRoom = await roomsApiClient.create({ name: 'Room 101', ... });
+ * 
+ * // Update room
+ * const updated = await roomsApiClient.update(123, { is_active: true });
+ * 
+ * // Delete room
+ * await roomsApiClient.delete(123);
+ * ```
+ */
+export const roomsApiClient = createHttpClient<Room, {
+  check_availability: { available: boolean; reason?: string };
+}>({
+  endpoint: '/api/v1/resources/rooms/',
 });
 
-// Room-specific actions (if any custom actions exist in views)
-// Helper actions that perform room-specific API calls. Not exported to avoid
-// name collisions with config-level action definitions.
-const roomApiActions = {
-  // Check if room is available on a specific date
-  checkAvailability: async (id: number, date: string): Promise<{ available: boolean; reason?: string }> => {
+/**
+ * Custom room actions
+ */
+export const roomActions = {
+  /**
+   * Check if room is available on a specific date
+   */
+  async checkAvailability(id: number, date: string) {
     try {
-      const resp = await authApi.post(`/api/v1/logx/resources/rooms/${id}/check_availability/`, { date });
+      const resp = await authApi.post(`/api/v1/resources/rooms/${id}/check_availability/`, { date });
       return resp.data as { available: boolean; reason?: string };
     } catch (e) {
       throw new Error('Failed to check room availability');
@@ -29,4 +52,6 @@ const roomApiActions = {
   },
 };
 
-export default roomsClient;
+// Legacy exports for backward compatibility
+export const roomsClient = roomsApiClient;
+export default roomsApiClient;

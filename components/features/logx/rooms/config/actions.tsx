@@ -1,19 +1,30 @@
 /**
- * Room Actions Configuration
- * Defines actions available for rooms
+ * Room Action Configurations
+ * 
+ * Defines actions available for room management.
  */
 
 import { EntityActionsConfig } from '@/components/entityManager/composition/config/types';
 import { Room } from '../../types';
-import { roomsClient } from '../api/client';
-import { Edit, Trash2, Eye, Power, PowerOff } from 'lucide-react';
+import { roomsApiClient } from '../api/client';
+import { 
+  Edit, 
+  Trash2, 
+  Eye, 
+  CheckCircle, 
+  XCircle,
+  Download
+} from 'lucide-react';
 
-export const roomActions: EntityActionsConfig<Room> = {
+export const RoomActionsConfig: EntityActionsConfig<Room> = {
   actions: [
+    // ===========================
+    // Single Item Actions
+    // ===========================
     {
       id: 'view',
       label: 'View Details',
-      icon: Eye,
+      icon: <Eye className="h-4 w-4" />,
       actionType: 'navigation',
       position: 'row',
       url: (room?: Room) => `/dashboard/rooms/${room!.id}`,
@@ -21,74 +32,162 @@ export const roomActions: EntityActionsConfig<Room> = {
     {
       id: 'edit',
       label: 'Edit',
-      icon: Edit,
+      icon: <Edit className="h-4 w-4" />,
       actionType: 'navigation',
       position: 'row',
       url: (room?: Room) => `/dashboard/rooms/${room!.id}/edit`,
     },
     {
-      id: 'toggle-active',
-      label: 'Toggle Active',
-      icon: Power,
+      id: 'activate',
+      label: 'Activate',
+      icon: <CheckCircle className="h-4 w-4" />,
       actionType: 'confirm',
+      variant: 'primary',
       position: 'row',
-      confirmTitle: 'Toggle Room Active State',
+      visible: (room?: Room) => !room?.is_active,
       confirmMessage: (room?: Room) =>
-        `Are you sure you want to toggle active state for "${room!.name}"?`,
-      onConfirm: async (room?: Room) => {
-        await roomsClient.update(room!.id, { is_active: !room!.is_active } as Partial<Room>);
+        `Are you sure you want to activate "${room?.name}"?`,
+      confirmText: 'Activate',
+      onConfirm: async (room?: Room, context?) => {
+        if (!room || !context?.refresh) return;
+        try {
+          await roomsApiClient.update(room.id, { is_active: true });
+          await context.refresh();
+        } catch (error) {
+          console.error('Failed to activate room:', error);
+        }
+      },
+    },
+    {
+      id: 'deactivate',
+      label: 'Deactivate',
+      icon: <XCircle className="h-4 w-4" />,
+      actionType: 'confirm',
+      variant: 'secondary',
+      position: 'row',
+      visible: (room?: Room) => room?.is_active === true,
+      confirmMessage: (room?: Room) =>
+        `Are you sure you want to deactivate "${room?.name}"?`,
+      confirmText: 'Deactivate',
+      onConfirm: async (room?: Room, context?) => {
+        if (!room || !context?.refresh) return;
+        try {
+          await roomsApiClient.update(room.id, { is_active: false });
+          await context.refresh();
+        } catch (error) {
+          console.error('Failed to deactivate room:', error);
+        }
       },
     },
     {
       id: 'delete',
       label: 'Delete',
-      icon: Trash2,
+      icon: <Trash2 className="h-4 w-4" />,
       actionType: 'confirm',
+      variant: 'destructive',
       position: 'row',
-      confirmTitle: 'Delete Room',
-      confirmMessage: (room?: Room) => `Are you sure you want to delete "${room!.name}"? This action cannot be undone.`,
-      onConfirm: async (room?: Room) => {
-        await roomsClient.delete(room!.id);
+      confirmMessage: (room?: Room) => 
+        `Are you sure you want to delete "${room?.name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      onConfirm: async (room?: Room, context?) => {
+        if (!room || !context?.refresh) return;
+        try {
+          await roomsApiClient.delete(room.id);
+          await context.refresh();
+        } catch (error) {
+          console.error('Failed to delete room:', error);
+        }
       },
-      variant: 'destructive',
     },
+
+    // ===========================
+    // Bulk Actions
+    // ===========================
     {
-      id: 'bulk-activate',
+      id: 'bulkActivate',
       label: 'Activate Selected',
-      icon: Power,
+      icon: <CheckCircle className="h-4 w-4" />,
       actionType: 'bulk',
+      variant: 'primary',
       position: 'toolbar',
-      handler: async (rooms: Room[]) => {
-        await Promise.all(
-          rooms.map((room: Room) => roomsClient.update(room.id, { is_active: true } as Partial<Room>))
-        );
+      confirmBulk: true,
+      bulkConfirmMessage: (count: number) => 
+        `Are you sure you want to activate ${count} room(s)?`,
+      handler: async (rooms: Room[], context) => {
+        if (!context?.refresh) return;
+        try {
+          await Promise.all(
+            rooms.map(room => roomsApiClient.update(room.id, { is_active: true }))
+          );
+          await context.refresh();
+        } catch (error) {
+          console.error('Failed to bulk activate:', error);
+        }
       },
     },
     {
-      id: 'bulk-deactivate',
+      id: 'bulkDeactivate',
       label: 'Deactivate Selected',
-      icon: PowerOff,
+      icon: <XCircle className="h-4 w-4" />,
       actionType: 'bulk',
+      variant: 'secondary',
       position: 'toolbar',
-      handler: async (rooms: Room[]) => {
-        await Promise.all(
-          rooms.map((room: Room) => roomsClient.update(room.id, { is_active: false } as Partial<Room>))
-        );
+      confirmBulk: true,
+      bulkConfirmMessage: (count: number) => 
+        `Are you sure you want to deactivate ${count} room(s)?`,
+      handler: async (rooms: Room[], context) => {
+        if (!context?.refresh) return;
+        try {
+          await Promise.all(
+            rooms.map(room => roomsApiClient.update(room.id, { is_active: false }))
+          );
+          await context.refresh();
+        } catch (error) {
+          console.error('Failed to bulk deactivate:', error);
+        }
       },
-      variant: 'destructive',
     },
     {
-      id: 'bulk-delete',
+      id: 'bulkDelete',
       label: 'Delete Selected',
-      icon: Trash2,
+      icon: <Trash2 className="h-4 w-4" />,
       actionType: 'bulk',
-      position: 'toolbar',
-      handler: async (rooms: Room[]) => {
-        await Promise.all(rooms.map((room: Room) => roomsClient.delete(room.id)));
-      },
       variant: 'destructive',
-      requireConfirm: true,
-      confirmMessage: (rooms?: Room[]) => `Are you sure you want to delete ${rooms?.length ?? 0} rooms? This action cannot be undone.`,
+      position: 'toolbar',
+      confirmBulk: true,
+      bulkConfirmMessage: (count: number) => 
+        `Are you sure you want to delete ${count} room(s)? This action cannot be undone.`,
+      handler: async (rooms: Room[], context) => {
+        if (!context?.refresh) return;
+        try {
+          await Promise.all(rooms.map(room => roomsApiClient.delete(room.id)));
+          await context.refresh();
+        } catch (error) {
+          console.error('Failed to bulk delete:', error);
+        }
+      },
+    },
+
+    // ===========================
+    // Global Actions
+    // ===========================
+    {
+      id: 'exportRooms',
+      label: 'Export',
+      icon: <Download className="h-4 w-4" />,
+      actionType: 'download',
+      variant: 'secondary',
+      position: 'toolbar',
+      handler: async () => {
+        console.log('Exporting rooms');
+        // Export handled by EntityManager exporter
+      },
     },
   ],
+  mode: 'dropdown',
+  className: '',
 };
+
+// Legacy export for backward compatibility
+export const roomActions = RoomActionsConfig;
+export const roomActionsConfig = RoomActionsConfig;

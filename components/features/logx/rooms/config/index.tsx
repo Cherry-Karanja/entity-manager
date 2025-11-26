@@ -1,38 +1,113 @@
 /**
  * Room Configuration Index
- * Exports all room-related configurations
+ * 
+ * Main configuration file that exports all room management configurations.
  */
 
-export { roomFields } from './fields';
-export { roomColumns, roomColumns as roomListConfig } from './list';
-export { roomViewConfig } from './view';
-export { roomActions, roomActions as roomActionsConfig } from './actions';
-export { roomExportConfig } from './export';
+import { EntityConfig } from '@/components/entityManager/composition/config/types';
+import { Room } from '../../types';
+import { RoomFormConfig } from './fields';
+import { RoomListConfig } from './list';
+import { RoomViewConfig } from './view';
+import { RoomActionsConfig } from './actions';
+import { RoomExporterConfig } from './export';
 
-import { roomFields } from './fields';
-import { roomColumns } from './list';
-import { roomViewConfig } from './view';
-import { roomActions } from './actions';
-import { roomExportConfig } from './export';
-
-// Combined config object for EntityManager
-import type { EntityConfig } from '@/components/entityManager/composition/config/types';
-import type { Room } from '../../types';
-
+/**
+ * Complete room entity configuration for the Entity Manager
+ */
 export const roomConfig: EntityConfig<Room> = {
+  // ===========================
+  // Basic Metadata
+  // ===========================
   name: 'room',
   label: 'Room',
   labelPlural: 'Rooms',
-  description: 'Physical rooms and facilities',
-  list: { columns: roomColumns },
-  form: { fields: roomFields },
-  view: roomViewConfig,
-  actions: roomActions,
-  exporter: roomExportConfig,
+  description: 'Physical rooms and facilities for scheduling',
+
+  // ===========================
+  // List View Configuration
+  // ===========================
+  list: RoomListConfig,
+
+  // ===========================
+  // Form Configuration
+  // ===========================
+  form: RoomFormConfig,
+
+  // ===========================
+  // Detail View Configuration
+  // ===========================
+  view: RoomViewConfig,
+
+  // ===========================
+  // Actions Configuration
+  // ===========================
+  actions: RoomActionsConfig,
+
+  // ===========================
+  // Export Configuration
+  // ===========================
+  exporter: RoomExporterConfig,
+
+  // ===========================
+  // Validation
+  // ===========================
+  onValidate: async (values: Partial<Room>) => {
+    const errors: Record<string, string> = {};
+
+    if (!values.name?.trim()) {
+      errors.name = 'Room name is required';
+    }
+
+    if (!values.code?.trim()) {
+      errors.code = 'Room code is required';
+    }
+
+    if (!values.department) {
+      errors.department = 'Department is required';
+    }
+
+    if (!values.room_type) {
+      errors.room_type = 'Room type is required';
+    }
+
+    if (!values.capacity || values.capacity < 1) {
+      errors.capacity = 'Capacity must be at least 1';
+    }
+
+    return errors;
+  },
+
+  // Api endpoint
   apiEndpoint: '/api/v1/resources/rooms/',
+
+  // icon
   icon: 'DoorOpen',
-  permissions: { create: true, read: true, update: true, delete: true, export: true },
-  metadata: { category: 'scheduling', tags: ['rooms', 'resources'] },
+
+  // ===========================
+  // Permissions
+  // ===========================
+  permissions: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+    export: true,
+  },
+
+  // ===========================
+  // Additional Metadata
+  // ===========================
+  metadata: {
+    color: 'blue',
+    category: 'scheduling',
+    tags: ['rooms', 'resources', 'facilities'],
+  },
 };
 
-export default roomConfig;
+// Export all configurations
+export * from './fields';
+export * from './list';
+export * from './view';
+export * from './actions';
+export * from './export';

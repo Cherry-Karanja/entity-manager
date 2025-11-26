@@ -3,8 +3,23 @@
  * Main export file for rooms feature
  */
 
-export * from './config';
-export { roomConfig } from './config';
+export { roomsApiClient, roomsClient, roomActions } from './api/client';
+export {
+  roomConfig,
+  roomFields,
+  RoomFormConfig,
+  RoomListConfig,
+  roomListConfig,
+  roomColumns,
+  RoomViewConfig,
+  roomViewConfig,
+  roomViewFields,
+  roomViewGroups,
+  RoomActionsConfig,
+  roomActionsConfig,
+  RoomExporterConfig,
+  roomExportConfig,
+} from './config';
 
-// Re-export API client with expected name
-export { roomsClient as roomClient } from './api/client';
+// Re-export API client with expected name for backward compatibility
+export { roomsApiClient as roomClient } from './api/client';

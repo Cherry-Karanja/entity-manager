@@ -1,23 +1,26 @@
 /**
  * Penalty Rules Management Page
+ * 
+ * Main page for managing penalty rules using Entity Manager with Django backend integration.
  */
 
 'use client';
 
 import React, { useEffect } from 'react';
-import { EntityManager, EntityManagerView } from '@/components/entityManager';
-import { penaltyRuleListConfig, penaltyRuleViewConfig, penaltyRuleActionsConfig, penaltyRuleExportConfig } from '@/components/features/logx/penalty-rules/config';
-import { penaltyRuleFields } from '@/components/features/logx/penalty-rules/config/fields';
-import { default as penaltyRuleClient } from '@/components/features/logx/penalty-rules/api/client';
+import { EntityManager } from '@/components/entityManager';
+import { penaltyRuleConfig } from '@/components/features/logx/penalty-rules/config';
+import penaltyRuleClient from '@/components/features/logx/penalty-rules/api/client';
 import { Scale } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';
+import { EntityManagerView } from '@/components/entityManager';
 
 export default function PenaltyRulesPage() {
   const { setPageActions } = usePageActions();
   const [initialView, setInitialView] = React.useState<EntityManagerView>('list');
   const [initialId, setInitialId] = React.useState<string | number | undefined>(undefined);
 
+  // Set actions to display in the layout header
   useEffect(() => {
     setPageActions(
       <div className="flex gap-2">
@@ -25,6 +28,7 @@ export default function PenaltyRulesPage() {
           variant="default" 
           size="sm"
           onClick={() => {
+            console.log('Add Penalty Rule button clicked');
             setInitialView('create');
             setInitialId(undefined);
           }}
@@ -34,10 +38,14 @@ export default function PenaltyRulesPage() {
         </Button>
       </div>
     );
+
+    // Cleanup on unmount
     return () => setPageActions(null);
   }, [setPageActions]);
 
+  // Callback when view changes internally (e.g., back to list after submit)
   const handleViewChange = React.useCallback((newView: EntityManagerView) => {
+    console.log('View changed to:', newView);
     setInitialView(newView);
     if (newView === 'list') {
       setInitialId(undefined);
@@ -47,15 +55,7 @@ export default function PenaltyRulesPage() {
   return (
     <EntityManager
       config={{
-        config: {
-          entityName: 'Penalty Rule',
-          entityNamePlural: 'Penalty Rules',
-          fields: penaltyRuleFields,
-          list: penaltyRuleListConfig,
-          view: penaltyRuleViewConfig,
-          actions: penaltyRuleActionsConfig,
-          export: penaltyRuleExportConfig,
-        },
+        config: penaltyRuleConfig,
         apiClient: penaltyRuleClient,
         initialView: initialView,
         initialId: initialId,

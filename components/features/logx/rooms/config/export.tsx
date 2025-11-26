@@ -1,17 +1,13 @@
 /**
- * Room Export Configuration
- * Defines export fields for rooms
+ * Room Exporter Configuration
+ * 
+ * Defines export fields and options for rooms.
  */
 
-import type { EntityExporterConfig } from '@/components/entityManager/composition/config/types';
+import { EntityExporterConfig } from '@/components/entityManager/composition/config/types';
 import { Room, ROOM_TYPE_LABELS } from '../../types';
 
-export const roomExportConfig: EntityExporterConfig<Room> = {
-  options: {
-    format: 'csv',
-    filename: 'rooms',
-    includeHeaders: true,
-  },
+export const RoomExporterConfig: EntityExporterConfig<Room> = {
   fields: [
     { key: 'id', label: 'ID' },
     { key: 'code', label: 'Code' },
@@ -20,7 +16,7 @@ export const roomExportConfig: EntityExporterConfig<Room> = {
     {
       key: 'room_type',
       label: 'Type',
-      formatter: (value: unknown) => ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] || String(value),
+      formatter: (value: unknown) => String(ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] || value || ''),
     },
     { key: 'capacity', label: 'Capacity' },
     { key: 'building', label: 'Building' },
@@ -30,20 +26,47 @@ export const roomExportConfig: EntityExporterConfig<Room> = {
     {
       key: 'is_active',
       label: 'Status',
-      formatter: (value: unknown) => (value ? 'Active' : 'Inactive'),
+      formatter: (value: unknown) => ((value as boolean) ? 'Active' : 'Inactive'),
     },
     {
       key: 'allows_concurrent_bookings',
       label: 'Concurrent Bookings',
-      formatter: (value: unknown) => (value ? 'Yes' : 'No'),
+      formatter: (value: unknown) => ((value as boolean) ? 'Yes' : 'No'),
     },
     {
       key: 'requires_approval',
       label: 'Requires Approval',
-      formatter: (value: unknown) => (value ? 'Yes' : 'No'),
+      formatter: (value: unknown) => ((value as boolean) ? 'Yes' : 'No'),
     },
     { key: 'notes', label: 'Notes' },
-    { key: 'created_at', label: 'Created At' },
-    { key: 'updated_at', label: 'Updated At' },
+    { 
+      key: 'created_at', 
+      label: 'Created At',
+      formatter: (value: unknown) => value ? new Date(value as string).toLocaleString() : '-',
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Updated At',
+      formatter: (value: unknown) => value ? new Date(value as string).toLocaleString() : '-',
+    },
   ],
+
+  options: {
+    format: 'xlsx',
+    filename: 'rooms_export',
+    includeHeaders: true,
+    prettyPrint: true,
+    dateFormat: 'MM/DD/YYYY HH:mm:ss',
+    delimiter: ',',
+    sheetName: 'Rooms',
+  },
+
+  buttonLabel: 'Export Rooms',
+  showFormatSelector: true,
+  showFieldSelector: true,
+  className: 'btn btn-primary',
+  disabled: false,
 };
+
+// Legacy export for backward compatibility
+export const roomExportConfig = RoomExporterConfig;
