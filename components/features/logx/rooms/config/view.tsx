@@ -1,114 +1,182 @@
 /**
- * Room Detail View Configuration
- * Defines the layout for viewing room details
+ * Room View Field Configurations
+ * 
+ * Defines fields for the room detail view.
  */
 
-import type { EntityViewConfig } from '@/components/entityManager/composition/config/types';
+import { EntityViewConfig } from '@/components/entityManager/composition/config/types';
 import { Room, ROOM_TYPE_LABELS } from '../../types';
 import { Badge } from '@/components/ui/badge';
-import { LayoutGrid, Building2, Users, Clock, CheckCircle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 
-export const roomViewConfig: EntityViewConfig<Room> = {
-  fields: [],
-  title: (room?: Room) => room?.name || '',
-  subtitle: (room?: Room) => (room ? `Code: ${room.code}` : ''),
-  icon: <LayoutGrid />,
-  sections: [
+export const RoomViewConfig: EntityViewConfig<Room> = {
+  fields: [
+    {
+      key: 'code',
+      label: 'Room Code',
+      type: 'text',
+    },
+    {
+      key: 'name',
+      label: 'Room Name',
+      type: 'text',
+    },
+    {
+      key: 'room_type',
+      label: 'Room Type',
+      render: (entity) => {
+        const value = (entity as Room).room_type;
+        return (
+          <Badge variant="outline">
+            {ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] || String(value)}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'department_name',
+      label: 'Department',
+      type: 'text',
+      formatter: (value) => (value as string) || '-',
+    },
+    {
+      key: 'building',
+      label: 'Building',
+      type: 'text',
+      formatter: (value) => (value as string) || '-',
+    },
+    {
+      key: 'floor',
+      label: 'Floor',
+      type: 'text',
+      formatter: (value) => (value as string) || '-',
+    },
+    {
+      key: 'capacity',
+      label: 'Capacity',
+      type: 'number',
+      formatter: (value) => `${value} people`,
+    },
+    {
+      key: 'allows_concurrent_bookings',
+      label: 'Concurrent Bookings',
+      render: (entity) => {
+        const value = (entity as Room).allows_concurrent_bookings;
+        return (
+          <Badge variant={value ? 'default' : 'secondary'}>
+            {value ? 'Allowed' : 'Not Allowed'}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'requires_approval',
+      label: 'Requires Approval',
+      render: (entity) => {
+        const value = (entity as Room).requires_approval;
+        return (
+          <Badge variant={value ? 'destructive' : 'secondary'}>
+            {value ? 'Yes' : 'No'}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'operating_hours_start',
+      label: 'Operating Hours Start',
+      type: 'text',
+      formatter: (value) => (value as string) || 'Not set',
+    },
+    {
+      key: 'operating_hours_end',
+      label: 'Operating Hours End',
+      type: 'text',
+      formatter: (value) => (value as string) || 'Not set',
+    },
+    {
+      key: 'is_active',
+      label: 'Status',
+      render: (entity) => {
+        const value = (entity as Room).is_active;
+        return (
+          <Badge variant={value ? 'default' : 'secondary'} className={value ? 'bg-green-600 text-white' : ''}>
+            {value ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+            {value ? 'Active' : 'Inactive'}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'notes',
+      label: 'Notes',
+      type: 'text',
+      formatter: (value) => (value as string) || '-',
+    },
+    {
+      key: 'created_at',
+      label: 'Created At',
+      type: 'date',
+    },
+    {
+      key: 'updated_at',
+      label: 'Updated At',
+      type: 'date',
+    },
+  ],
+
+  groups: [
     {
       id: 'basic',
       label: 'Basic Information',
-      icon: <Building2 />,
-      fields: [
-        { key: 'code', label: 'Room Code' },
-        { key: 'name', label: 'Room Name' },
-        {
-          key: 'room_type',
-          label: 'Room Type',
-          render: (value: any) => (
-            <Badge variant="outline">
-              {ROOM_TYPE_LABELS[value as keyof typeof ROOM_TYPE_LABELS] || String(value)}
-            </Badge>
-          ),
-        },
-        {
-          key: 'department_name',
-          label: 'Department',
-          render: (value: any, row?: Room) => value || `Department ${row?.department}`,
-        },
-      ],
+      description: 'Room identification and type',
+      fields: ['code', 'name', 'room_type', 'department_name'],
+      collapsible: true,
+      order: 1,
     },
     {
       id: 'location',
       label: 'Location',
-      icon: Building2,
-      fields: [
-        { key: 'building', label: 'Building' },
-        { key: 'floor', label: 'Floor' },
-      ],
+      description: 'Building and floor information',
+      fields: ['building', 'floor'],
+      collapsible: true,
+      order: 2,
     },
     {
       id: 'capacity',
       label: 'Capacity & Usage',
-      icon: <Users />,
-      fields: [
-        {
-          key: 'capacity',
-          label: 'Capacity',
-          render: (value: any) => `${String(value)} people`,
-        },
-        {
-          key: 'allows_concurrent_bookings',
-          label: 'Concurrent Bookings',
-          render: (value: any) => (
-            <Badge variant={(value as boolean) ? 'default' : 'secondary'}>
-              {(value as boolean) ? 'Allowed' : 'Not Allowed'}
-            </Badge>
-          ),
-        },
-        {
-          key: 'requires_approval',
-          label: 'Requires Approval',
-          render: (value: any) => (
-            <Badge variant={(value as boolean) ? 'destructive' : 'secondary'}>
-              {(value as boolean) ? 'Yes' : 'No'}
-            </Badge>
-          ),
-        },
-      ],
+      description: 'Room capacity and booking settings',
+      fields: ['capacity', 'allows_concurrent_bookings', 'requires_approval'],
+      collapsible: true,
+      order: 3,
     },
     {
       id: 'hours',
       label: 'Operating Hours',
-      icon: <Clock />,
-      fields: [
-        {
-          key: 'operating_hours_start',
-          label: 'Start Time',
-          render: (value: any) => (value ? String(value) : 'Not set'),
-        },
-        {
-          key: 'operating_hours_end',
-          label: 'End Time',
-          render: (value: any) => (value ? String(value) : 'Not set'),
-        },
-      ],
+      description: 'Room availability hours',
+      fields: ['operating_hours_start', 'operating_hours_end'],
+      collapsible: true,
+      order: 4,
     },
     {
       id: 'status',
-      label: 'Status',
-      icon: <CheckCircle />,
-      fields: [
-        {
-          key: 'is_active',
-          label: 'Status',
-          render: (value: any) => (
-            <Badge variant={(value as boolean) ? 'default' : 'secondary'}>
-              {(value as boolean) ? 'Active' : 'Inactive'}
-            </Badge>
-          ),
-        },
-        { key: 'notes', label: 'Notes' },
-      ],
+      label: 'Status & Notes',
+      description: 'Active status and timestamps',
+      fields: ['is_active', 'notes', 'created_at', 'updated_at'],
+      collapsible: true,
+      order: 5,
     },
   ],
+
+  mode: 'detail',
+  showMetadata: true,
+
+  titleField: 'name',
+  subtitleField: 'code',
+
+  actions: [],
 };
+
+// Convenience exports for backward compatibility
+export const roomViewFields = RoomViewConfig.fields;
+export const roomViewGroups = RoomViewConfig.groups;
+export const roomViewConfig = RoomViewConfig;
