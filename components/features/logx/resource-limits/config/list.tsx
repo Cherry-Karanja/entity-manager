@@ -12,7 +12,6 @@ import {
   PERIOD_TYPE_LABELS 
 } from "../../types";
 import { Badge } from "@/components/ui/badge";
-import { ResourceLimitActionsConfig } from './actions';
 
 export const ResourceLimitListConfig: EntityListConfig<ResourceLimit> = {
   columns: [
@@ -154,8 +153,6 @@ export const ResourceLimitListConfig: EntityListConfig<ResourceLimit> = {
   searchPlaceholder: 'Search resource limits...',
 
   emptyMessage: 'No resource limits found.',
-
-  actions: ResourceLimitActionsConfig as any,
 
   hover: true,
   striped: true,

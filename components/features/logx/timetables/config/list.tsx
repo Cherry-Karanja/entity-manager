@@ -8,7 +8,6 @@ import { EntityListConfig } from '@/components/entityManager/composition/config/
 import { Timetable, DAY_OF_WEEK_LABELS } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle } from 'lucide-react';
-import { TimetableActionsConfig } from './actions';
 
 export const TimetableListConfig: EntityListConfig<Timetable> = {
   columns: [
@@ -129,8 +128,6 @@ export const TimetableListConfig: EntityListConfig<Timetable> = {
   searchPlaceholder: 'Search timetables...',
 
   emptyMessage: 'No timetables found.',
-
-  actions: TimetableActionsConfig as any,
 
   hover: true,
   striped: true,

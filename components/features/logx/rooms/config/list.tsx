@@ -8,7 +8,6 @@ import { EntityListConfig } from '@/components/entityManager/composition/config/
 import { Room, ROOM_TYPE_LABELS } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle } from 'lucide-react';
-import { RoomActionsConfig } from './actions';
 
 export const RoomListConfig: EntityListConfig<Room> = {
   columns: [
@@ -117,8 +116,6 @@ export const RoomListConfig: EntityListConfig<Room> = {
   searchPlaceholder: 'Search rooms...',
 
   emptyMessage: 'No rooms found.',
-
-  actions: RoomActionsConfig as any,
 
   hover: true,
   striped: true,
