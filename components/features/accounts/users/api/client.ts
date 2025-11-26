@@ -40,7 +40,12 @@ import { User } from '../../types';
  * await usersApiClient.bulkDelete([1, 2, 3]);
  * ```
  */
-export const usersApiClient = createHttpClient<User>({
+export const usersApiClient = createHttpClient<User, {
+  approve: User;
+  change_role: User;
+  unlock: User;
+  reset_password: { message?: string } | User;
+}>({
   endpoint: '/api/v1/accounts/users/',
 });
 

@@ -1,7 +1,8 @@
-import { FieldConfig } from "@/components/entityManager";
+import type { FormField } from "@/components/entityManager/components/form/types";
+import { authApi } from '@/components/connectionManager/http/client';
 import { VIOLATION_TYPE_LABELS } from "../../types";
 
-export const penaltyRuleFields: FieldConfig[] = [
+export const penaltyRuleFields: FormField[] = [
   {
     name: "name",
     label: "Rule Name",
@@ -13,13 +14,21 @@ export const penaltyRuleFields: FieldConfig[] = [
   {
     name: "timetable",
     label: "Timetable",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select timetable",
     helpText: "The timetable this rule applies to",
-    endpoint: "/api/v1/logx/timetabling/timetables/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: "timetables",
+      displayField: "name",
+      valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/logx/timetabling/timetables/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+    },
   },
   {
     name: "violation_type",
@@ -66,8 +75,9 @@ export const penaltyRuleFields: FieldConfig[] = [
   {
     name: "is_active",
     label: "Active",
-    type: "checkbox",
+    type: "switch",
     helpText: "Only active rules are used in penalty calculations",
+    defaultValue: true,
   },
   {
     name: "description",

@@ -3,10 +3,11 @@
  * Defines the form fields for creating and editing timetables
  */
 
-import { FieldDefinition } from '@/components/entityManager';
+import { FormField } from '@/components/entityManager/components/form/types';
+import { authApi } from '@/components/connectionManager/http/client';
 import { Timetable, DAY_OF_WEEK_LABELS } from '../../types';
 
-export const timetableFields: FieldDefinition<Timetable>[] = [
+export const timetableFields: FormField<Timetable>[] = [
   {
     name: 'name',
     label: 'Timetable Name',
@@ -14,33 +15,45 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     required: true,
     placeholder: 'Enter timetable name',
     description: 'Name of the timetable',
-    gridColumn: 'span 12',
+    width: 'span 12',
   },
   {
     name: 'academic_year',
     label: 'Academic Year',
     type: 'relationship',
     required: true,
-    relationship: {
-      endpoint: '/api/v1/institution/academic-years/',
+    relationConfig: {
+      entity: 'academic-years',
+      displayField: 'name',
       valueField: 'id',
-      labelField: 'name',
-      searchable: true,
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/institution/academic-years/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+      searchFields: ['name'],
     },
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
   {
     name: 'term',
     label: 'Term',
     type: 'relationship',
     required: true,
-    relationship: {
-      endpoint: '/api/v1/institution/terms/',
+    relationConfig: {
+      entity: 'terms',
+      displayField: 'name',
       valueField: 'id',
-      labelField: 'name',
-      searchable: true,
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/institution/terms/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+      searchFields: ['name'],
     },
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
   {
     name: 'start_date',
@@ -48,7 +61,7 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     type: 'date',
     required: true,
     description: 'Start date of the timetable period',
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
   {
     name: 'end_date',
@@ -56,7 +69,7 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     type: 'date',
     required: true,
     description: 'End date of the timetable period',
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
   {
     name: 'working_hours_start',
@@ -65,7 +78,7 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     required: true,
     defaultValue: '08:00',
     description: 'Start time of working hours',
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
   {
     name: 'working_hours_end',
@@ -74,7 +87,7 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     required: true,
     defaultValue: '17:00',
     description: 'End time of working hours',
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
   {
     name: 'working_days',
@@ -87,7 +100,7 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     })),
     defaultValue: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
     description: 'Days when classes can be scheduled',
-    gridColumn: 'span 12',
+    width: 'span 12',
   },
   {
     name: 'is_active',
@@ -95,7 +108,7 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     type: 'switch',
     defaultValue: false,
     description: 'Whether this timetable is currently active',
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
   {
     name: 'version',
@@ -104,6 +117,6 @@ export const timetableFields: FieldDefinition<Timetable>[] = [
     defaultValue: 1,
     disabled: true,
     description: 'Version number for regeneration tracking',
-    gridColumn: 'span 6',
+    width: 'span 6',
   },
 ];

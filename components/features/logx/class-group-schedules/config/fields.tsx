@@ -1,61 +1,102 @@
-import { FieldConfig } from "@/components/entityManager";
+import type { FormField } from "@/components/entityManager/components/form/types";
 import { DAY_OF_WEEK_LABELS } from "../../types";
+import { authApi } from '@/components/connectionManager/http/client';
 
-export const classGroupScheduleFields: FieldConfig[] = [
+export const classGroupScheduleFields: FormField[] = [
   {
     name: "timetable",
     label: "Timetable",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select timetable",
     helpText: "The timetable this schedule belongs to",
-    endpoint: "/api/v1/logx/timetabling/timetables/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: "timetables",
+      displayField: "name",
+      valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/logx/timetabling/timetables/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+    },
   },
   {
     name: "class_group",
     label: "Class Group",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select class group",
     helpText: "The class group for this schedule",
-    endpoint: "/api/v1/institution/class-groups/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: "class-groups",
+      displayField: "name",
+      valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/institution/class-groups/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+    },
   },
   {
     name: "unit",
     label: "Unit",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select unit",
     helpText: "The subject/unit being taught",
-    endpoint: "/api/v1/academics/units/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: "units",
+      displayField: "name",
+      valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/academics/units/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+    },
   },
   {
     name: "instructor",
     label: "Instructor",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select instructor",
     helpText: "The teacher/instructor for this class",
-    endpoint: "/api/v1/accounts/staff/",
-    displayField: "full_name",
-    valueField: "id",
+    relationConfig: {
+      entity: "staff",
+      displayField: "full_name",
+      valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/accounts/staff/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+    },
   },
   {
     name: "room",
     label: "Room",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select room",
     helpText: "The room where the class will be held",
-    endpoint: "/api/v1/logx/resources/rooms/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: "rooms",
+      displayField: "name",
+      valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/logx/resources/rooms/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+    },
   },
   {
     name: "day_of_week",

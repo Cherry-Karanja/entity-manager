@@ -5,7 +5,11 @@
 import { createHttpClient } from '@/components/entityManager';
 import { Term } from '../../types';
 
-export const termsApiClient = createHttpClient<Term>({
+export const termsApiClient = createHttpClient<Term, {
+  activate: Term;
+  deactivate: Term;
+  current: Term;
+}>({
   endpoint: '/api/v1/institution/terms/',
 });
 

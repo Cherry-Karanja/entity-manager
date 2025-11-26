@@ -1,7 +1,8 @@
-import { FieldConfig } from "@/components/entityManager";
+import type { FormField } from "@/components/entityManager/components/form/types";
 import { RESOURCE_TYPE_LABELS } from "../../types";
+import { authApi } from '@/components/connectionManager/http/client';
 
-export const virtualResourceFields: FieldConfig[] = [
+export const virtualResourceFields: FormField[] = [
   {
     name: "name",
     label: "Resource Name",
@@ -21,13 +22,21 @@ export const virtualResourceFields: FieldConfig[] = [
   {
     name: "timetable",
     label: "Timetable",
-    type: "select",
+    type: "relation",
     required: true,
     placeholder: "Select timetable",
     helpText: "The timetable this resource is associated with",
-    endpoint: "/api/v1/logx/timetabling/timetables/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: "timetables",
+      displayField: "name",
+      valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/logx/timetabling/timetables/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+    },
   },
   {
     name: "resource_type",

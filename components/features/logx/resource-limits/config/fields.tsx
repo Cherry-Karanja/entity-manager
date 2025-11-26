@@ -1,4 +1,5 @@
-import type { FieldConfig } from "@/components/entityManager";
+import type { FormField } from "@/components/entityManager";
+import { authApi } from '@/components/connectionManager/http/client';
 import { 
   ENTITY_TYPE_LABELS, 
   RESOURCE_TYPE_LABELS, 
@@ -6,7 +7,7 @@ import {
 } from "../../types";
 import type { ResourceLimit } from "../../types";
 
-export const resourceLimitFields: FieldConfig<ResourceLimit>[] = [
+export const resourceLimitFields: FormField<ResourceLimit>[] = [
   {
     name: "timetable",
     label: "Timetable",
@@ -14,10 +15,16 @@ export const resourceLimitFields: FieldConfig<ResourceLimit>[] = [
     required: true,
     placeholder: "Select timetable",
     description: "The timetable this limit applies to",
-    fetchOptions: {
-      url: "/api/v1/logx/timetabling/timetables/",
-      labelField: "name",
+    relationConfig: {
+      entity: "timetables",
+      displayField: "name",
       valueField: "id",
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/logx/timetabling/timetables/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
     },
   },
   {

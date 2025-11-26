@@ -3,6 +3,7 @@
  */
 
 import { EntityFormConfig } from '@/components/entityManager/composition/config/types';
+import { authApi } from '@/components/connectionManager/http/client';
 import { Programme } from '../../types';
 
 export const ProgrammeFormConfig: EntityFormConfig<Programme> = {
@@ -51,15 +52,21 @@ export const ProgrammeFormConfig: EntityFormConfig<Programme> = {
     {
       name: 'department',
       label: 'Department',
-      type: 'relationship',
+      type: 'relation',
       required: true,
       placeholder: 'Select department',
       group: 'basic',
-      relationshipConfig: {
-        endpoint: '/api/v1/institution/departments/',
-        labelField: 'name',
+      relationConfig: {
+        entity: 'departments',
+        displayField: 'name',
         valueField: 'id',
-        searchField: 'search',
+        searchFields: ['search'],
+        fetchOptions: async (query?: string) => {
+          const params = query ? { params: { search: query } } : undefined;
+          const resp = await authApi.get('/api/v1/institution/departments/', params as any);
+          const data = resp.data;
+          return (Array.isArray(data) ? data : data.results ?? data.data ?? []) as any[];
+        },
       },
       width: '100%',
     },
@@ -74,5 +81,5 @@ export const ProgrammeFormConfig: EntityFormConfig<Programme> = {
     },
   ],
 
-  layout: 'standard',
+  layout: 'vertical',
 };

@@ -1,6 +1,7 @@
-import { FieldConfig } from "@/components/entityManager";
+import { FormField } from '@/components/entityManager/components/form/types';
+import { authApi } from '@/components/connectionManager/http/client';
 
-export const timetableSettingsFields: FieldConfig[] = [
+export const timetableSettingsFields: FormField<any>[] = [
   {
     name: "name",
     label: "Settings Name",
@@ -16,9 +17,18 @@ export const timetableSettingsFields: FieldConfig[] = [
     required: true,
     placeholder: "Select institution",
     helpText: "The institution these settings apply to",
-    endpoint: "/api/v1/institution/institutions/",
-    displayField: "name",
-    valueField: "id",
+    relationConfig: {
+      entity: 'institutions',
+      displayField: 'name',
+      valueField: 'id',
+      fetchOptions: async (search?: string) => {
+        const params = search ? { params: { search } } : undefined;
+        const resp = await authApi.get('/api/v1/institution/institutions/', params as any);
+        const data = resp.data;
+        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
+      },
+      searchFields: ['name'],
+    },
   },
   {
     name: "max_lessons_per_day",
