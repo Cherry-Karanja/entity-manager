@@ -112,8 +112,6 @@ export interface BreakPeriod {
  */
 export interface Timetable extends BaseEntity {
   name: string;
-  academic_year: number;
-  academic_year_name?: string;
   term: number;
   term_name?: string;
   is_active: boolean;

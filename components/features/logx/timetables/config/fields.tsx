@@ -29,27 +29,6 @@ export const timetableFields: FormField<Timetable>[] = [
     width: '100%',
   },
   {
-    name: 'academic_year',
-    label: 'Academic Year',
-    type: 'relation',
-    required: true,
-    placeholder: 'Select academic year',
-    group: 'basic',
-    relationConfig: {
-      entity: 'academic-years',
-      displayField: 'year',
-      valueField: 'id',
-      fetchOptions: async (search?: string) => {
-        const params = search ? { params: { search } } : undefined;
-        const resp = await authApi.get('/api/v1/institution/academic-years/', params as Record<string, unknown> | undefined);
-        const data = resp.data;
-        return Array.isArray(data) ? data : data.results ?? data.data ?? [];
-      },
-      searchFields: ['year'],
-    },
-    width: '50%',
-  },
-  {
     name: 'term',
     label: 'Term',
     type: 'relation',

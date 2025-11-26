@@ -1,7 +1,8 @@
 "use strict";
 /**
  * Timetable Form Field Definitions
- * Defines the form fields for creating and editing timetables
+ *
+ * Defines the form fields for creating and editing timetables.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -40,52 +41,35 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.timetableFields = void 0;
+exports.TimetableFormConfig = exports.timetableFields = void 0;
 var client_1 = require("@/components/connectionManager/http/client");
 var types_1 = require("../../types");
+var lucide_react_1 = require("lucide-react");
 exports.timetableFields = [
+    // ===========================
+    // Basic Information
+    // ===========================
     {
         name: 'name',
         label: 'Timetable Name',
         type: 'text',
         required: true,
         placeholder: 'Enter timetable name',
-        description: 'Name of the timetable',
-        width: 'span 12'
-    },
-    {
-        name: 'academic_year',
-        label: 'Academic Year',
-        type: 'relationship',
-        required: true,
-        relationConfig: {
-            entity: 'academic-years',
-            displayField: 'name',
-            valueField: 'id',
-            fetchOptions: function (search) { return __awaiter(void 0, void 0, void 0, function () {
-                var params, resp, data;
-                var _a, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
-                        case 0:
-                            params = search ? { params: { search: search } } : undefined;
-                            return [4 /*yield*/, client_1.authApi.get('/api/v1/institution/academic-years/', params)];
-                        case 1:
-                            resp = _c.sent();
-                            data = resp.data;
-                            return [2 /*return*/, Array.isArray(data) ? data : (_b = (_a = data.results) !== null && _a !== void 0 ? _a : data.data) !== null && _b !== void 0 ? _b : []];
-                    }
-                });
-            }); },
-            searchFields: ['name']
-        },
-        width: 'span 6'
+        group: 'basic',
+        validation: [
+            { type: 'required', message: 'Timetable name is required' },
+            { type: 'minLength', value: 3, message: 'Name must be at least 3 characters' },
+        ],
+        helpText: 'A descriptive name for this timetable',
+        width: '100%'
     },
     {
         name: 'term',
         label: 'Term',
-        type: 'relationship',
+        type: 'relation',
         required: true,
+        placeholder: 'Select term',
+        group: 'basic',
         relationConfig: {
             entity: 'terms',
             displayField: 'name',
@@ -107,47 +91,35 @@ exports.timetableFields = [
             }); },
             searchFields: ['name']
         },
-        width: 'span 6'
+        width: '50%'
     },
+    // ===========================
+    // Schedule Period
+    // ===========================
     {
         name: 'start_date',
         label: 'Start Date',
         type: 'date',
         required: true,
-        description: 'Start date of the timetable period',
-        width: 'span 6'
+        group: 'schedule',
+        helpText: 'Start date of the timetable period',
+        width: '50%'
     },
     {
         name: 'end_date',
         label: 'End Date',
         type: 'date',
         required: true,
-        description: 'End date of the timetable period',
-        width: 'span 6'
-    },
-    {
-        name: 'working_hours_start',
-        label: 'Working Hours Start',
-        type: 'time',
-        required: true,
-        defaultValue: '08:00',
-        description: 'Start time of working hours',
-        width: 'span 6'
-    },
-    {
-        name: 'working_hours_end',
-        label: 'Working Hours End',
-        type: 'time',
-        required: true,
-        defaultValue: '17:00',
-        description: 'End time of working hours',
-        width: 'span 6'
+        group: 'schedule',
+        helpText: 'End date of the timetable period',
+        width: '50%'
     },
     {
         name: 'working_days',
         label: 'Working Days',
         type: 'multiselect',
         required: true,
+        group: 'schedule',
         options: Object.entries(types_1.DAY_OF_WEEK_LABELS).map(function (_a) {
             var value = _a[0], label = _a[1];
             return ({
@@ -156,24 +128,96 @@ exports.timetableFields = [
             });
         }),
         defaultValue: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
-        description: 'Days when classes can be scheduled',
-        width: 'span 12'
+        helpText: 'Days when classes can be scheduled',
+        width: '100%'
     },
+    // ===========================
+    // Working Hours
+    // ===========================
+    {
+        name: 'working_hours_start',
+        label: 'Working Hours Start',
+        type: 'time',
+        required: true,
+        defaultValue: '08:00',
+        group: 'hours',
+        helpText: 'Start time of working hours',
+        width: '50%'
+    },
+    {
+        name: 'working_hours_end',
+        label: 'Working Hours End',
+        type: 'time',
+        required: true,
+        defaultValue: '17:00',
+        group: 'hours',
+        helpText: 'End time of working hours',
+        width: '50%'
+    },
+    // ===========================
+    // Status
+    // ===========================
     {
         name: 'is_active',
         label: 'Active',
         type: 'switch',
+        required: false,
+        group: 'status',
         defaultValue: false,
-        description: 'Whether this timetable is currently active',
-        width: 'span 6'
+        helpText: 'Whether this timetable is currently active',
+        width: '50%'
     },
     {
         name: 'version',
         label: 'Version',
         type: 'number',
+        required: false,
+        group: 'status',
         defaultValue: 1,
         disabled: true,
-        description: 'Version number for regeneration tracking',
-        width: 'span 6'
+        helpText: 'Version number for regeneration tracking',
+        width: '50%'
     },
 ];
+exports.TimetableFormConfig = {
+    fields: exports.timetableFields,
+    layout: 'tabs',
+    sections: [
+        {
+            id: 'basic',
+            label: 'Basic Information',
+            description: 'Timetable name and academic period',
+            fields: ['name', 'academic_year', 'term'],
+            icon: React.createElement(lucide_react_1.Calendar, { className: "h-4 w-4" }),
+            order: 1
+        },
+        {
+            id: 'schedule',
+            label: 'Schedule Period',
+            description: 'Date range and working days',
+            fields: ['start_date', 'end_date', 'working_days'],
+            icon: React.createElement(lucide_react_1.Calendar, { className: "h-4 w-4" }),
+            order: 2
+        },
+        {
+            id: 'hours',
+            label: 'Working Hours',
+            description: 'Daily time boundaries',
+            fields: ['working_hours_start', 'working_hours_end'],
+            icon: React.createElement(lucide_react_1.Clock, { className: "h-4 w-4" }),
+            order: 3
+        },
+        {
+            id: 'status',
+            label: 'Status',
+            description: 'Activation and version info',
+            fields: ['is_active', 'version'],
+            icon: React.createElement(lucide_react_1.Settings, { className: "h-4 w-4" }),
+            order: 4
+        },
+    ],
+    submitText: 'Save Timetable',
+    cancelText: 'Cancel',
+    showCancel: true,
+    showReset: true
+};
