@@ -1,8 +1,4 @@
-/**
- * Timetable View Page
- */
-
-'use client';
+"use client";
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -41,8 +37,8 @@ export default function TimetableViewPage() {
     fetchTimetable();
   }, [id]);
 
-  const handleBack = () => router.push('/dashboard/scheduling/timetables');
-  const handleEdit = () => router.push(`/dashboard/scheduling/timetables/${id}/edit`);
+  const handleBack = () => router.push('/dashboard/timetables');
+  const handleEdit = () => router.push(`/dashboard/timetables/${id}/editor`);
 
   if (loading) {
     return <div className="flex items-center justify-center h-96"><div className="text-muted-foreground">Loading...</div></div>;

@@ -122,6 +122,8 @@ export interface Timetable extends BaseEntity {
   working_hours_end: string;
   break_periods: BreakPeriod[];
   generation_task_id?: string;
+  generation_status?: 'pending' | 'in_progress' | 'completed' | 'failed';
+  generation_errors?: string[];
   version: number;
 }
 
@@ -158,6 +160,30 @@ export interface TimetableSettings extends BaseEntity {
   max_consecutive_classes: number;
   prioritize_room_capacity: boolean;
   allow_room_sharing: boolean;
+  max_daily_hours_per_class?: number;
+  max_consecutive_hours_same_course?: number;
+  max_daily_hours_per_trainer?: number;
+
+  respect_lunch_break?: boolean;
+  lunch_break_start?: string;
+  lunch_break_duration_minutes?: number;
+
+  penalty_weight_day_off?: number;
+  penalty_weight_session_type_seq?: number;
+  penalty_weight_preferred_room?: number;
+  penalty_weight_lunch_border?: number;
+
+  weight_distribute_sessions?: number;
+  weight_morning_theory?: number;
+  weight_afternoon_practical?: number;
+
+  max_virtual_rooms?: number;
+  allow_room_overrides?: boolean;
+
+  enabled_days?: DayOfWeek[];
+  start_hour?: string;
+  end_hour?: string;
+  break_periods?: BreakPeriod[];
 }
 
 /**
