@@ -13,7 +13,8 @@ import {
   Eye, 
   CheckCircle, 
   XCircle,
-  Download
+  Download,
+  Calendar
 } from 'lucide-react';
 
 export const RoomActionsConfig: EntityActionsConfig<Room> = {
@@ -78,6 +79,15 @@ export const RoomActionsConfig: EntityActionsConfig<Room> = {
           console.error('Failed to deactivate room:', error);
         }
       },
+    },
+    {
+      id: 'viewTimetables',
+      label: 'View Timetables',
+      icon: <Calendar className="h-4 w-4" />,
+      actionType: 'navigation',
+      position: 'row',
+      variant: 'outline',
+      url: (room?: Room) => `/dashboard/timetables?room=${room!.id}`,
     },
     {
       id: 'delete',

@@ -8,6 +8,7 @@ import { EntityViewConfig } from '@/components/entityManager/composition/config/
 import { Timetable, DAY_OF_WEEK_LABELS } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { GenerationStatusBadge } from '../components/GenerationStatusDisplay';
 
 export const TimetableViewConfig: EntityViewConfig<Timetable> = {
   fields: [
@@ -80,6 +81,20 @@ export const TimetableViewConfig: EntityViewConfig<Timetable> = {
             {isActive ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
             {isActive ? 'Active' : 'Inactive'}
           </Badge>
+        );
+      },
+    },
+    {
+      key: 'generation_status',
+      label: 'Generation Status',
+      render: (entity) => {
+        const timetable = entity as Timetable;
+        const status = timetable.generation_status || 'pending';
+        return (
+          <GenerationStatusBadge 
+            status={status as any} 
+            isGenerating={status === 'in_progress'} 
+          />
         );
       },
     },

@@ -28,15 +28,18 @@ export const TimetableActionsConfig: EntityActionsConfig<Timetable> = {
       icon: <Eye className="h-4 w-4" />,
       actionType: 'navigation',
       position: 'row',
+      variant: 'default',
       url: (timetable?: Timetable) => `/dashboard/timetables/${timetable!.id}/viewer`,
+      visible: (timetable?: Timetable) => timetable?.generation_status === 'completed',
     },
     {
       id: 'edit',
-      label: 'Edit Schedule',
+      label: 'Edit Details',
       icon: <Edit className="h-4 w-4" />,
       actionType: 'navigation',
       position: 'row',
-      url: (timetable?: Timetable) => `/dashboard/timetables/${timetable!.id}/editor`,
+      variant: 'outline',
+      url: (timetable?: Timetable) => `/dashboard/timetables/${timetable!.id}`,
     },
     {
       id: 'activate',
@@ -82,23 +85,37 @@ export const TimetableActionsConfig: EntityActionsConfig<Timetable> = {
     },
     {
       id: 'regenerate',
-      label: 'Regenerate',
+      label: 'Generate',
       icon: <RefreshCw className="h-4 w-4" />,
       actionType: 'confirm',
       variant: 'outline',
       position: 'row',
+      visible: (timetable?: Timetable) => timetable?.generation_status !== 'in_progress',
       confirmMessage: (timetable?: Timetable) =>
-        `Are you sure you want to regenerate "${timetable?.name}"? This will create new schedules based on current enrollments and constraints.`,
-      confirmText: 'Regenerate',
+        `Are you sure you want to ${timetable?.generation_status === 'completed' ? 'regenerate' : 'generate'} "${timetable?.name}"? This will create new schedules based on current enrollments and constraints.`,
+      confirmText: timetable => timetable?.generation_status === 'completed' ? 'Regenerate' : 'Generate',
       onConfirm: async (timetable?: Timetable, context?) => {
         if (!timetable) return;
         try {
           await apiActions.regenerateTimetable(timetable.id as number, { use_optimization: true });
+          // Show toast notification
+          if (typeof window !== 'undefined') {
+            const toast = (window as any).toast;
+            if (toast) {
+              toast.loading('Generating timetable...', { id: `gen-${timetable.id}` });
+            }
+          }
           if (context?.refresh) {
             await context.refresh();
           }
         } catch (error) {
           console.error('Failed to regenerate timetable:', error);
+          if (typeof window !== 'undefined') {
+            const toast = (window as any).toast;
+            if (toast) {
+              toast.error('Failed to start generation', { id: `gen-${timetable.id}` });
+            }
+          }
         }
       },
     },

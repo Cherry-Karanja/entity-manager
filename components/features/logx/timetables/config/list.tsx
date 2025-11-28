@@ -8,6 +8,8 @@ import { EntityListConfig } from '@/components/entityManager/composition/config/
 import { Timetable } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { GenerationStatusBadge } from '../components/GenerationStatusDisplay';
+
 // navigation is handled by the consuming component; avoid calling hooks in config modules
 export const TimetableListConfig: EntityListConfig<Timetable> = {
   columns: [
@@ -55,6 +57,16 @@ export const TimetableListConfig: EntityListConfig<Timetable> = {
       label: 'Generation Status',
       width: '15%',
       align: 'center',
+      render: (entity) => {
+        const timetable = entity as Timetable;
+        const status = timetable.generation_status || 'pending';
+        return (
+          <GenerationStatusBadge 
+            status={status as any} 
+            isGenerating={status === 'in_progress'} 
+          />
+        );
+      },
     },
     {
       key: 'version',
@@ -127,7 +139,11 @@ export const TimetableListConfig: EntityListConfig<Timetable> = {
   onRowClick: (timetable) => {
     // Avoid React hooks in configuration files - perform navigation using window when running in browser
     if (typeof window !== 'undefined') {
-      window.location.href = `/dashboard/timetables/${timetable.id}/viewer`;
+      // Navigate to viewer if generation is complete, otherwise to detail page
+      const destination = timetable.generation_status === 'completed' 
+        ? `/dashboard/timetables/${timetable.id}/viewer`
+        : `/dashboard/timetables/${timetable.id}`;
+      window.location.href = destination;
     }
   },
 };

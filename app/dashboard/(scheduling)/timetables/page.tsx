@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { EntityManager } from '@/components/entityManager';
 import { timetableConfig } from '@/components/features/logx/timetables/config';
 import { timetablesApiClient } from '@/components/features/logx/timetables/api/client';
@@ -14,11 +14,43 @@ import { Calendar } from 'lucide-react';
 import { usePageActions } from '../../layout';
 import { Button } from '@/components/ui/button';
 import { EntityManagerView } from '@/components/entityManager';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function TimetablesPage() {
   const { setPageActions } = usePageActions();
   const [initialView, setInitialView] = React.useState<EntityManagerView>('list');
   const [initialId, setInitialId] = React.useState<string | number | undefined>(undefined);
+  const queryClient = useQueryClient();
+  const previousGeneratingCountRef = useRef(0);
+
+  // Poll for generating timetables to provide real-time status updates
+  const { data: generatingTimetables } = useQuery({
+    queryKey: ['generating-timetables'],
+    queryFn: async () => {
+      const response = await timetablesApiClient.list({ 
+        generation_status: 'in_progress',
+        page_size: 100 
+      });
+      return response;
+    },
+    refetchInterval: (data) => {
+      // Only poll if there are generating timetables
+      const results = (data as any)?.results || [];
+      return results.length > 0 ? 2000 : false;
+    },
+  });
+
+  // Refresh main list when generating timetables complete
+  useEffect(() => {
+    const currentCount = (generatingTimetables as any)?.results?.length || 0;
+    
+    if (currentCount === 0 && previousGeneratingCountRef.current > 0) {
+      // Timetables just finished generating, refresh the main list
+      queryClient.invalidateQueries({ queryKey: ['timetables'] });
+    }
+    
+    previousGeneratingCountRef.current = currentCount;
+  }, [generatingTimetables, queryClient]);
 
   // Set actions to display in the layout header
   useEffect(() => {
