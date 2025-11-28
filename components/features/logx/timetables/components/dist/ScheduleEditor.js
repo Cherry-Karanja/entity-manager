@@ -71,48 +71,51 @@ var pad = function (n) { return String(n).padStart(2, '0'); };
 var formatTime = function (h, m) { return pad(h) + ":" + pad(m); };
 function ScheduleEditor(_a) {
     var _this = this;
-    var _b, _c, _d, _e, _f;
+    var _b, _c, _d, _e, _f, _g;
     var timetableId = _a.timetableId;
-    var _g = react_1.useState([]), schedules = _g[0], setSchedules = _g[1];
-    var _h = react_1.useState([]), filteredSchedules = _h[0], setFilteredSchedules = _h[1];
-    var _j = react_1.useState(null), timetableSettings = _j[0], setTimetableSettings = _j[1];
-    var _k = react_1.useState(''), searchQuery = _k[0], setSearchQuery = _k[1];
-    var _l = react_1.useState(''), selectedRoom = _l[0], setSelectedRoom = _l[1];
-    var _m = react_1.useState(''), selectedGroup = _m[0], setSelectedGroup = _m[1];
-    var _o = react_1.useState(false), isFullscreen = _o[0], setIsFullscreen = _o[1];
+    var _h = react_1.useState([]), schedules = _h[0], setSchedules = _h[1];
+    var _j = react_1.useState([]), filteredSchedules = _j[0], setFilteredSchedules = _j[1];
+    var _k = react_1.useState(null), timetableSettings = _k[0], setTimetableSettings = _k[1];
+    var _l = react_1.useState(''), searchQuery = _l[0], setSearchQuery = _l[1];
+    var _m = react_1.useState(''), selectedRoom = _m[0], setSelectedRoom = _m[1];
+    var _o = react_1.useState(''), selectedGroup = _o[0], setSelectedGroup = _o[1];
+    var _p = react_1.useState(false), isFullscreen = _p[0], setIsFullscreen = _p[1];
     var showStats = true;
-    var _p = react_1.useState(null), hoveredSchedule = _p[0], setHoveredSchedule = _p[1];
+    var _q = react_1.useState(null), hoveredSchedule = _q[0], setHoveredSchedule = _q[1];
     var HOUR_PX = 60;
     var pixelsPerMinute = HOUR_PX / 60;
     var slotMinutes = (_b = timetableSettings === null || timetableSettings === void 0 ? void 0 : timetableSettings.slot_duration_minutes) !== null && _b !== void 0 ? _b : 60;
+    // Fixed session duration (defined by timetable settings). Sessions always use this length.
+    var fixedDuration = (_c = timetableSettings === null || timetableSettings === void 0 ? void 0 : timetableSettings.preferred_class_duration) !== null && _c !== void 0 ? _c : slotMinutes;
     var containerRef = react_1.useRef(null);
-    var _q = react_1.useState(150), columnWidth = _q[0], setColumnWidth = _q[1];
-    var _r = react_1.useState(null), draggingId = _r[0], setDraggingId = _r[1];
-    var _s = react_1.useState(null), preview = _s[0], setPreview = _s[1];
-    var _t = react_1.useState(null), pendingSave = _t[0], setPendingSave = _t[1];
-    var _u = react_1.useState(new Set()), conflictIds = _u[0], setConflictIds = _u[1];
-    var _v = react_1.useState(null), notification = _v[0], setNotification = _v[1];
-    var _w = react_1.useState([]), departments = _w[0], setDepartments = _w[1];
-    var _x = react_1.useState([]), programmes = _x[0], setProgrammes = _x[1];
-    var _y = react_1.useState([]), classGroupsOptions = _y[0], setClassGroupsOptions = _y[1];
-    var _z = react_1.useState([]), roomsOptions = _z[0], setRoomsOptions = _z[1];
-    var _0 = react_1.useState(undefined), selectedProgramme = _0[0], setSelectedProgramme = _0[1];
-    var _1 = react_1.useState(1), programmesPage = _1[0], setProgrammesPage = _1[1];
-    var _2 = react_1.useState(false), programmesHasMore = _2[0], setProgrammesHasMore = _2[1];
-    var _3 = react_1.useState(1), classGroupsPage = _3[0], setClassGroupsPage = _3[1];
-    var _4 = react_1.useState(false), classGroupsHasMore = _4[0], setClassGroupsHasMore = _4[1];
-    var _5 = react_1.useState(1), roomsPage = _5[0], setRoomsPage = _5[1];
-    var _6 = react_1.useState(false), roomsHasMore = _6[0], setRoomsHasMore = _6[1];
+    var _r = react_1.useState(150), columnWidth = _r[0], setColumnWidth = _r[1];
+    var _s = react_1.useState(null), draggingId = _s[0], setDraggingId = _s[1];
+    var _t = react_1.useState(null), preview = _t[0], setPreview = _t[1];
+    var _u = react_1.useState(null), pendingSave = _u[0], setPendingSave = _u[1];
+    var _v = react_1.useState(new Set()), conflictIds = _v[0], setConflictIds = _v[1];
+    var _w = react_1.useState('vertical'), stackingMode = _w[0], setStackingMode = _w[1];
+    var _x = react_1.useState(null), notification = _x[0], setNotification = _x[1];
+    var _y = react_1.useState([]), departments = _y[0], setDepartments = _y[1];
+    var _z = react_1.useState([]), programmes = _z[0], setProgrammes = _z[1];
+    var _0 = react_1.useState([]), classGroupsOptions = _0[0], setClassGroupsOptions = _0[1];
+    var _1 = react_1.useState([]), roomsOptions = _1[0], setRoomsOptions = _1[1];
+    var _2 = react_1.useState(undefined), selectedProgramme = _2[0], setSelectedProgramme = _2[1];
+    var _3 = react_1.useState(1), programmesPage = _3[0], setProgrammesPage = _3[1];
+    var _4 = react_1.useState(false), programmesHasMore = _4[0], setProgrammesHasMore = _4[1];
+    var _5 = react_1.useState(1), classGroupsPage = _5[0], setClassGroupsPage = _5[1];
+    var _6 = react_1.useState(false), classGroupsHasMore = _6[0], setClassGroupsHasMore = _6[1];
+    var _7 = react_1.useState(1), roomsPage = _7[0], setRoomsPage = _7[1];
+    var _8 = react_1.useState(false), roomsHasMore = _8[0], setRoomsHasMore = _8[1];
     var PAGE_SIZE = 25;
-    var _7 = react_1.useState(false), deptOpen = _7[0], setDeptOpen = _7[1];
-    var _8 = react_1.useState(false), programmeOpen = _8[0], setProgrammeOpen = _8[1];
-    var _9 = react_1.useState(false), groupOpen = _9[0], setGroupOpen = _9[1];
-    var _10 = react_1.useState(false), roomOpen = _10[0], setRoomOpen = _10[1];
-    var _11 = useDebounce_1.useDebounceSearch('', 300), deptSearchTerm = _11.searchTerm, debouncedDeptSearch = _11.debouncedSearchTerm, setDeptSearch = _11.setSearchTerm;
-    var _12 = useDebounce_1.useDebounceSearch('', 300), programmeSearchTerm = _12.searchTerm, debouncedProgrammeSearch = _12.debouncedSearchTerm, setProgrammeSearch = _12.setSearchTerm;
-    var _13 = useDebounce_1.useDebounceSearch('', 300), groupSearchTerm = _13.searchTerm, debouncedGroupSearch = _13.debouncedSearchTerm, setGroupSearch = _13.setSearchTerm;
-    var _14 = useDebounce_1.useDebounceSearch('', 300), roomSearchTerm = _14.searchTerm, debouncedRoomSearch = _14.debouncedSearchTerm, setRoomSearch = _14.setSearchTerm;
-    var _15 = react_1.useState(undefined), selectedDepartment = _15[0], setSelectedDepartment = _15[1];
+    var _9 = react_1.useState(false), deptOpen = _9[0], setDeptOpen = _9[1];
+    var _10 = react_1.useState(false), programmeOpen = _10[0], setProgrammeOpen = _10[1];
+    var _11 = react_1.useState(false), groupOpen = _11[0], setGroupOpen = _11[1];
+    var _12 = react_1.useState(false), roomOpen = _12[0], setRoomOpen = _12[1];
+    var _13 = useDebounce_1.useDebounceSearch('', 300), deptSearchTerm = _13.searchTerm, debouncedDeptSearch = _13.debouncedSearchTerm, setDeptSearch = _13.setSearchTerm;
+    var _14 = useDebounce_1.useDebounceSearch('', 300), programmeSearchTerm = _14.searchTerm, debouncedProgrammeSearch = _14.debouncedSearchTerm, setProgrammeSearch = _14.setSearchTerm;
+    var _15 = useDebounce_1.useDebounceSearch('', 300), groupSearchTerm = _15.searchTerm, debouncedGroupSearch = _15.debouncedSearchTerm, setGroupSearch = _15.setSearchTerm;
+    var _16 = useDebounce_1.useDebounceSearch('', 300), roomSearchTerm = _16.searchTerm, debouncedRoomSearch = _16.debouncedSearchTerm, setRoomSearch = _16.setSearchTerm;
+    var _17 = react_1.useState(undefined), selectedDepartment = _17[0], setSelectedDepartment = _17[1];
     var searchRef = react_1.useRef(null);
     var classGroupsReqRef = react_1.useRef(0);
     var roomsReqRef = react_1.useRef(0);
@@ -282,6 +285,7 @@ function ScheduleEditor(_a) {
             setClassGroupsHasMore(false);
             return;
         }
+        ;
         (function () { return __awaiter(_this, void 0, void 0, function () {
             var params, res, items_1, err_4;
             return __generator(this, function (_a) {
@@ -338,7 +342,8 @@ function ScheduleEditor(_a) {
             return;
         }
         var reqId = programmesReqRef.current + 1;
-        programmesReqRef.current = reqId(function () { return __awaiter(_this, void 0, void 0, function () {
+        programmesReqRef.current = reqId;
+        (function () { return __awaiter(_this, void 0, void 0, function () {
             var params, res, items_2, err_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -392,6 +397,7 @@ function ScheduleEditor(_a) {
             setRoomsHasMore(false);
             return;
         }
+        ;
         (function () { return __awaiter(_this, void 0, void 0, function () {
             var params, sg, derivedDept, res, items_3, err_6;
             var _a, _b;
@@ -507,10 +513,12 @@ function ScheduleEditor(_a) {
         return { totalClasses: totalClasses, roomsUsed: roomsUsed, groupsScheduled: groupsScheduled, lockedClasses: lockedClasses };
     }, [filteredSchedules]);
     // NOTE: filter option lists are provided by backend clients (departments, classGroupsOptions, roomsOptions)
-    var MAX_DISPLAY_COLUMNS = 3;
-    // Vertical stacking offset (px) applied per overlapping lane when in vertical stacking mode.
-    // Kept small so time alignment remains visually clear but items don't fully obscure each other.
-    var STACK_OFFSET_PX = Math.min(12, slotPx * 0.25);
+    // Max display columns (legacy) - kept for reference; current stacking uses dynamic offsets (unused)
+    // Vertical stacking offset (base px) applied per overlapping lane when in vertical stacking mode.
+    // Increased slightly so stacked items are more clearly separated for long events.
+    var STACK_OFFSET_PX = Math.min(16, slotPx * 0.4);
+    // Minimum padding inside slot boundaries so items don't touch separator lines
+    var PADDING_PX = 2;
     // Each logical slot maps to a fixed pixel height so schedule blocks align precisely
     var slotHeights = react_1.useMemo(function () { return Array.from({ length: slotsCount }).map(function () { return slotPx; }); }, [slotsCount, slotPx]);
     var totalHeight = react_1.useMemo(function () { return Math.max(48, slotsCount * slotPx); }, [slotsCount, slotPx]);
@@ -539,14 +547,14 @@ function ScheduleEditor(_a) {
     }, [slots.length, days.length]);
     function hasLocalOverlap(updated) {
         var updStart = timeStrToMinutes(updated.start_time);
-        var updEnd = timeStrToMinutes(updated.end_time);
+        var updEnd = updStart + fixedDuration;
         return schedules.some(function (s) {
             if (s.id === updated.id)
                 return false;
             if (s.day_of_week !== updated.day_of_week)
                 return false;
             var sStart = timeStrToMinutes(s.start_time);
-            var sEnd = timeStrToMinutes(s.end_time);
+            var sEnd = sStart + fixedDuration;
             return (sStart < updEnd && sEnd > updStart);
         });
     }
@@ -558,8 +566,8 @@ function ScheduleEditor(_a) {
         var minBreak = timetableSettings.min_break_between_classes || 0;
         var maxConsec = timetableSettings.max_consecutive_classes || 0;
         var start = timeStrToMinutes(updated.start_time);
-        var end = timeStrToMinutes(updated.end_time);
-        var duration = Math.max(1, end - start);
+        var duration = fixedDuration;
+        var end = start + duration;
         if (preferred > 0 && duration !== preferred) {
             violations.push("Duration " + duration + "m does not match preferred class duration of " + preferred + "m.");
         }
@@ -568,7 +576,7 @@ function ScheduleEditor(_a) {
             for (var _i = 0, sameGroup_1 = sameGroup; _i < sameGroup_1.length; _i++) {
                 var s = sameGroup_1[_i];
                 var sStart = timeStrToMinutes(s.start_time);
-                var sEnd = timeStrToMinutes(s.end_time);
+                var sEnd = sStart + fixedDuration;
                 var gap = Math.max(0, Math.min(Math.abs(sStart - end), Math.abs(start - sEnd)));
                 if (gap < minBreak) {
                     violations.push("Break between classes for this group is " + gap + "m which is less than the minimum " + minBreak + "m.");
@@ -578,7 +586,7 @@ function ScheduleEditor(_a) {
         }
         if (maxConsec > 0 && updated.class_group) {
             var sameDay = schedules.filter(function (s) { return s.id !== updated.id && s.day_of_week === updated.day_of_week && s.class_group === updated.class_group; });
-            var times = sameDay.map(function (s) { return ({ start: timeStrToMinutes(s.start_time), end: timeStrToMinutes(s.end_time) }); });
+            var times = sameDay.map(function (s) { return ({ start: timeStrToMinutes(s.start_time), end: timeStrToMinutes(s.start_time) + fixedDuration }); });
             times.push({ start: start, end: end });
             times.sort(function (a, b) { return a.start - b.start; });
             var consecutive = 1;
@@ -601,7 +609,7 @@ function ScheduleEditor(_a) {
     }
     function performSave(updated) {
         return __awaiter(this, void 0, void 0, function () {
-            var prev, err_7;
+            var prev, start, end, err_7;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -611,9 +619,11 @@ function ScheduleEditor(_a) {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
+                        start = timeStrToMinutes(updated.start_time);
+                        end = formatTime(Math.floor((start + fixedDuration) / 60), (start + fixedDuration) % 60);
                         return [4 /*yield*/, client_1.classGroupScheduleApi.update(updated.id, {
                                 start_time: updated.start_time,
-                                end_time: updated.end_time,
+                                end_time: end,
                                 day_of_week: updated.day_of_week
                             })];
                     case 2:
@@ -633,7 +643,7 @@ function ScheduleEditor(_a) {
     }
     function saveSchedule(updated) {
         return __awaiter(this, void 0, void 0, function () {
-            var localViolations, constraintViolations, serverConflicts, dayIdx, ttId, excludeId, resp, err_8;
+            var localViolations, constraintViolations, serverConflicts, dayIdx, ttId, excludeId, start_1, endTime_1, resp, err_8, start, endTime, toSave;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -650,7 +660,9 @@ function ScheduleEditor(_a) {
                         dayIdx = days.indexOf(updated.day_of_week);
                         ttId = Number(timetableId);
                         excludeId = updated.id ? Number(updated.id) : undefined;
-                        return [4 /*yield*/, client_1.classGroupScheduleApi.checkConflicts(ttId, dayIdx, updated.start_time, updated.end_time, excludeId)];
+                        start_1 = timeStrToMinutes(updated.start_time);
+                        endTime_1 = formatTime(Math.floor((start_1 + fixedDuration) / 60), (start_1 + fixedDuration) % 60);
+                        return [4 /*yield*/, client_1.classGroupScheduleApi.checkConflicts(ttId, dayIdx, updated.start_time, endTime_1, excludeId)];
                     case 2:
                         resp = _a.sent();
                         if (resp && resp.conflicts && resp.conflicts.length)
@@ -665,7 +677,10 @@ function ScheduleEditor(_a) {
                             setPendingSave({ updated: updated, localViolations: localViolations, serverConflicts: serverConflicts });
                             return [2 /*return*/];
                         }
-                        return [4 /*yield*/, performSave(updated)];
+                        start = timeStrToMinutes(updated.start_time);
+                        endTime = formatTime(Math.floor((start + fixedDuration) / 60), (start + fixedDuration) % 60);
+                        toSave = __assign(__assign({}, updated), { end_time: endTime });
+                        return [4 /*yield*/, performSave(toSave)];
                     case 5:
                         _a.sent();
                         return [2 /*return*/];
@@ -677,9 +692,8 @@ function ScheduleEditor(_a) {
         if (deltaDays === void 0) { deltaDays = 0; }
         try {
             var orig = parseTime(s.start_time);
-            var end = parseTime(s.end_time);
             var origTotal = orig.hh * 60 + orig.mm;
-            var duration = Math.max(slotMinutes, end.hh * 60 + end.mm - origTotal);
+            var duration = fixedDuration;
             var snap = slotMinutes;
             var newTotal = origTotal + deltaMins;
             newTotal = Math.round(newTotal / snap) * snap;
@@ -709,7 +723,9 @@ function ScheduleEditor(_a) {
         react_1["default"].createElement("div", { className: "mb-4 space-y-3" },
             react_1["default"].createElement("div", { className: "flex items-center justify-between" },
                 react_1["default"].createElement("h2", { className: "text-2xl font-bold" }, "Schedule Editor"),
-                react_1["default"].createElement("button", { onClick: function () { return setIsFullscreen(!isFullscreen); }, className: "p-2 hover:bg-gray-100 rounded-lg transition-colors", "aria-label": isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen' }, isFullscreen ? react_1["default"].createElement(lucide_react_1.Minimize2, { className: "w-5 h-5" }) : react_1["default"].createElement(lucide_react_1.Maximize2, { className: "w-5 h-5" }))),
+                react_1["default"].createElement("div", { className: "flex items-center gap-2" },
+                    react_1["default"].createElement("button", { onClick: function () { return setStackingMode(function (m) { return m === 'vertical' ? 'columns' : 'vertical'; }); }, className: "px-3 py-1 text-sm border rounded hover:bg-gray-100", title: "Toggle stacking mode" }, stackingMode === 'vertical' ? 'Stack: Vertical' : 'Stack: Columns'),
+                    react_1["default"].createElement("button", { onClick: function () { return setIsFullscreen(!isFullscreen); }, className: "p-2 hover:bg-gray-100 rounded-lg transition-colors", "aria-label": isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen' }, isFullscreen ? react_1["default"].createElement(lucide_react_1.Minimize2, { className: "w-5 h-5" }) : react_1["default"].createElement(lucide_react_1.Maximize2, { className: "w-5 h-5" })))),
             showStats && (react_1["default"].createElement(framer_motion_1.motion.div, { initial: { opacity: 0, y: -10 }, animate: { opacity: 1, y: 0 }, className: "grid grid-cols-4 gap-3" },
                 react_1["default"].createElement("div", { className: "bg-blue-50 p-3 rounded-lg" },
                     react_1["default"].createElement("div", { className: "text-xs text-blue-600 font-medium" }, "Total Classes"),
@@ -729,7 +745,7 @@ function ScheduleEditor(_a) {
                     react_1["default"].createElement("input", { type: "text", placeholder: "Search by class, room, or group...", value: searchQuery, onChange: function (e) { return setSearchQuery(e.target.value); }, ref: searchRef, className: "w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" })),
                 react_1["default"].createElement("div", { className: "flex flex-col" },
                     react_1["default"].createElement("div", { className: "relative" },
-                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setDeptOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedDepartment ? (((_c = departments.find(function (d) { return String(d.id || d.pk || d.name) === String(selectedDepartment); })) === null || _c === void 0 ? void 0 : _c.name) || selectedDepartment) : 'All Departments'),
+                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setDeptOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedDepartment ? (((_d = departments.find(function (d) { return String(d.id || d.pk || d.name) === String(selectedDepartment); })) === null || _d === void 0 ? void 0 : _d.name) || selectedDepartment) : 'All Departments'),
                         deptOpen && (react_1["default"].createElement("div", { className: "absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm" },
                             react_1["default"].createElement(command_1.Command, { className: "w-full" },
                                 react_1["default"].createElement(command_1.CommandInput, { value: deptSearchTerm, onValueChange: function (v) { return setDeptSearch(v); }, placeholder: "Search departments..." }),
@@ -740,7 +756,7 @@ function ScheduleEditor(_a) {
                                         departments.map(function (d) { return (react_1["default"].createElement(command_1.CommandItem, { key: d.id || d.pk || d.name, onMouseDown: function () { setSelectedDepartment(d.id || d.pk || d.name); setSelectedProgramme(undefined); setSelectedGroup(''); setDeptOpen(false); } }, d.name || d.title || String(d))); })))))))),
                 react_1["default"].createElement("div", { className: "flex flex-col" },
                     react_1["default"].createElement("div", { className: "relative" },
-                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setProgrammeOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedProgramme ? (((_d = programmes.find(function (p) { return String(p.id || p.pk || p.name) === String(selectedProgramme); })) === null || _d === void 0 ? void 0 : _d.name) || selectedProgramme) : 'All Programmes'),
+                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setProgrammeOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedProgramme ? (((_e = programmes.find(function (p) { return String(p.id || p.pk || p.name) === String(selectedProgramme); })) === null || _e === void 0 ? void 0 : _e.name) || selectedProgramme) : 'All Programmes'),
                         programmeOpen && (react_1["default"].createElement("div", { className: "absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm" },
                             react_1["default"].createElement(command_1.Command, { className: "w-full" },
                                 react_1["default"].createElement(command_1.CommandInput, { value: programmeSearchTerm, onValueChange: function (v) { return setProgrammeSearch(v); }, placeholder: "Search programmes..." }),
@@ -753,7 +769,7 @@ function ScheduleEditor(_a) {
                                             react_1["default"].createElement("button", { onMouseDown: function (e) { e.preventDefault(); setProgrammesPage(function (p) { return p + 1; }); }, className: "text-sm text-blue-600" }, "Load more")))))))))),
                 react_1["default"].createElement("div", { className: "flex flex-col" },
                     react_1["default"].createElement("div", { className: "relative" },
-                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setGroupOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedGroup ? (((_e = classGroupsOptions.find(function (g) { return String(g.id || g.pk || g.name) === String(selectedGroup); })) === null || _e === void 0 ? void 0 : _e.name) || selectedGroup) : 'All Groups'),
+                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setGroupOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedGroup ? (((_f = classGroupsOptions.find(function (g) { return String(g.id || g.pk || g.name) === String(selectedGroup); })) === null || _f === void 0 ? void 0 : _f.name) || selectedGroup) : 'All Groups'),
                         groupOpen && (react_1["default"].createElement("div", { className: "absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm" },
                             react_1["default"].createElement(command_1.Command, { className: "w-full" },
                                 react_1["default"].createElement(command_1.CommandInput, { value: groupSearchTerm, onValueChange: function (v) { return setGroupSearch(v); }, placeholder: "Search groups..." }),
@@ -778,7 +794,7 @@ function ScheduleEditor(_a) {
                                             react_1["default"].createElement("button", { onMouseDown: function (e) { e.preventDefault(); setClassGroupsPage(function (p) { return p + 1; }); }, className: "text-sm text-blue-600" }, "Load more")))))))))),
                 react_1["default"].createElement("div", { className: "flex flex-col" },
                     react_1["default"].createElement("div", { className: "relative" },
-                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setRoomOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedRoom ? (((_f = roomsOptions.find(function (r) { return String(r.id || r.pk || r.name) === String(selectedRoom); })) === null || _f === void 0 ? void 0 : _f.name) || selectedRoom) : 'All Rooms'),
+                        react_1["default"].createElement("button", { type: "button", onClick: function () { return setRoomOpen(function (v) { return !v; }); }, className: "w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }, selectedRoom ? (((_g = roomsOptions.find(function (r) { return String(r.id || r.pk || r.name) === String(selectedRoom); })) === null || _g === void 0 ? void 0 : _g.name) || selectedRoom) : 'All Rooms'),
                         roomOpen && (react_1["default"].createElement("div", { className: "absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm" },
                             react_1["default"].createElement(command_1.Command, { className: "w-full" },
                                 react_1["default"].createElement(command_1.CommandInput, { value: roomSearchTerm, onValueChange: function (v) { return setRoomSearch(v); }, placeholder: "Search rooms..." }),
@@ -805,65 +821,170 @@ function ScheduleEditor(_a) {
                     d.charAt(0).toUpperCase() + d.slice(1))); }),
                 react_1["default"].createElement("div", { className: "flex flex-col sticky left-0 z-10 bg-white border-r" }, slots.map(function (slot) { return (react_1["default"].createElement("div", { key: "label-" + slot.index, className: "p-3 text-xs text-gray-500 font-medium border-b", style: { height: slotHeights[slot.index] } }, slot.label)); })),
                 days.map(function (day, dayIdx) {
-                    var daySchedules = filteredSchedules.filter(function (s) { return s.day_of_week === day; }).map(function (s) { return ({ s: s, start: timeStrToMinutes(s.start_time), end: timeStrToMinutes(s.end_time) }); }).sort(function (a, b) { return a.start - b.start; });
-                    var columns = [];
-                    var placement = new Map();
-                    for (var _i = 0, daySchedules_1 = daySchedules; _i < daySchedules_1.length; _i++) {
-                        var item = daySchedules_1[_i];
-                        var placed = false;
-                        for (var ci = 0; ci < columns.length; ci++) {
-                            if (item.start >= columns[ci]) {
-                                placement.set(Number(item.s.id), { col: ci, totalCols: 0 });
-                                columns[ci] = item.end;
-                                placed = true;
-                                break;
+                    var daySchedules = filteredSchedules.filter(function (s) { return s.day_of_week === day; }).map(function (s) {
+                        var start = timeStrToMinutes(s.start_time);
+                        return { s: s, start: start, end: start + fixedDuration };
+                    }).sort(function (a, b) { return a.start - b.start; });
+                    // Compute visual placements: we want to guarantee no visual overlap even for long events
+                    // Approach: find overlapping clusters (connected components by time overlap) and within
+                    // each cluster assign a vertical offset to each event so their visual boxes do not
+                    // intersect. Offsets are computed in pixels and we respect a small padding from slot lines.
+                    var n = daySchedules.length;
+                    // offsets (px) for each event index (default zero)
+                    var offsets = Array.from({ length: n }).map(function () { return 0; });
+                    // placementMap will be populated when in columns mode so renderer can access column info
+                    var placementMap = undefined;
+                    var dayHeight = Math.max(48, totalHeight);
+                    if (stackingMode === 'columns') {
+                        // legacy columns mode: compute horizontal columns so overlapping events share rows
+                        var columns = [];
+                        var placement = new Map();
+                        for (var _i = 0, daySchedules_1 = daySchedules; _i < daySchedules_1.length; _i++) {
+                            var item = daySchedules_1[_i];
+                            var placed = false;
+                            for (var ci = 0; ci < columns.length; ci++) {
+                                if (item.start >= columns[ci]) {
+                                    placement.set(Number(item.s.id), { col: ci, totalCols: 0 });
+                                    columns[ci] = item.end;
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                            if (!placed) {
+                                columns.push(item.end);
+                                placement.set(Number(item.s.id), { col: columns.length - 1, totalCols: 0 });
                             }
                         }
-                        if (!placed) {
-                            columns.push(item.end);
-                            placement.set(Number(item.s.id), { col: columns.length - 1, totalCols: 0 });
+                        var totalCols = columns.length || 1;
+                        for (var _a = 0, _b = placement.keys(); _a < _b.length; _a++) {
+                            var key = _b[_a];
+                            placement.set(key, { col: placement.get(key).col, totalCols: totalCols });
                         }
+                        placementMap = placement;
+                        // dayHeight remains default (no extra vertical stacking)
                     }
-                    var totalCols = columns.length || 1;
-                    for (var _a = 0, _b = placement.keys(); _a < _b.length; _a++) {
-                        var key = _b[_a];
-                        placement.set(key, { col: placement.get(key).col, totalCols: totalCols });
+                    else {
+                        // VERTICAL stacking: compute non-overlapping vertical offsets per connected cluster
+                        // build graph of overlaps
+                        var adj = Array.from({ length: n }, function () { return []; });
+                        for (var i = 0; i < n; i++) {
+                            for (var j = i + 1; j < n; j++) {
+                                var a = daySchedules[i];
+                                var b = daySchedules[j];
+                                if (a.start < b.end && a.end > b.start) {
+                                    adj[i].push(j);
+                                    adj[j].push(i);
+                                }
+                            }
+                        }
+                        // find clusters
+                        var visited = new Array(n).fill(false);
+                        var clusters = [];
+                        for (var i = 0; i < n; i++) {
+                            if (visited[i])
+                                continue;
+                            var stack = [i];
+                            var comp = [];
+                            visited[i] = true;
+                            while (stack.length) {
+                                var u = stack.pop();
+                                comp.push(u);
+                                for (var _c = 0, _d = adj[u]; _c < _d.length; _c++) {
+                                    var v = _d[_c];
+                                    if (!visited[v]) {
+                                        visited[v] = true;
+                                        stack.push(v);
+                                    }
+                                }
+                            }
+                            clusters.push(comp);
+                        }
+                        var maxBottom = totalHeight;
+                        // process each cluster independently
+                        for (var _e = 0, clusters_1 = clusters; _e < clusters_1.length; _e++) {
+                            var comp = clusters_1[_e];
+                            // sort by start time (stable)
+                            comp.sort(function (a, b) { return daySchedules[a].start - daySchedules[b].start; });
+                            var placed = [];
+                            for (var _f = 0, comp_1 = comp; _f < comp_1.length; _f++) {
+                                var idx = comp_1[_f];
+                                var item = daySchedules[idx];
+                                var topPx = (item.start - startHour * 60) * pixelsPerMinute;
+                                var heightPx = Math.max(1, (item.end - item.start) * pixelsPerMinute) - 2 * PADDING_PX;
+                                var off = 0;
+                                // incrementally raise off until no overlap with already placed items
+                                while (true) {
+                                    var conflictFound = false;
+                                    var neededOff = off;
+                                    for (var _g = 0, placed_1 = placed; _g < placed_1.length; _g++) {
+                                        var p = placed_1[_g];
+                                        // check vertical overlap between item at candidate offset and placed p
+                                        var itemTop = topPx + off + PADDING_PX;
+                                        var itemBottom = itemTop + heightPx;
+                                        var pTop = p.top + p.offset + PADDING_PX;
+                                        var pBottom = pTop + p.height;
+                                        if (itemTop < pBottom && itemBottom > pTop) {
+                                            // overlapping visually, raise below this placed item
+                                            neededOff = Math.max(neededOff, (pBottom - topPx) + STACK_OFFSET_PX);
+                                            conflictFound = true;
+                                        }
+                                    }
+                                    if (!conflictFound)
+                                        break;
+                                    off = neededOff;
+                                }
+                                offsets[idx] = off;
+                                placed.push({ idx: idx, top: topPx, height: heightPx, offset: off });
+                                maxBottom = Math.max(maxBottom, topPx + off + PADDING_PX + heightPx);
+                            }
+                        }
+                        dayHeight = Math.max(48, Math.max(totalHeight, Math.ceil(maxBottom)));
                     }
-                    // account for vertical stacking extra height so events don't get clipped
-                    var visibleCols = Math.min(totalCols, MAX_DISPLAY_COLUMNS);
-                    var dayExtraHeight = Math.max(0, (visibleCols - 1) * STACK_OFFSET_PX);
-                    var dayHeight = Math.max(48, totalHeight + dayExtraHeight);
                     return (react_1["default"].createElement("div", { key: "day-" + day, className: "p-3 border-l border-t relative bg-white", style: { minHeight: Math.max(48, dayHeight), height: dayHeight } },
                         slotTopOffsets.map(function (topOff, si) { return (react_1["default"].createElement("div", { key: "sep-" + si, style: { position: 'absolute', left: 0, right: 0, top: topOff, height: 0, borderTop: '1px solid rgba(0,0,0,0.04)' }, "aria-hidden": true })); }),
-                        daySchedules.map(function (_a) {
-                            var s = _a.s, start = _a.start, end = _a.end;
+                        daySchedules.map(function (_a, idx) {
+                            var s = _a.s, start = _a.start;
                             var startTotal = start;
-                            var duration = Math.max(1, end - startTotal);
+                            var duration = fixedDuration;
                             // compute absolute top/height in pixels so schedule blocks match time slots exactly
                             var top = (startTotal - startHour * 60) * pixelsPerMinute;
-                            var height = Math.max(1, duration * pixelsPerMinute);
+                            // visual padding so items don't touch slot borders
+                            var height = Math.max(1, duration * pixelsPerMinute) - 2 * PADDING_PX;
                             // clamp into grid bounds (account for extra stacking height)
                             top = clamp(top, 0, Math.max(0, dayHeight));
                             height = Math.max(1, Math.min(height, Math.max(0, dayHeight - top)));
+                            // compute rendering metrics depending on stacking mode
+                            var styleTop = top + PADDING_PX;
+                            var styleHeight = Math.max(1, height);
+                            var styleLeft = 8 + "px";
+                            var styleWidth = "calc(100% - " + (8 + 8) + "px)";
+                            if (stackingMode === 'columns') {
+                                // compute horizontal columns layout
+                                var layout = (placementMap === null || placementMap === void 0 ? void 0 : placementMap.get(Number(s.id))) || { col: 0, totalCols: 1 };
+                                var actualCol = layout.col % Math.max(1, layout.totalCols || 1);
+                                var colsForThis = Math.max(1, layout.totalCols || 1);
+                                var leftPct = (actualCol / colsForThis) * 100;
+                                var widthPct = (1 / colsForThis) * 100;
+                                styleLeft = "calc(" + leftPct + "% + 8px)";
+                                styleWidth = "calc(" + widthPct + "% - 12px)";
+                                styleTop = top + PADDING_PX;
+                                styleHeight = Math.max(1, duration * pixelsPerMinute - 2 * PADDING_PX);
+                            }
+                            else {
+                                var offsetPx = (offsets && offsets[idx]) ? offsets[idx] : 0;
+                                styleTop = top + PADDING_PX + offsetPx;
+                                styleHeight = Math.max(1, height);
+                                styleLeft = 8 + "px";
+                                styleWidth = "calc(100% - " + (8 + 8) + "px)";
+                            }
                             var isDragging = draggingId === Number(s.id);
                             var isHovered = hoveredSchedule === Number(s.id);
-                            var layout = placement.get(Number(s.id)) || { col: 0, totalCols: 1 };
                             var hasConflict = conflictIds && conflictIds.has(Number(s.id));
-                            // VERTICAL STACKING MODE:
-                            // Instead of carving horizontal columns, keep time-aligned top positions and apply
-                            // a small vertical offset per overlapping lane so items don't fully obscure each other.
-                            // We still limit the number of visual lanes for display purposes.
-                            var laneIndex = layout.col % MAX_DISPLAY_COLUMNS;
-                            var verticalOffset = laneIndex * STACK_OFFSET_PX;
-                            // compute column display (we render full-width with small inset padding)
-                            var leftInset = 8;
-                            var rightInset = 8;
-                            var topWithRow = top + verticalOffset;
                             return (react_1["default"].createElement(framer_motion_1.motion.div, { key: s.id, role: "button", tabIndex: 0, "aria-label": (s.class_group_name || ('Class ' + s.class_group)) + " " + s.start_time + " to " + s.end_time, className: "rounded-lg p-3 text-sm select-none absolute transition-all cursor-move  " + (hasConflict
                                     ? 'bg-red-100 border-2 border-red-500 shadow-lg'
                                     : isHovered
                                         ? 'bg-blue-100 border-2 border-blue-400 shadow-xl scale-105'
-                                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-md hover:shadow-lg'), style: { top: topWithRow, height: height, zIndex: isDragging ? 30 : isHovered ? 20 : 10, left: leftInset + "px", width: "calc(100% - " + (leftInset + rightInset) + "px)" }, drag: "y", onMouseEnter: function () { return setHoveredSchedule(Number(s.id)); }, onMouseLeave: function () { return setHoveredSchedule(null); }, whileHover: { scale: isDragging ? 1 : 1.02 }, onKeyDown: function (e) {
+                                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-md hover:shadow-lg'), style: { top: styleTop, height: styleHeight, zIndex: isDragging ? 30 : isHovered ? 20 : 10, left: styleLeft, width: styleWidth }, drag: "y", onMouseEnter: function () { return setHoveredSchedule(Number(s.id)); }, onMouseLeave: function () { return setHoveredSchedule(null); }, whileHover: { scale: isDragging ? 1 : 1.02 }, onKeyDown: function (e) {
                                     if (e.key === 'ArrowUp') {
                                         e.preventDefault();
                                         nudgeSchedule(s, -slotMinutes, 0);
@@ -887,7 +1008,7 @@ function ScheduleEditor(_a) {
                                         var deltaMinutes = Math.round(offsetY / pixelsPerMinute);
                                         var deltaDays = Math.round(offsetX / columnWidth);
                                         var origTotalMins = startTotal;
-                                        var durationMins = duration;
+                                        var durationMins = fixedDuration;
                                         var newTotalMins = origTotalMins + deltaMinutes;
                                         var newDayIdx = dayIdx + deltaDays;
                                         newDayIdx = clamp(newDayIdx, 0, days.length - 1);
@@ -903,7 +1024,7 @@ function ScheduleEditor(_a) {
                                             if (other.day_of_week !== days[newDayIdx])
                                                 continue;
                                             var oStart = timeStrToMinutes(other.start_time);
-                                            var oEnd = timeStrToMinutes(other.end_time);
+                                            var oEnd = oStart + fixedDuration;
                                             if (oStart < newEnd && oEnd > newStart) {
                                                 conflictSet.add(Number(other.id));
                                             }
@@ -922,13 +1043,14 @@ function ScheduleEditor(_a) {
                                         var newMin = newTotalMins % 60;
                                         var newDayIdx = dayIdx + Math.round(offsetX / columnWidth);
                                         newDayIdx = clamp(newDayIdx, 0, days.length - 1);
-                                        newHour = clamp(newHour, startHour, endHour - Math.ceil(duration / 60));
-                                        if (newHour + Math.ceil(duration / 60) > endHour) {
-                                            newHour = endHour - Math.ceil(duration / 60);
+                                        var durationMins = fixedDuration;
+                                        newHour = clamp(newHour, startHour, endHour - Math.ceil(durationMins / 60));
+                                        if (newHour + Math.ceil(durationMins / 60) > endHour) {
+                                            newHour = endHour - Math.ceil(durationMins / 60);
                                             newMin = 0;
                                         }
                                         var newStart = formatTime(newHour, newMin);
-                                        var newEndTotal = newHour * 60 + newMin + duration;
+                                        var newEndTotal = newHour * 60 + newMin + durationMins;
                                         var newEnd = formatTime(Math.floor(newEndTotal / 60), newEndTotal % 60);
                                         var updated = __assign(__assign({}, s), { day_of_week: days[newDayIdx], start_time: newStart, end_time: newEnd });
                                         if (updated.start_time !== s.start_time || updated.day_of_week !== s.day_of_week) {
@@ -952,25 +1074,11 @@ function ScheduleEditor(_a) {
                                     " - ",
                                     s.end_time,
                                     " \u2022 ",
-                                    s.room_name || ''),
-                                !s.is_locked && (react_1["default"].createElement(framer_motion_1.motion.div, { drag: "y", dragElastic: 0, onDragEnd: function (e, info) {
-                                        try {
-                                            var deltaMins = Math.round(info.offset.y / pixelsPerMinute);
-                                            var newDuration = clamp(duration + deltaMins, slotMinutes, totalMinutes);
-                                            newDuration = Math.round(newDuration / slotMinutes) * slotMinutes;
-                                            var newEndTotal = startTotal + newDuration;
-                                            var newEnd = formatTime(Math.floor(newEndTotal / 60), newEndTotal % 60);
-                                            var updated = __assign(__assign({}, s), { end_time: newEnd });
-                                            saveSchedule(updated);
-                                        }
-                                        catch (err) {
-                                            console.error('resize save failed', err);
-                                        }
-                                    }, className: "h-2 mt-2 bg-blue-200 rounded-b cursor-ns-resize" }))));
+                                    s.room_name || '')));
                         }),
                         preview && preview.dayIdx === dayIdx && (function () {
-                            var pTop = (preview.startMin - startHour * 60) * pixelsPerMinute;
-                            var pHeight = Math.max(1, preview.durationMins * pixelsPerMinute);
+                            var pTop = (preview.startMin - startHour * 60) * pixelsPerMinute + PADDING_PX;
+                            var pHeight = Math.max(1, preview.durationMins * pixelsPerMinute - 2 * PADDING_PX);
                             return (react_1["default"].createElement(framer_motion_1.motion.div, { initial: { opacity: 0, scale: 0.98 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0 }, transition: { duration: 0.12 }, style: { position: 'absolute', left: 8, top: pTop, width: 'calc(100% - 12px)', height: pHeight, pointerEvents: 'none', zIndex: 25 }, className: "bg-primary/20 border border-primary/40 rounded h-full shadow-sm " }));
                         })()));
                 }))),

@@ -39,12 +39,15 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
   const HOUR_PX = 60
   const pixelsPerMinute = HOUR_PX / 60
   const slotMinutes = timetableSettings?.slot_duration_minutes ?? 60
+  // Fixed session duration (defined by timetable settings). Sessions always use this length.
+  const fixedDuration = timetableSettings?.preferred_class_duration ?? slotMinutes
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [columnWidth, setColumnWidth] = useState(150)
   const [draggingId, setDraggingId] = useState<number | null>(null)
   const [preview, setPreview] = useState<{ dayIdx: number, startMin: number, durationMins: number } | null>(null)
   const [pendingSave, setPendingSave] = useState<null | { updated: ClassGroupSchedule, localViolations: string[], serverConflicts?: any[] }>(null)
   const [conflictIds, setConflictIds] = useState<Set<number>>(new Set())
+  const [stackingMode, setStackingMode] = useState<'vertical' | 'columns'>('vertical')
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [departments, setDepartments] = useState<any[]>([])
   const [programmes, setProgrammes] = useState<any[]>([])
@@ -128,7 +131,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     const shouldFetch = Boolean(timetableId && (selectedDepartment || selectedProgramme || selectedGroup || selectedRoom || debouncedGroupSearch || debouncedRoomSearch))
     if (!shouldFetch) return
 
-    (async () => {
+    ;(async () => {
       try {
         const params: any = { timetable: timetableId, pageSize: 1000 }
         if (selectedGroup) params.class_group = selectedGroup
@@ -186,7 +189,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     classGroupsReqRef.current = reqId
     // guard: only run if there's either a department, programme or a search term
     if (!selectedDepartment && !selectedProgramme && !debouncedGroupSearch) { setClassGroupsOptions([]); setClassGroupsHasMore(false); return }
-    (async () => {
+    ;(async () => {
       try {
         const params: any = { pageSize: PAGE_SIZE, page: classGroupsPage }
         // backend expects Django-style lookup params for nested filters
@@ -226,7 +229,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     if (!selectedDepartment && !debouncedProgrammeSearch) { setProgrammes([]); setProgrammesHasMore(false); return }
     const reqId = programmesReqRef.current + 1
     programmesReqRef.current = reqId
-    (async () => {
+    ;(async () => {
       try {
         const params: any = { pageSize: PAGE_SIZE, page: programmesPage }
         if (selectedDepartment) params.department = selectedDepartment
@@ -263,7 +266,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     const reqId = roomsReqRef.current + 1
     roomsReqRef.current = reqId
     if (!selectedGroup && !debouncedRoomSearch && !selectedDepartment) { setRoomsOptions([]); setRoomsHasMore(false); return }
-    (async () => {
+    ;(async () => {
       try {
         const params: any = { pageSize: PAGE_SIZE, page: roomsPage }
         // derive department from selectedGroup when available
@@ -379,10 +382,12 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
 
   // NOTE: filter option lists are provided by backend clients (departments, classGroupsOptions, roomsOptions)
 
-  const MAX_DISPLAY_COLUMNS = 3
-  // Vertical stacking offset (px) applied per overlapping lane when in vertical stacking mode.
-  // Kept small so time alignment remains visually clear but items don't fully obscure each other.
-  const STACK_OFFSET_PX = Math.min(12, slotPx * 0.25)
+  // Max display columns (legacy) - kept for reference; current stacking uses dynamic offsets (unused)
+  // Vertical stacking offset (base px) applied per overlapping lane when in vertical stacking mode.
+  // Increased slightly so stacked items are more clearly separated for long events.
+  const STACK_OFFSET_PX = Math.min(16, slotPx * 0.4)
+  // Minimum padding inside slot boundaries so items don't touch separator lines
+  const PADDING_PX = 2
 
   // Each logical slot maps to a fixed pixel height so schedule blocks align precisely
   const slotHeights = useMemo(() => Array.from({ length: slotsCount }).map(() => slotPx), [slotsCount, slotPx])
@@ -415,12 +420,12 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
 
   function hasLocalOverlap(updated: ClassGroupSchedule) {
     const updStart = timeStrToMinutes(updated.start_time)
-    const updEnd = timeStrToMinutes(updated.end_time)
+    const updEnd = updStart + fixedDuration
     return schedules.some(s => {
       if (s.id === updated.id) return false
       if (s.day_of_week !== updated.day_of_week) return false
       const sStart = timeStrToMinutes(s.start_time)
-      const sEnd = timeStrToMinutes(s.end_time)
+      const sEnd = sStart + fixedDuration
       return (sStart < updEnd && sEnd > updStart)
     })
   }
@@ -433,8 +438,8 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     const maxConsec = timetableSettings.max_consecutive_classes || 0
 
     const start = timeStrToMinutes(updated.start_time)
-    const end = timeStrToMinutes(updated.end_time)
-    const duration = Math.max(1, end - start)
+    const duration = fixedDuration
+    const end = start + duration
 
     if (preferred > 0 && duration !== preferred) {
       violations.push(`Duration ${duration}m does not match preferred class duration of ${preferred}m.`)
@@ -444,7 +449,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
       const sameGroup = schedules.filter(s => s.id !== updated.id && s.day_of_week === updated.day_of_week && s.class_group === updated.class_group)
       for (const s of sameGroup) {
         const sStart = timeStrToMinutes(s.start_time)
-        const sEnd = timeStrToMinutes(s.end_time)
+        const sEnd = sStart + fixedDuration
         const gap = Math.max(0, Math.min(Math.abs(sStart - end), Math.abs(start - sEnd)))
         if (gap < minBreak) {
           violations.push(`Break between classes for this group is ${gap}m which is less than the minimum ${minBreak}m.`)
@@ -455,7 +460,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
 
     if (maxConsec > 0 && updated.class_group) {
       const sameDay = schedules.filter(s => s.id !== updated.id && s.day_of_week === updated.day_of_week && s.class_group === updated.class_group)
-      const times = sameDay.map(s => ({ start: timeStrToMinutes(s.start_time), end: timeStrToMinutes(s.end_time) }))
+      const times = sameDay.map(s => ({ start: timeStrToMinutes(s.start_time), end: timeStrToMinutes(s.start_time) + fixedDuration }))
       times.push({ start, end })
       times.sort((a, b) => a.start - b.start)
       let consecutive = 1
@@ -478,9 +483,12 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     setSchedules(arr => arr.map(it => it.id === updated.id ? updated : it))
     setPendingSave(null)
     try {
+      // enforce fixed duration on save
+      const start = timeStrToMinutes(updated.start_time)
+      const end = formatTime(Math.floor((start + fixedDuration) / 60), (start + fixedDuration) % 60)
       await classGroupScheduleApi.update(updated.id, {
         start_time: updated.start_time,
-        end_time: updated.end_time,
+        end_time: end,
         day_of_week: updated.day_of_week,
       })
       setNotification({ type: 'success', message: 'Schedule updated successfully' })
@@ -502,7 +510,10 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
       const dayIdx = days.indexOf(updated.day_of_week as DayOfWeek)
       const ttId = Number(timetableId)
       const excludeId = updated.id ? Number(updated.id) : undefined
-      const resp = await classGroupScheduleApi.checkConflicts(ttId, dayIdx, updated.start_time, updated.end_time, excludeId)
+      // ensure we pass fixed duration end time when checking conflicts on the server
+      const start = timeStrToMinutes(updated.start_time)
+      const endTime = formatTime(Math.floor((start + fixedDuration) / 60), (start + fixedDuration) % 60)
+      const resp = await classGroupScheduleApi.checkConflicts(ttId, dayIdx, updated.start_time, endTime, excludeId)
       if (resp && resp.conflicts && resp.conflicts.length) serverConflicts = resp.conflicts
     } catch (err) {
       console.warn('Constraint check failed (server), proceeding to inline warnings', err)
@@ -513,15 +524,18 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
       return
     }
 
-    await performSave(updated)
+    // enforce fixed duration before saving
+    const start = timeStrToMinutes(updated.start_time)
+    const endTime = formatTime(Math.floor((start + fixedDuration) / 60), (start + fixedDuration) % 60)
+    const toSave = { ...updated, end_time: endTime }
+    await performSave(toSave as ClassGroupSchedule)
   }
 
   function nudgeSchedule(s: ClassGroupSchedule, deltaMins: number, deltaDays = 0) {
     try {
       const orig = parseTime(s.start_time)
-      const end = parseTime(s.end_time)
       const origTotal = orig.hh * 60 + orig.mm
-      const duration = Math.max(slotMinutes, end.hh * 60 + end.mm - origTotal)
+      const duration = fixedDuration
       const snap = slotMinutes
       let newTotal = origTotal + deltaMins
       newTotal = Math.round(newTotal / snap) * snap
@@ -552,15 +566,24 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     <div className={`w-full ${isFullscreen ? 'fixed inset-0 z-50 bg-white p-6' : ''}`}>
       {/* Header with Search and Filters */}
       <div className="mb-4 space-y-3">
-        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Schedule Editor</h2>
-          <button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          >
-            {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-          </button>
+            <div className="flex items-center gap-2">
+            <button
+              onClick={() => setStackingMode(m => m === 'vertical' ? 'columns' : 'vertical')}
+              className="px-3 py-1 text-sm border rounded hover:bg-gray-100"
+              title="Toggle stacking mode"
+            >
+              {stackingMode === 'vertical' ? 'Stack: Vertical' : 'Stack: Columns'}
+            </button>
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Statistics */}
@@ -805,64 +828,154 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
           </div>
 
           {days.map((day, dayIdx) => {
-            const daySchedules = filteredSchedules.filter(s => s.day_of_week === day).map(s => ({ s, start: timeStrToMinutes(s.start_time), end: timeStrToMinutes(s.end_time) })).sort((a, b) => a.start - b.start)
+            const daySchedules = filteredSchedules.filter(s => s.day_of_week === day).map(s => {
+              const start = timeStrToMinutes(s.start_time)
+              return { s, start, end: start + fixedDuration }
+            }).sort((a, b) => a.start - b.start)
 
-            const columns: number[] = []
-            const placement = new Map<number, { col: number, totalCols: number }>()
+            // Compute visual placements: we want to guarantee no visual overlap even for long events
+            // Approach: find overlapping clusters (connected components by time overlap) and within
+            // each cluster assign a vertical offset to each event so their visual boxes do not
+            // intersect. Offsets are computed in pixels and we respect a small padding from slot lines.
+            const n = daySchedules.length
+            // offsets (px) for each event index (default zero)
+            const offsets: number[] = Array.from({ length: n }).map(() => 0)
+            // placementMap will be populated when in columns mode so renderer can access column info
+            let placementMap: Map<number, { col: number, totalCols: number }> | undefined = undefined
+            let dayHeight = Math.max(48, totalHeight)
 
-            for (const item of daySchedules) {
-              let placed = false
-              for (let ci = 0; ci < columns.length; ci++) {
-                if (item.start >= columns[ci]) {
-                  placement.set(Number(item.s.id), { col: ci, totalCols: 0 })
-                  columns[ci] = item.end
-                  placed = true
-                  break
+            if (stackingMode === 'columns') {
+              // legacy columns mode: compute horizontal columns so overlapping events share rows
+              const columns: number[] = []
+              const placement = new Map<number, { col: number, totalCols: number }>()
+              for (const item of daySchedules) {
+                let placed = false
+                for (let ci = 0; ci < columns.length; ci++) {
+                  if (item.start >= columns[ci]) {
+                    placement.set(Number(item.s.id), { col: ci, totalCols: 0 })
+                    columns[ci] = item.end
+                    placed = true
+                    break
+                  }
+                }
+                if (!placed) {
+                  columns.push(item.end)
+                  placement.set(Number(item.s.id), { col: columns.length - 1, totalCols: 0 })
                 }
               }
-              if (!placed) {
-                columns.push(item.end)
-                placement.set(Number(item.s.id), { col: columns.length - 1, totalCols: 0 })
+              const totalCols = columns.length || 1
+              for (const key of placement.keys()) placement.set(key, { col: placement.get(key)!.col, totalCols })
+              placementMap = placement
+              // dayHeight remains default (no extra vertical stacking)
+            } else {
+              // VERTICAL stacking: compute non-overlapping vertical offsets per connected cluster
+              // build graph of overlaps
+              const adj: number[][] = Array.from({ length: n }, () => [])
+              for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                  const a = daySchedules[i]
+                  const b = daySchedules[j]
+                  if (a.start < b.end && a.end > b.start) { adj[i].push(j); adj[j].push(i) }
+                }
               }
-            }
+              // find clusters
+              const visited = new Array(n).fill(false)
+              const clusters: number[][] = []
+              for (let i = 0; i < n; i++) {
+                if (visited[i]) continue
+                const stack = [i]
+                const comp: number[] = []
+                visited[i] = true
+                while (stack.length) {
+                  const u = stack.pop()!
+                  comp.push(u)
+                  for (const v of adj[u]) if (!visited[v]) { visited[v] = true; stack.push(v) }
+                }
+                clusters.push(comp)
+              }
 
-            const totalCols = columns.length || 1
-            for (const key of placement.keys()) placement.set(key, { col: placement.get(key)!.col, totalCols })
-            // account for vertical stacking extra height so events don't get clipped
-            const visibleCols = Math.min(totalCols, MAX_DISPLAY_COLUMNS)
-            const dayExtraHeight = Math.max(0, (visibleCols - 1) * STACK_OFFSET_PX)
-            const dayHeight = Math.max(48, totalHeight + dayExtraHeight)
+              let maxBottom = totalHeight
+              // process each cluster independently
+              for (const comp of clusters) {
+                // sort by start time (stable)
+                comp.sort((a, b) => daySchedules[a].start - daySchedules[b].start)
+                const placed: { idx: number, top: number, height: number, offset: number }[] = []
+                for (const idx of comp) {
+                  const item = daySchedules[idx]
+                  const topPx = (item.start - startHour * 60) * pixelsPerMinute
+                  const heightPx = Math.max(1, (item.end - item.start) * pixelsPerMinute) - 2 * PADDING_PX
+                  let off = 0
+                  // incrementally raise off until no overlap with already placed items
+                  while (true) {
+                    let conflictFound = false
+                    let neededOff = off
+                    for (const p of placed) {
+                      // check vertical overlap between item at candidate offset and placed p
+                      const itemTop = topPx + off + PADDING_PX
+                      const itemBottom = itemTop + heightPx
+                      const pTop = p.top + p.offset + PADDING_PX
+                      const pBottom = pTop + p.height
+                      if (itemTop < pBottom && itemBottom > pTop) {
+                        // overlapping visually, raise below this placed item
+                        neededOff = Math.max(neededOff, (pBottom - topPx) + STACK_OFFSET_PX)
+                        conflictFound = true
+                      }
+                    }
+                    if (!conflictFound) break
+                    off = neededOff
+                  }
+                  offsets[idx] = off
+                  placed.push({ idx, top: topPx, height: heightPx, offset: off })
+                  maxBottom = Math.max(maxBottom, topPx + off + PADDING_PX + heightPx)
+                }
+              }
+              dayHeight = Math.max(48, Math.max(totalHeight, Math.ceil(maxBottom)))
+            }
 
             return (
               <div key={`day-${day}`} className="p-3 border-l border-t relative bg-white" style={{ minHeight: Math.max(48, dayHeight), height: dayHeight }}>
                 {slotTopOffsets.map((topOff, si) => (
                   <div key={`sep-${si}`} style={{ position: 'absolute', left: 0, right: 0, top: topOff, height: 0, borderTop: '1px solid rgba(0,0,0,0.04)' }} aria-hidden />
                 ))}
-                {daySchedules.map(({ s, start, end }) => {
+                {daySchedules.map(({ s, start }, idx) => {
                   const startTotal = start
-                  const duration = Math.max(1, end - startTotal)
+                  const duration = fixedDuration
                   // compute absolute top/height in pixels so schedule blocks match time slots exactly
                   let top = (startTotal - startHour * 60) * pixelsPerMinute
-                  let height = Math.max(1, duration * pixelsPerMinute)
+                  // visual padding so items don't touch slot borders
+                  let height = Math.max(1, duration * pixelsPerMinute) - 2 * PADDING_PX
                   // clamp into grid bounds (account for extra stacking height)
                   top = clamp(top, 0, Math.max(0, dayHeight))
                   height = Math.max(1, Math.min(height, Math.max(0, dayHeight - top)))
+                  // compute rendering metrics depending on stacking mode
+                  let styleTop = top + PADDING_PX
+                  let styleHeight = Math.max(1, height)
+                  let styleLeft = `${8}px`
+                  let styleWidth = `calc(100% - ${8 + 8}px)`
+
+                  if (stackingMode === 'columns') {
+                    // compute horizontal columns layout
+                    const layout = placementMap?.get(Number(s.id)) || { col: 0, totalCols: 1 }
+                    const actualCol = layout.col % Math.max(1, layout.totalCols || 1)
+                    const colsForThis = Math.max(1, layout.totalCols || 1)
+                    const leftPct = (actualCol / colsForThis) * 100
+                    const widthPct = (1 / colsForThis) * 100
+                    styleLeft = `calc(${leftPct}% + 8px)`
+                    styleWidth = `calc(${widthPct}% - 12px)`
+                    styleTop = top + PADDING_PX
+                    styleHeight = Math.max(1, duration * pixelsPerMinute - 2 * PADDING_PX)
+                  } else {
+                    const offsetPx = (offsets && offsets[idx]) ? offsets[idx] : 0
+                    styleTop = top + PADDING_PX + offsetPx
+                    styleHeight = Math.max(1, height)
+                    styleLeft = `${8}px`
+                    styleWidth = `calc(100% - ${8 + 8}px)`
+                  }
                   const isDragging = draggingId === Number(s.id)
                   const isHovered = hoveredSchedule === Number(s.id)
-                  const layout = placement.get(Number(s.id)) || { col: 0, totalCols: 1 }
                   const hasConflict = conflictIds && conflictIds.has(Number(s.id))
-                  // VERTICAL STACKING MODE:
-                  // Instead of carving horizontal columns, keep time-aligned top positions and apply
-                  // a small vertical offset per overlapping lane so items don't fully obscure each other.
-                  // We still limit the number of visual lanes for display purposes.
-                  const laneIndex = layout.col % MAX_DISPLAY_COLUMNS
-                  const verticalOffset = laneIndex * STACK_OFFSET_PX
-                  // compute column display (we render full-width with small inset padding)
-                  const leftInset = 8
-                  const rightInset = 8
-                  const topWithRow = top + verticalOffset
 
-                  return (
+                    return (
                     <motion.div
                       key={s.id}
                       role="button"
@@ -875,7 +988,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
                           ? 'bg-blue-100 border-2 border-blue-400 shadow-xl scale-105' 
                           : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-md hover:shadow-lg'
                       }`}
-                      style={{ top: topWithRow, height, zIndex: isDragging ? 30 : isHovered ? 20 : 10, left: `${leftInset}px`, width: `calc(100% - ${leftInset + rightInset}px)` }}
+                      style={{ top: styleTop, height: styleHeight, zIndex: isDragging ? 30 : isHovered ? 20 : 10, left: styleLeft, width: styleWidth }}
                       drag="y"
                       onMouseEnter={() => setHoveredSchedule(Number(s.id))}
                       onMouseLeave={() => setHoveredSchedule(null)}
@@ -895,7 +1008,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
                           const deltaMinutes = Math.round(offsetY / pixelsPerMinute)
                           const deltaDays = Math.round(offsetX / columnWidth)
                           const origTotalMins = startTotal
-                          const durationMins = duration
+                          const durationMins = fixedDuration
                           const newTotalMins = origTotalMins + deltaMinutes
                           let newDayIdx = dayIdx + deltaDays
                           newDayIdx = clamp(newDayIdx, 0, days.length - 1)
@@ -909,7 +1022,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
                             if (Number(other.id) === Number(s.id)) continue
                             if (other.day_of_week !== days[newDayIdx]) continue
                             const oStart = timeStrToMinutes(other.start_time)
-                            const oEnd = timeStrToMinutes(other.end_time)
+                            const oEnd = oStart + fixedDuration
                             if (oStart < newEnd && oEnd > newStart) {
                               conflictSet.add(Number(other.id))
                             }
@@ -928,10 +1041,11 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
                           let newMin = newTotalMins % 60
                           let newDayIdx = dayIdx + Math.round(offsetX / columnWidth)
                           newDayIdx = clamp(newDayIdx, 0, days.length - 1)
-                          newHour = clamp(newHour, startHour, endHour - Math.ceil(duration / 60))
-                          if (newHour + Math.ceil(duration / 60) > endHour) { newHour = endHour - Math.ceil(duration / 60); newMin = 0 }
+                          const durationMins = fixedDuration
+                          newHour = clamp(newHour, startHour, endHour - Math.ceil(durationMins / 60))
+                          if (newHour + Math.ceil(durationMins / 60) > endHour) { newHour = endHour - Math.ceil(durationMins / 60); newMin = 0 }
                           const newStart = formatTime(newHour, newMin)
-                          const newEndTotal = newHour * 60 + newMin + duration
+                          const newEndTotal = newHour * 60 + newMin + durationMins
                           const newEnd = formatTime(Math.floor(newEndTotal / 60), newEndTotal % 60)
                           const updated: ClassGroupSchedule = { ...s, day_of_week: days[newDayIdx], start_time: newStart, end_time: newEnd }
                           if (updated.start_time !== s.start_time || updated.day_of_week !== s.day_of_week) {
@@ -951,33 +1065,14 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
                         {s.is_locked && <div className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800">Locked</div>}
                       </div>
                       <div className="text-xs text-gray-600">{s.start_time} - {s.end_time} • {s.room_name || ''}</div>
-                      {!s.is_locked && (
-                        <motion.div
-                          drag="y"
-                          dragElastic={0}
-                          onDragEnd={(e, info) => {
-                            try {
-                              const deltaMins = Math.round(info.offset.y / pixelsPerMinute)
-                              let newDuration = clamp(duration + deltaMins, slotMinutes, totalMinutes)
-                              newDuration = Math.round(newDuration / slotMinutes) * slotMinutes
-                              const newEndTotal = startTotal + newDuration
-                              const newEnd = formatTime(Math.floor(newEndTotal / 60), newEndTotal % 60)
-                              const updated = { ...s, end_time: newEnd }
-                              saveSchedule(updated as ClassGroupSchedule)
-                            } catch (err) {
-                              console.error('resize save failed', err)
-                            }
-                          }}
-                          className="h-2 mt-2 bg-blue-200 rounded-b cursor-ns-resize"
-                        />
-                      )}
+                      {/* resizing disabled: sessions have fixed duration defined by timetable settings */}
                     </motion.div>
                   )
                 })}
 
                 {preview && preview.dayIdx === dayIdx && (() => {
-                  const pTop = (preview.startMin - startHour * 60) * pixelsPerMinute
-                  const pHeight = Math.max(1, preview.durationMins * pixelsPerMinute)
+                  const pTop = (preview.startMin - startHour * 60) * pixelsPerMinute + PADDING_PX
+                  const pHeight = Math.max(1, preview.durationMins * pixelsPerMinute - 2 * PADDING_PX)
                   return (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.98 }}
