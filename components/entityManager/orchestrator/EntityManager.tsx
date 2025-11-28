@@ -344,19 +344,19 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
 
   // Memoize actions with context to prevent re-renders
   const actionsWithContext = useMemo(() => {
-    if (!config.config.list.actions) return undefined;
+    if (!config.config.actions) return undefined;
 
     return {
-      ...config.config.list.actions,
+      ...config.config.actions,
       context: {
-        ...config.config.list.actions.context,
+        ...config.config.actions.context,
         refresh: refreshData,
         customData: {
           allData: state.state.entities, // Pass all data for export
         },
       },
     };
-  }, [config.config.list.actions, refreshData, state.state.entities]);
+  }, [config.config.actions, refreshData, state.state.entities]);
 
   // Handle edit
   const handleEdit = useCallback((entity: T) => {
@@ -478,8 +478,8 @@ function EntityManagerContent<T extends BaseEntity = BaseEntity>(
           multiSelect={config.config.list.multiSelect}
           selectedIds={state.state.selectedIds}
           onSelectionChange={state.setSelected}
-          onRowClick={handleView}
-          onRowDoubleClick={handleEdit}
+          onRowClick={config.config.list.onRowClick || handleView}
+          onRowDoubleClick={config.config.list.onRowDoubleClick || handleEdit}
           pagination={true}
           paginationConfig={memoizedPaginationConfig}
           onPaginationChange={handlePaginationChange}

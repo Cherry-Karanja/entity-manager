@@ -8,7 +8,6 @@ exports.__esModule = true;
 exports.UserListConfig = void 0;
 var badge_1 = require("@/components/ui/badge");
 var lucide_react_1 = require("lucide-react");
-var actions_1 = require("./actions");
 exports.UserListConfig = {
     /** Column definitions */
     columns: [
@@ -140,7 +139,7 @@ exports.UserListConfig = {
     searchPlaceholder: 'Search user ...',
     emptyMessage: 'No users found.',
     // Cast to any for incremental migration; EntityManager will supply context at runtime
-    actions: actions_1.UserActionsConfig,
+    // actions: UserActionsConfig as any,
     className: '',
     hover: true,
     striped: true,

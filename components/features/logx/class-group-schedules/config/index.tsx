@@ -8,8 +8,8 @@ import { EntityConfig } from '@/components/entityManager/composition/config/type
 import { ClassGroupSchedule } from '../../types';
 
 // Import individual configs
-import { classGroupScheduleFields } from './fields';
-import { classGroupScheduleColumns } from './list';
+import { classGroupScheduleFields, ClassGroupScheduleFormConfig } from './fields';
+import { classGroupScheduleColumns, ClassGroupScheduleListConfig } from './list';
 import { classGroupScheduleViewConfig } from './view';
 import { classGroupScheduleActionsConfig } from './actions';
 import { classGroupScheduleExportConfig } from './export';
@@ -25,10 +25,10 @@ export const classGroupScheduleConfig: EntityConfig<ClassGroupSchedule> = {
   description: 'Scheduled classes for class groups',
 
   // List View Configuration
-  list: { columns: classGroupScheduleColumns },
+  list: ClassGroupScheduleListConfig,
 
   // Form Configuration
-  form: { fields: classGroupScheduleFields },
+  form: ClassGroupScheduleFormConfig,
 
   // Detail View Configuration
   view: classGroupScheduleViewConfig,
@@ -62,8 +62,12 @@ export const classGroupScheduleConfig: EntityConfig<ClassGroupSchedule> = {
 };
 
 // Export individual configs
-export { classGroupScheduleFields } from './fields';
-export { classGroupScheduleColumns, classGroupScheduleColumns as classGroupScheduleListConfig } from './list';
+export { classGroupScheduleFields, ClassGroupScheduleFormConfig } from './fields';
+export { classGroupScheduleColumns, ClassGroupScheduleListConfig } from './list';
 export { classGroupScheduleViewConfig } from './view';
 export { classGroupScheduleActionsConfig } from './actions';
 export { classGroupScheduleExportConfig } from './export';
+
+// Backwards-compatible lower-cased exports used by other modules
+export const classGroupScheduleListConfig = ClassGroupScheduleListConfig;
+export const classGroupScheduleFormConfig = ClassGroupScheduleFormConfig;

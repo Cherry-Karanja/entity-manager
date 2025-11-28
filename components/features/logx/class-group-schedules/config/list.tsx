@@ -1,4 +1,5 @@
 import type { Column } from "@/components/entityManager/components/list/types";
+import type { EntityListConfig } from '@/components/entityManager/composition/config/types';
 import { Badge } from "@/components/ui/badge";
 import { ClassGroupSchedule, DAY_OF_WEEK_LABELS } from "../../types";
 import { Lock, Unlock } from "lucide-react";
@@ -79,3 +80,33 @@ export const classGroupScheduleColumns: Column<ClassGroupSchedule>[] = [
     ),
   },
 ];
+
+export const ClassGroupScheduleListConfig: EntityListConfig<ClassGroupSchedule> = {
+  columns: classGroupScheduleColumns,
+  view: 'table',
+  toolbar: {
+    search: true,
+    filters: true,
+    viewSwitcher: false,
+    columnSelector: true,
+    refresh: true,
+    export: true,
+    actions: [],
+  },
+  selectable: true,
+  multiSelect: false,
+  pagination: true,
+  paginationConfig: { page: 1, pageSize: 10 },
+  sortable: true,
+  sortConfig: { field: 'day_of_week', direction: 'asc' },
+  filterable: true,
+  searchable: true,
+  emptyMessage: 'No class schedules found.',
+  className: '',
+  hover: true,
+  striped: false,
+  bordered: true,
+  titleField: 'class_group_name',
+  subtitleField: 'unit_name',
+  dateField: 'start_time',
+};

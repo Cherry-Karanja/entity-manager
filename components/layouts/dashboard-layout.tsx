@@ -385,30 +385,29 @@ export function DashboardLayout({
                 </div>
               </div>
             </Link>
-          </SidebarFooter>
-        </Sidebar>
+            </SidebarFooter>
+          </Sidebar>
 
-        <SidebarInset>
-          {/* Header */}
-          <header className="sticky top-0 z-40 border-b border-sidebar-border bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60">
-            <div className="flex h-14 items-center gap-4 px-4">
+          <SidebarInset>
+            {/* Header */}
+            <header className="sticky top-0 z-40 border-b border-sidebar-border bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60">
+              <div className="flex h-14 items-center gap-4 px-4">
               <SidebarTrigger className="-ml-1" />
-
               {/* Breadcrumbs */}
               {breadcrumbs.length > 0 && (
-                <nav className="flex items-center space-x-2 text-sm text-sidebar-foreground/70">
+                <nav className="flex items-center space-x-2 text-sm text-sidebar-foreground/70 max-w-[48%] overflow-hidden">
                   {breadcrumbs.map((breadcrumb, index) => (
                     <React.Fragment key={index}>
-                      {index > 0 && <span>/</span>}
+                      {index > 0 && <span className="flex-shrink-0">/</span>}
                       {breadcrumb.href ? (
                         <Link
                           href={breadcrumb.href}
-                          className="hover:text-sidebar-foreground transition-colors"
+                          className="hover:text-sidebar-foreground transition-colors max-w-[12rem] truncate block"
                         >
                           {breadcrumb.label}
                         </Link>
                       ) : (
-                        <span className="text-sidebar-foreground font-medium">
+                        <span className="text-sidebar-foreground font-medium max-w-[12rem] truncate block">
                           {breadcrumb.label}
                         </span>
                       )}
@@ -496,7 +495,7 @@ export function DashboardLayout({
           )}
 
           {/* Main Content */}
-          <main className={cn("flex-1 overflow-y-auto p-3", className)}>
+          <main className={cn("flex-1 overflow-auto p-3", className)}>
             {children}
           </main>
         </SidebarInset>

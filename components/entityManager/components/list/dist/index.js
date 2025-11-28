@@ -63,12 +63,14 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 exports.__esModule = true;
 exports.EntityList = void 0;
 var react_1 = require("react");
+var image_1 = require("next/image");
 var actions_1 = require("../actions");
 var utils_1 = require("./utils");
 var Skeleton_1 = require("./components/Skeleton");
 var EmptyState_1 = require("./components/EmptyState");
 var ErrorState_1 = require("./components/ErrorState");
 var DensitySelector_1 = require("./components/DensitySelector");
+var ViewSelector_1 = require("./components/ViewSelector");
 var lucide_react_1 = require("lucide-react");
 var button_1 = require("@/components/ui/button");
 var dropdown_menu_1 = require("@/components/ui/dropdown-menu");
@@ -468,9 +470,9 @@ function EntityList(props) {
                         react_1["default"].createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" })),
                     react_1["default"].createElement("input", { type: "text", placeholder: searchPlaceholder, value: state.search, onChange: function (e) { return handleSearchChange(e.target.value); }, className: "w-full pl-10 pr-4 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-shadow", "aria-label": "Search" })))),
                 react_1["default"].createElement("div", { className: "flex gap-2 items-center flex-wrap justify-end w-full sm:w-auto" },
-                    toolbar.viewSwitcher && (react_1["default"].createElement("div", { className: "inline-flex rounded-md shadow-sm", role: "group", "aria-label": "View switcher" }, ['table', 'card', 'list', 'grid'].map(function (v) { return (react_1["default"].createElement("button", { key: v, onClick: function () { return handleViewChange(v); }, className: "px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border transition-colors first:rounded-l-md last:rounded-r-md min-h-[44px] " + (state.view === v
-                            ? 'bg-primary text-primary-foreground border-primary z-10'
-                            : 'bg-background text-muted-foreground border-input hover:bg-muted hover:text-foreground'), title: "Switch to " + v + " view" }, v.charAt(0).toUpperCase() + v.slice(1))); }))),
+                    toolbar.viewSwitcher && (
+                    // Match DensitySelector default presentation (dropdown) for compact toolbar
+                    react_1["default"].createElement(ViewSelector_1.ViewSelector, { value: state.view, onChange: handleViewChange, variant: "dropdown", className: "" })),
                     (toolbar.filters || filterable) && (react_1["default"].createElement(dropdown_menu_1.DropdownMenu, { open: filterDropdownOpen, onOpenChange: setFilterDropdownOpen },
                         react_1["default"].createElement(dropdown_menu_1.DropdownMenuTrigger, { asChild: true },
                             react_1["default"].createElement(button_1.Button, { variant: "outline", size: "sm", className: "min-h-[44px] w-full sm:w-auto" },
@@ -608,7 +610,7 @@ function EntityList(props) {
     };
     // Render table view
     var renderTableView = function () {
-        return (react_1["default"].createElement("div", { className: "relative overflow-x-auto -mx-4 sm:mx-0" },
+        return (react_1["default"].createElement("div", { className: "relative overflow-x-hidden -mx-4 sm:mx-0 p-2" },
             react_1["default"].createElement("div", { className: "inline-block min-w-full align-middle max-w-full" },
                 react_1["default"].createElement("table", { className: "min-w-full divide-y divide-border text-sm w-full" },
                     react_1["default"].createElement("thead", { className: "bg-muted/50" },
@@ -649,8 +651,8 @@ function EntityList(props) {
             return (react_1["default"].createElement("div", { key: entity.id, className: "bg-card rounded-lg border shadow-sm overflow-hidden transition-all hover:shadow-md " + (isSelected ? 'ring-2 ring-primary' : '') + " cursor-pointer relative", onClick: function () { return handleRowClick(entity, index); }, onDoubleClick: function () { return handleRowClick(entity, index); } },
                 selectable && (react_1["default"].createElement("div", { className: "absolute top-2 right-2 z-10" },
                     react_1["default"].createElement("input", { title: "Select card", type: "checkbox", checked: isSelected, onChange: function () { return handleSelectRow(entity.id); }, onClick: function (e) { return e.stopPropagation(); }, className: "w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring focus:ring-2" }))),
-                imageUrl && (react_1["default"].createElement("div", { className: "aspect-video w-full overflow-hidden bg-muted" },
-                    react_1["default"].createElement("img", { src: imageUrl, alt: title, className: "w-full h-full object-cover", loading: "lazy" }))),
+                imageUrl && (react_1["default"].createElement("div", { className: "relative aspect-video w-full overflow-hidden bg-muted" },
+                    react_1["default"].createElement(image_1["default"], { src: String(imageUrl), alt: String(title), fill: true, className: "object-cover", sizes: "(max-width: 640px) 100vw, 50vw" }))),
                 react_1["default"].createElement("div", { className: "p-3 sm:p-4 space-y-2 sm:space-y-3" },
                     react_1["default"].createElement("div", null,
                         react_1["default"].createElement("h3", { className: "text-sm sm:text-base font-semibold text-foreground line-clamp-1" }, title),
@@ -663,8 +665,9 @@ function EntityList(props) {
                                 ":"),
                             react_1["default"].createElement("span", { className: "text-foreground w-2/3 line-clamp-1" }, renderCell({ column: column, entity: entity, value: value, index: index }))));
                     }))),
-                rowActions.length > 0 && (react_1["default"].createElement("div", { className: "px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3" },
-                    react_1["default"].createElement(actions_1.EntityActions, { actions: rowActions, entity: entity, context: actionContext, mode: (actions === null || actions === void 0 ? void 0 : actions.mode) || 'dropdown', position: 'row', className: (actions === null || actions === void 0 ? void 0 : actions.className) || '', onActionStart: actions === null || actions === void 0 ? void 0 : actions.onActionStart, onActionComplete: actions === null || actions === void 0 ? void 0 : actions.onActionComplete, onActionError: actions === null || actions === void 0 ? void 0 : actions.onActionError })))));
+                rowActions.length > 0 && (react_1["default"].createElement("div", { className: "px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3", onClick: function (e) { return e.stopPropagation(); } },
+                    react_1["default"].createElement("div", { onClick: function (e) { return e.stopPropagation(); } },
+                        react_1["default"].createElement(actions_1.EntityActions, { actions: rowActions, entity: entity, context: actionContext, mode: (actions === null || actions === void 0 ? void 0 : actions.mode) || 'dropdown', position: 'row', className: (actions === null || actions === void 0 ? void 0 : actions.className) || '', onActionStart: actions === null || actions === void 0 ? void 0 : actions.onActionStart, onActionComplete: actions === null || actions === void 0 ? void 0 : actions.onActionComplete, onActionError: actions === null || actions === void 0 ? void 0 : actions.onActionError }))))));
         })));
     };
     // Render list view
@@ -729,8 +732,9 @@ function EntityList(props) {
                             ":"),
                         react_1["default"].createElement("span", { className: "text-xs sm:text-sm text-foreground w-2/3 break-words" }, renderCell({ column: column, entity: entity, value: value, index: index }))));
                 })),
-                rowActions.length > 0 && (react_1["default"].createElement("div", { className: "px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3" },
-                    react_1["default"].createElement(actions_1.EntityActions, { actions: rowActions, entity: entity, context: actionContext, mode: (actions === null || actions === void 0 ? void 0 : actions.mode) || 'dropdown', position: 'row', className: (actions === null || actions === void 0 ? void 0 : actions.className) || '', onActionStart: actions === null || actions === void 0 ? void 0 : actions.onActionStart, onActionComplete: actions === null || actions === void 0 ? void 0 : actions.onActionComplete, onActionError: actions === null || actions === void 0 ? void 0 : actions.onActionError })))));
+                rowActions.length > 0 && (react_1["default"].createElement("div", { className: "px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3", onClick: function (e) { return e.stopPropagation(); } },
+                    react_1["default"].createElement("div", { onClick: function (e) { return e.stopPropagation(); } },
+                        react_1["default"].createElement(actions_1.EntityActions, { actions: rowActions, entity: entity, context: actionContext, mode: (actions === null || actions === void 0 ? void 0 : actions.mode) || 'dropdown', position: 'row', className: (actions === null || actions === void 0 ? void 0 : actions.className) || '', onActionStart: actions === null || actions === void 0 ? void 0 : actions.onActionStart, onActionComplete: actions === null || actions === void 0 ? void 0 : actions.onActionComplete, onActionError: actions === null || actions === void 0 ? void 0 : actions.onActionError }))))));
         })));
     };
     // Render gallery view
@@ -740,8 +744,8 @@ function EntityList(props) {
             var title = utils_1.getEntityTitle(entity, titleField);
             var imageUrl = utils_1.getEntityImageUrl(entity, imageField);
             return (react_1["default"].createElement("div", { key: entity.id, className: "bg-card rounded-lg border shadow-sm overflow-hidden transition-all hover:shadow-md " + (isSelected ? 'ring-2 ring-primary' : '') + " cursor-pointer", onClick: function () { return handleRowClick(entity, index); }, onDoubleClick: function () { return handleRowClick(entity, index); } },
-                imageUrl ? (react_1["default"].createElement("div", { className: "aspect-square w-full overflow-hidden bg-muted" },
-                    react_1["default"].createElement("img", { src: imageUrl, alt: title, className: "w-full h-full object-cover", loading: "lazy" }))) : (react_1["default"].createElement("div", { className: "aspect-square w-full bg-muted flex items-center justify-center" },
+                imageUrl ? (react_1["default"].createElement("div", { className: "relative aspect-square w-full overflow-hidden bg-muted" },
+                    react_1["default"].createElement(image_1["default"], { src: String(imageUrl), alt: String(title), fill: true, className: "object-cover", sizes: "(max-width: 640px) 100vw, 33vw" }))) : (react_1["default"].createElement("div", { className: "aspect-square w-full bg-muted flex items-center justify-center" },
                     react_1["default"].createElement("svg", { className: "w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", "aria-hidden": "true" },
                         react_1["default"].createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" })))),
                 react_1["default"].createElement("div", { className: "p-2 sm:p-3 text-center" },

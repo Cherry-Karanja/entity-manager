@@ -5,10 +5,10 @@
  */
 
 import { EntityListConfig } from '@/components/entityManager/composition/config/types';
-import { Timetable, DAY_OF_WEEK_LABELS } from '../../types';
+import { Timetable } from '../../types';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle } from 'lucide-react';
-
+// navigation is handled by the consuming component; avoid calling hooks in config modules
 export const TimetableListConfig: EntityListConfig<Timetable> = {
   columns: [
     {
@@ -51,23 +51,10 @@ export const TimetableListConfig: EntityListConfig<Timetable> = {
       type: 'date',
     },
     {
-      key: 'working_days',
-      label: 'Working Days',
+      key: 'generation_status',
+      label: 'Generation Status',
       width: '15%',
-      render: (value) => (
-        <div className="flex flex-wrap gap-1">
-          {(value as string[])?.slice(0, 3).map((day) => (
-            <Badge key={day} variant="outline" className="text-xs">
-              {DAY_OF_WEEK_LABELS[day as keyof typeof DAY_OF_WEEK_LABELS]?.slice(0, 3) || day}
-            </Badge>
-          ))}
-          {(value as string[])?.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{(value as string[]).length - 3}
-            </Badge>
-          )}
-        </div>
-      ),
+      align: 'center',
     },
     {
       key: 'version',
@@ -136,6 +123,13 @@ export const TimetableListConfig: EntityListConfig<Timetable> = {
   titleField: 'name',
   subtitleField: 'academic_year_name',
   dateField: 'created_at',
+
+  onRowClick: (timetable) => {
+    // Avoid React hooks in configuration files - perform navigation using window when running in browser
+    if (typeof window !== 'undefined') {
+      window.location.href = `/dashboard/timetables/${timetable.id}/viewer`;
+    }
+  },
 };
 
 // Legacy exports for backward compatibility

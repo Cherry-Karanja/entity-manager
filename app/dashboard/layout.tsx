@@ -22,6 +22,23 @@ export const usePageActions = () => {
 
 const generateBreadcrumbs = (pathname: string) => {
   const segments = pathname.split('/').filter(Boolean);
+
+  // If path is long, collapse middle segments to an ellipsis for readability
+  if (segments.length > 4) {
+    const first = segments[0];
+    const lastTwo = segments.slice(-2);
+    const crumbs: { label: string; href?: string }[] = [];
+
+    crumbs.push({ label: first.charAt(0).toUpperCase() + first.slice(1).replace(/-/g, ' '), href: '/' + first });
+    crumbs.push({ label: '…' });
+    lastTwo.forEach((segment, i) => {
+      const href = '/' + segments.slice(0, segments.length - 2 + i + 1).join('/');
+      crumbs.push({ label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '), href });
+    });
+
+    return crumbs;
+  }
+
   return segments.map((segment, index) => {
     const href = '/' + segments.slice(0, index + 1).join('/');
     const label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');

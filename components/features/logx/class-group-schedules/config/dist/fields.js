@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.classGroupScheduleFields = void 0;
+exports.ClassGroupScheduleFormConfig = exports.classGroupScheduleFields = void 0;
 var types_1 = require("../../types");
 var client_1 = require("@/components/connectionManager/http/client");
 exports.classGroupScheduleFields = [
@@ -225,3 +225,23 @@ exports.classGroupScheduleFields = [
         helpText: "Any additional information or special instructions"
     },
 ];
+exports.ClassGroupScheduleFormConfig = {
+    fields: exports.classGroupScheduleFields,
+    layout: 'vertical',
+    sections: [
+        {
+            id: 'main',
+            label: 'Schedule Details',
+            description: 'Configure class group schedule details',
+            fields: ['timetable', 'class_group', 'unit', 'instructor', 'room', 'day_of_week', 'start_time', 'end_time', 'is_locked', 'notes'],
+            order: 1
+        },
+    ],
+    submitText: 'Save Schedule',
+    cancelText: 'Cancel',
+    showCancel: true,
+    showReset: false,
+    className: 'class-schedule-form',
+    validateOnChange: false,
+    validateOnBlur: true
+};

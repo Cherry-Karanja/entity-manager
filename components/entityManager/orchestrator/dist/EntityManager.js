@@ -377,12 +377,12 @@ function EntityManagerContent(props) {
     }); }, [config.apiClient, view, state.state.page, state.state.pageSize, state.state.sort, state.state.search, stableFilters, fetchEntities]);
     // Memoize actions with context to prevent re-renders
     var actionsWithContext = react_1.useMemo(function () {
-        if (!config.config.list.actions)
+        if (!config.config.actions)
             return undefined;
-        return __assign(__assign({}, config.config.list.actions), { context: __assign(__assign({}, config.config.list.actions.context), { refresh: refreshData, customData: {
+        return __assign(__assign({}, config.config.actions), { context: __assign(__assign({}, config.config.actions.context), { refresh: refreshData, customData: {
                     allData: state.state.entities
                 } }) });
-    }, [config.config.list.actions, refreshData, state.state.entities]);
+    }, [config.config.actions, refreshData, state.state.entities]);
     // Handle edit
     var handleEdit = react_1.useCallback(function (entity) {
         setView('edit');
@@ -478,7 +478,7 @@ function EntityManagerContent(props) {
     if (view === 'list') {
         return (react_1["default"].createElement("div", { className: "space-y-4" },
             renderBreadcrumbs(),
-            react_1["default"].createElement(list_1.EntityList, { data: state.state.entities, columns: config.config.list.columns, view: "table", toolbar: config.config.list.toolbar, selectable: config.config.list.selectable, multiSelect: config.config.list.multiSelect, selectedIds: state.state.selectedIds, onSelectionChange: state.setSelected, onRowClick: handleView, onRowDoubleClick: handleEdit, pagination: true, paginationConfig: memoizedPaginationConfig, onPaginationChange: handlePaginationChange, sortable: config.config.list.sortable, sortConfig: state.state.sort, onSortChange: state.setSort, filterable: config.config.list.filterable, filterConfigs: state.state.filters, onFilterChange: state.setFilters, searchable: config.config.list.searchable, searchValue: state.state.search, onSearchChange: state.setSearch, searchPlaceholder: config.config.list.searchPlaceholder, emptyMessage: config.config.list.emptyMessage, loading: state.state.loading, error: state.state.error, actions: actionsWithContext, className: config.config.list.className, hover: config.config.list.hover, striped: config.config.list.striped, bordered: config.config.list.bordered, titleField: config.config.list.titleField, subtitleField: config.config.list.subtitleField, imageField: config.config.list.imageField, dateField: config.config.list.dateField })));
+            react_1["default"].createElement(list_1.EntityList, { data: state.state.entities, columns: config.config.list.columns, view: "table", toolbar: config.config.list.toolbar, selectable: config.config.list.selectable, multiSelect: config.config.list.multiSelect, selectedIds: state.state.selectedIds, onSelectionChange: state.setSelected, onRowClick: config.config.list.onRowClick || handleView, onRowDoubleClick: config.config.list.onRowDoubleClick || handleEdit, pagination: true, paginationConfig: memoizedPaginationConfig, onPaginationChange: handlePaginationChange, sortable: config.config.list.sortable, sortConfig: state.state.sort, onSortChange: state.setSort, filterable: config.config.list.filterable, filterConfigs: state.state.filters, onFilterChange: state.setFilters, searchable: config.config.list.searchable, searchValue: state.state.search, onSearchChange: state.setSearch, searchPlaceholder: config.config.list.searchPlaceholder, emptyMessage: config.config.list.emptyMessage, loading: state.state.loading, error: state.state.error, actions: actionsWithContext, className: config.config.list.className, hover: config.config.list.hover, striped: config.config.list.striped, bordered: config.config.list.bordered, titleField: config.config.list.titleField, subtitleField: config.config.list.subtitleField, imageField: config.config.list.imageField, dateField: config.config.list.dateField })));
     }
     // Render form view (create/edit)
     if (view === 'create' || view === 'edit') {

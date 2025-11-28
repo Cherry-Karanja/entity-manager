@@ -1,4 +1,5 @@
 import type { FormField } from "@/components/entityManager/components/form/types";
+import type { EntityFormConfig } from '@/components/entityManager/composition/config/types';
 import { DAY_OF_WEEK_LABELS } from "../../types";
 import { ClassGroupSchedule } from "../../types";
 import { authApi } from '@/components/connectionManager/http/client';
@@ -141,3 +142,24 @@ export const classGroupScheduleFields: FormField<ClassGroupSchedule>[] = [
     helpText: "Any additional information or special instructions",
   },
 ];
+
+export const ClassGroupScheduleFormConfig: EntityFormConfig<ClassGroupSchedule> = {
+  fields: classGroupScheduleFields,
+  layout: 'vertical',
+  sections: [
+    {
+      id: 'main',
+      label: 'Schedule Details',
+      description: 'Configure class group schedule details',
+      fields: ['timetable', 'class_group', 'unit', 'instructor', 'room', 'day_of_week', 'start_time', 'end_time', 'is_locked', 'notes'],
+      order: 1,
+    },
+  ],
+  submitText: 'Save Schedule',
+  cancelText: 'Cancel',
+  showCancel: true,
+  showReset: false,
+  className: 'class-schedule-form',
+  validateOnChange: false,
+  validateOnBlur: true,
+};

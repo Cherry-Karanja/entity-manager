@@ -11,7 +11,6 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  Power, 
   RefreshCw,
   CheckCircle,
   XCircle,
@@ -25,19 +24,19 @@ export const TimetableActionsConfig: EntityActionsConfig<Timetable> = {
     // ===========================
     {
       id: 'view',
-      label: 'View Details',
+      label: 'View Schedule',
       icon: <Eye className="h-4 w-4" />,
       actionType: 'navigation',
       position: 'row',
-      url: (timetable?: Timetable) => `/dashboard/timetables/${timetable!.id}`,
+      url: (timetable?: Timetable) => `/dashboard/timetables/${timetable!.id}/viewer`,
     },
     {
       id: 'edit',
-      label: 'Edit',
+      label: 'Edit Schedule',
       icon: <Edit className="h-4 w-4" />,
       actionType: 'navigation',
       position: 'row',
-      url: (timetable?: Timetable) => `/dashboard/timetables/${timetable!.id}/edit`,
+      url: (timetable?: Timetable) => `/dashboard/timetables/${timetable!.id}/editor`,
     },
     {
       id: 'activate',

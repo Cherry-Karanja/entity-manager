@@ -173,12 +173,11 @@ export const UserListConfig: EntityListConfig<User> = {
   emptyMessage: 'No users found.',
 
   // Cast to any for incremental migration; EntityManager will supply context at runtime
-  actions: UserActionsConfig as any,
+  // actions: UserActionsConfig as any,
 
   className: '',
 
   hover: true,
-
   striped: true,
   bordered: true,
 

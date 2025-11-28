@@ -5,9 +5,10 @@
  * Standalone component - works independently.
  */
 
-'use client';
+ 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { BaseEntity, FilterConfig } from '../../primitives/types';
 import { EntityActions } from '../actions';
 import { Action, ActionContext } from '../actions/types';
@@ -36,6 +37,7 @@ import { ListSkeleton } from './components/Skeleton';
 import { CreateEmptyState, SearchEmptyState, FilterEmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
 import { DensitySelector } from './components/DensitySelector';
+import { ViewSelector } from './components/ViewSelector';
 import { ListDensity } from './variants';
 import { Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -578,22 +580,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
           
           <div className="flex gap-2 items-center flex-wrap justify-end w-full sm:w-auto">
             {toolbar.viewSwitcher && (
-              <div className="inline-flex rounded-md shadow-sm" role="group" aria-label="View switcher">
-                {(['table', 'card', 'list', 'grid'] as ListView[]).map(v => (
-                  <button
-                    key={v}
-                    onClick={() => handleViewChange(v)}
-                    className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border transition-colors first:rounded-l-md last:rounded-r-md min-h-[44px] ${
-                      state.view === v
-                        ? 'bg-primary text-primary-foreground border-primary z-10'
-                        : 'bg-background text-muted-foreground border-input hover:bg-muted hover:text-foreground'
-                    }`}
-                    title={`Switch to ${v} view`}
-                  >
-                    {v.charAt(0).toUpperCase() + v.slice(1)}
-                  </button>
-                ))}
-              </div>
+              // Match DensitySelector default presentation (dropdown) for compact toolbar
+              <ViewSelector value={state.view} onChange={handleViewChange} variant="dropdown" className="" />
             )}
 
             {/* Filter Button */}
@@ -855,7 +843,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
   // Render table view
   const renderTableView = () => {
     return (
-      <div className="relative overflow-x-auto -mx-4 sm:mx-0">
+      <div className="relative overflow-x-hidden -mx-4 sm:mx-0 p-2">
         <div className="inline-block min-w-full align-middle max-w-full">
           <table className="min-w-full divide-y divide-border text-sm w-full">
             <thead className="bg-muted/50">
@@ -1002,8 +990,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               )}
               
               {imageUrl && (
-                <div className="aspect-video w-full overflow-hidden bg-muted">
-                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" loading="lazy" />
+                <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                  <Image src={String(imageUrl)} alt={String(title)} fill className="object-cover" sizes="(max-width: 640px) 100vw, 50vw" />
                 </div>
               )}
               
@@ -1029,8 +1017,9 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
               
               {rowActions.length > 0 && (
-                <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3">
-                  <EntityActions 
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <EntityActions 
                     actions={rowActions}
                     entity={entity}
                     context={actionContext}
@@ -1041,6 +1030,7 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
                     onActionComplete={actions?.onActionComplete}
                     onActionError={actions?.onActionError}
                   />
+                  </div>
                 </div>
               )}
             </div>
@@ -1222,18 +1212,20 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               </div>
               
               {rowActions.length > 0 && (
-                <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3">
-                  <EntityActions 
-                    actions={rowActions}
-                    entity={entity}
-                    context={actionContext}
-                    mode={actions?.mode || 'dropdown'}
-                    position={'row'}
-                    className={actions?.className || ''}
-                    onActionStart={actions?.onActionStart}
-                    onActionComplete={actions?.onActionComplete}
-                    onActionError={actions?.onActionError}
-                  />
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex items-center gap-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <EntityActions 
+                      actions={rowActions}
+                      entity={entity}
+                      context={actionContext}
+                      mode={actions?.mode || 'dropdown'}
+                      position={'row'}
+                      className={actions?.className || ''}
+                      onActionStart={actions?.onActionStart}
+                      onActionComplete={actions?.onActionComplete}
+                      onActionError={actions?.onActionError}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -1262,8 +1254,8 @@ export function EntityList<T extends BaseEntity = BaseEntity>(
               onDoubleClick={() => handleRowClick(entity, index)}
             >
               {imageUrl ? (
-                <div className="aspect-square w-full overflow-hidden bg-muted">
-                  <img src={imageUrl} alt={title} className="w-full h-full object-cover" loading="lazy" />
+                <div className="relative aspect-square w-full overflow-hidden bg-muted">
+                  <Image src={String(imageUrl)} alt={String(title)} fill className="object-cover" sizes="(max-width: 640px) 100vw, 33vw" />
                 </div>
               ) : (
                 <div className="aspect-square w-full bg-muted flex items-center justify-center">

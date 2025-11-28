@@ -2,25 +2,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { Department, Programme, ClassGroup } from '@/components/features/institution/types'
+import { Room } from '../../types'
 import { useDebounceSearch } from '@/hooks/useDebounce'
 import { motion, AnimatePresence } from 'framer-motion'
 import { classGroupScheduleApi } from '../../class-group-schedules/api/client'
 import { timetableSettingClient } from '../../timetable-settings'
-import { departmentsApiClient, programmesApiClient } from '@/components/features/institution'
+import { departmentsApiClient, programmesApiClient,classGroupsApiClient } from '@/components/features/institution'
 import { classGroupScheduleClient } from '../../class-group-schedules'
 import { ClassGroupSchedule, TimetableSettings, DayOfWeek } from '../../types'
 import { roomClient } from '../../rooms'
-import { Search, Calendar, Clock, AlertCircle, Check, X, Maximize2, Minimize2 } from 'lucide-react'
-// use command component for search filters for departments classgroups and rooms
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { AlertCircle, Check, X } from 'lucide-react'
+import ScheduleToolbar from './ScheduleToolbar'
+import ScheduleFilters from './ScheduleFilters'
+import ScheduleGrid from './ScheduleGrid'
 interface ScheduleEditorProps { timetableId: string }
+
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const formatTime = (h: number, m: number) => `${pad(h)}:${pad(m)}`
@@ -33,8 +30,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
   const [selectedRoom, setSelectedRoom] = useState<string>('')
   const [selectedGroup, setSelectedGroup] = useState<string>('')
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const showStats = true
-  const [hoveredSchedule, setHoveredSchedule] = useState<number | null>(null)
+  // placeholder for potential hover state (not used in refactor yet)
 
   const HOUR_PX = 60
   const pixelsPerMinute = HOUR_PX / 60
@@ -45,38 +41,34 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
   const [columnWidth, setColumnWidth] = useState(150)
   const [draggingId, setDraggingId] = useState<number | null>(null)
   const [preview, setPreview] = useState<{ dayIdx: number, startMin: number, durationMins: number } | null>(null)
-  const [pendingSave, setPendingSave] = useState<null | { updated: ClassGroupSchedule, localViolations: string[], serverConflicts?: any[] }>(null)
+  const [pendingSave, setPendingSave] = useState<null | { updated: ClassGroupSchedule, localViolations: string[], serverConflicts?: ClassGroupSchedule[] }>(null)
+  const [showConflictModal, setShowConflictModal] = useState(false)
   const [conflictIds, setConflictIds] = useState<Set<number>>(new Set())
+  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [stackingMode, setStackingMode] = useState<'vertical' | 'columns'>('vertical')
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
-  const [departments, setDepartments] = useState<any[]>([])
-  const [programmes, setProgrammes] = useState<any[]>([])
-  const [classGroupsOptions, setClassGroupsOptions] = useState<any[]>([])
-  const [roomsOptions, setRoomsOptions] = useState<any[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [programmes, setProgrammes] = useState<Programme[]>([])
+  const [classGroupsOptions, setClassGroupsOptions] = useState<ClassGroup[]>([])
+  const [roomsOptions, setRoomsOptions] = useState<Room[]>([])
   const [selectedProgramme, setSelectedProgramme] = useState<string|undefined>(undefined)
   const [programmesPage, setProgrammesPage] = useState(1)
-  const [programmesHasMore, setProgrammesHasMore] = useState(false)
   const [classGroupsPage, setClassGroupsPage] = useState(1)
-  const [classGroupsHasMore, setClassGroupsHasMore] = useState(false)
   const [roomsPage, setRoomsPage] = useState(1)
-  const [roomsHasMore, setRoomsHasMore] = useState(false)
   const PAGE_SIZE = 25
-  const [deptOpen, setDeptOpen] = useState(false)
-  const [programmeOpen, setProgrammeOpen] = useState(false)
-  const [groupOpen, setGroupOpen] = useState(false)
-  const [roomOpen, setRoomOpen] = useState(false)
-  const { searchTerm: deptSearchTerm, debouncedSearchTerm: debouncedDeptSearch, setSearchTerm: setDeptSearch } = useDebounceSearch('', 300)
-  const { searchTerm: programmeSearchTerm, debouncedSearchTerm: debouncedProgrammeSearch, setSearchTerm: setProgrammeSearch } = useDebounceSearch('', 300)
-  const { searchTerm: groupSearchTerm, debouncedSearchTerm: debouncedGroupSearch, setSearchTerm: setGroupSearch } = useDebounceSearch('', 300)
-  const { searchTerm: roomSearchTerm, debouncedSearchTerm: debouncedRoomSearch, setSearchTerm: setRoomSearch } = useDebounceSearch('', 300)
+  const { debouncedSearchTerm: debouncedDeptSearch } = useDebounceSearch('', 300)
+  const { debouncedSearchTerm: debouncedProgrammeSearch } = useDebounceSearch('', 300)
+  const { debouncedSearchTerm: debouncedGroupSearch } = useDebounceSearch('', 300)
+  const { debouncedSearchTerm: debouncedRoomSearch } = useDebounceSearch('', 300)
   const [selectedDepartment, setSelectedDepartment] = useState<string|undefined>(undefined)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const classGroupsReqRef = useRef(0)
   const roomsReqRef = useRef(0)
   const programmesReqRef = useRef(0)
   const schedulesReqRef = useRef(0)
+  const nudgeRef = useRef<((s: ClassGroupSchedule, dm: number, dd?: number) => void) | null>(null)
 
-  const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
+  // clamp helper was used in previous placement calculations; kept inline in helpers as needed
 
   // Auto-dismiss notifications
   useEffect(() => {
@@ -188,31 +180,31 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     const reqId = classGroupsReqRef.current + 1
     classGroupsReqRef.current = reqId
     // guard: only run if there's either a department, programme or a search term
-    if (!selectedDepartment && !selectedProgramme && !debouncedGroupSearch) { setClassGroupsOptions([]); setClassGroupsHasMore(false); return }
+    if (!selectedDepartment && !selectedProgramme && !debouncedGroupSearch) { setClassGroupsOptions([]); return }
     ;(async () => {
       try {
         const params: any = { pageSize: PAGE_SIZE, page: classGroupsPage }
         // backend expects Django-style lookup params for nested filters
         if (selectedProgramme) params['class_group__programme'] = selectedProgramme
         else if (selectedDepartment) params['class_group__programme__department'] = selectedDepartment
+        // allow optional filtering of class group options by room (show only groups that have schedules in the room)
+        if (selectedRoom) params.room = selectedRoom
         if (debouncedGroupSearch) params.search = debouncedGroupSearch
-        const res = await classGroupScheduleClient.list(params)
+        const res = await classGroupsApiClient.list(params)
         if (!mounted) return
         // ignore stale responses
         if (classGroupsReqRef.current !== reqId) return
         const items = (res as any).results || (res as any).data || res || []
         // append or replace based on page
         setClassGroupsOptions(prev => classGroupsPage > 1 ? [...prev, ...items] : items)
-        // detect pagination
-        setClassGroupsHasMore(Boolean((res as any).next))
+        // detect pagination (pagination handling intentionally omitted in this refactor)
       } catch (err) {
         console.warn('Failed to fetch class groups', err)
         if (classGroupsPage === 1) setClassGroupsOptions([])
-        setClassGroupsHasMore(false)
       }
     })()
     return () => { mounted = false }
-  }, [selectedDepartment, selectedProgramme, debouncedGroupSearch, classGroupsPage])
+  }, [selectedDepartment, selectedProgramme, debouncedGroupSearch, classGroupsPage, selectedRoom])
 
   // Also trigger class group fetch when debouncedGroupSearch changes
   useEffect(() => {
@@ -226,7 +218,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
   useEffect(() => {
     let mounted = true
     // if no department and no search, clear
-    if (!selectedDepartment && !debouncedProgrammeSearch) { setProgrammes([]); setProgrammesHasMore(false); return }
+    if (!selectedDepartment && !debouncedProgrammeSearch) { setProgrammes([]); return }
     const reqId = programmesReqRef.current + 1
     programmesReqRef.current = reqId
     ;(async () => {
@@ -239,11 +231,9 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
         if (programmesReqRef.current !== reqId) return
         const items = (res as any).results || (res as any).data || res || []
         setProgrammes(prev => programmesPage > 1 ? [...prev, ...items] : items)
-        setProgrammesHasMore(Boolean((res as any).next))
       } catch (err) {
         console.warn('Failed to fetch programmes', err)
         if (programmesPage === 1) setProgrammes([])
-        setProgrammesHasMore(false)
       }
     })()
     return () => { mounted = false }
@@ -265,13 +255,13 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     let mounted = true
     const reqId = roomsReqRef.current + 1
     roomsReqRef.current = reqId
-    if (!selectedGroup && !debouncedRoomSearch && !selectedDepartment) { setRoomsOptions([]); setRoomsHasMore(false); return }
+    if (!selectedGroup && !debouncedRoomSearch && !selectedDepartment) { setRoomsOptions([]); return }
     ;(async () => {
       try {
         const params: any = { pageSize: PAGE_SIZE, page: roomsPage }
         // derive department from selectedGroup when available
         if (selectedGroup) {
-          const sg = classGroupsOptions.find((g: any) => String(g.id || g.pk || g.name) === String(selectedGroup))
+          const sg: any = classGroupsOptions.find((g: any) => String(g.id || g.pk || g.name) === String(selectedGroup))
           const derivedDept = sg?.programme?.department || sg?.programme?.department_id || sg?.department || sg?.department_id || selectedDepartment
           if (derivedDept) params.department = derivedDept
         } else if (selectedDepartment) {
@@ -284,11 +274,9 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
         if (roomsReqRef.current !== reqId) return
         const items = (res as any).results || (res as any).data || res || []
         setRoomsOptions(prev => roomsPage > 1 ? [...prev, ...items] : items)
-        setRoomsHasMore(Boolean((res as any).next))
       } catch (err) {
         console.warn('Failed to fetch rooms', err)
         if (roomsPage === 1) setRoomsOptions([])
-        setRoomsHasMore(false)
       }
     })()
     return () => { mounted = false }
@@ -347,6 +335,21 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+  // keyboard nudges for selected schedule (arrow keys)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!selectedId) return
+      const sched = schedules.find(s => Number(s.id) === Number(selectedId))
+      if (!sched) return
+      if (e.key === 'ArrowUp') { e.preventDefault(); nudgeRef.current?.(sched, -slotMinutes) }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); nudgeRef.current?.(sched, slotMinutes) }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); nudgeRef.current?.(sched, 0, -1) }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); nudgeRef.current?.(sched, 0, 1) }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [selectedId, schedules, slotMinutes])
+
   const days: DayOfWeek[] = useMemo(() => {
     if (timetableSettings?.enabled_days && timetableSettings.enabled_days.length) return timetableSettings.enabled_days as DayOfWeek[]
     return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
@@ -382,12 +385,22 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
 
   // NOTE: filter option lists are provided by backend clients (departments, classGroupsOptions, roomsOptions)
 
+  // If a room is selected, narrow class group options to those that actually have schedules in that room
+  const visibleClassGroups = useMemo(() => {
+    if (!selectedRoom) return classGroupsOptions
+    // match schedules to class groups by id/PK/name and room by id or name
+    return classGroupsOptions.filter(g => {
+      const gid = String(g.id ?? g.pk ?? g.name ?? '')
+      return filteredSchedules.some(s => {
+        const sG = String((s as any).class_group ?? (s as any).class_group_id ?? s.class_group_name ?? '')
+        const sRoom = String((s as any).room ?? (s as any).room_id ?? (s as any).room_name ?? '')
+        return sG === gid && (sRoom === String(selectedRoom) || String(s.room_name) === String(selectedRoom))
+      })
+    })
+  }, [classGroupsOptions, selectedRoom, filteredSchedules])
+
   // Max display columns (legacy) - kept for reference; current stacking uses dynamic offsets (unused)
-  // Vertical stacking offset (base px) applied per overlapping lane when in vertical stacking mode.
-  // Increased slightly so stacked items are more clearly separated for long events.
-  const STACK_OFFSET_PX = Math.min(16, slotPx * 0.4)
-  // Minimum padding inside slot boundaries so items don't touch separator lines
-  const PADDING_PX = 2
+  // Vertical stacking and padding are handled in the DayColumn component after refactor
 
   // Each logical slot maps to a fixed pixel height so schedule blocks align precisely
   const slotHeights = useMemo(() => Array.from({ length: slotsCount }).map(() => slotPx), [slotsCount, slotPx])
@@ -418,7 +431,7 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     return () => window.removeEventListener('resize', measure)
   }, [slots.length, days.length])
 
-  function hasLocalOverlap(updated: ClassGroupSchedule) {
+  const hasLocalOverlap = useCallback((updated: ClassGroupSchedule) => {
     const updStart = timeStrToMinutes(updated.start_time)
     const updEnd = updStart + fixedDuration
     return schedules.some(s => {
@@ -428,9 +441,9 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
       const sEnd = sStart + fixedDuration
       return (sStart < updEnd && sEnd > updStart)
     })
-  }
+  }, [timeStrToMinutes, fixedDuration, schedules])
 
-  function checkConstraintsLocally(updated: ClassGroupSchedule) {
+  const checkConstraintsLocally = useCallback((updated: ClassGroupSchedule) => {
     const violations: string[] = []
     if (!timetableSettings) return violations
     const preferred = timetableSettings.preferred_class_duration || 0
@@ -476,9 +489,9 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     }
 
     return violations
-  }
+  }, [timetableSettings, schedules, timeStrToMinutes, fixedDuration])
 
-  async function performSave(updated: ClassGroupSchedule) {
+  const performSave = useCallback(async (updated: ClassGroupSchedule) => {
     const prev = schedules
     setSchedules(arr => arr.map(it => it.id === updated.id ? updated : it))
     setPendingSave(null)
@@ -497,9 +510,9 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
       setNotification({ type: 'error', message: 'Failed to save schedule' })
       console.error('Failed to save schedule', err)
     }
-  }
+  }, [schedules, setSchedules, timeStrToMinutes, fixedDuration])
 
-  async function saveSchedule(updated: ClassGroupSchedule) {
+  const saveSchedule = useCallback(async (updated: ClassGroupSchedule) => {
     const localViolations: string[] = []
     if (hasLocalOverlap(updated)) localViolations.push('This schedule overlaps with an existing schedule.')
     const constraintViolations = checkConstraintsLocally(updated)
@@ -529,9 +542,9 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
     const endTime = formatTime(Math.floor((start + fixedDuration) / 60), (start + fixedDuration) % 60)
     const toSave = { ...updated, end_time: endTime }
     await performSave(toSave as ClassGroupSchedule)
-  }
+  }, [hasLocalOverlap, checkConstraintsLocally, days, timetableId, timeStrToMinutes, fixedDuration, performSave])
 
-  function nudgeSchedule(s: ClassGroupSchedule, deltaMins: number, deltaDays = 0) {
+  const nudgeSchedule = useCallback((s: ClassGroupSchedule, deltaMins: number, deltaDays = 0) => {
     try {
       const orig = parseTime(s.start_time)
       const origTotal = orig.hh * 60 + orig.mm
@@ -548,11 +561,18 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
       const origDay = days.indexOf(s.day_of_week as DayOfWeek)
       const newDay = Math.max(0, Math.min(origDay + deltaDays, days.length - 1))
       const updated = { ...s, start_time: startStr, end_time: endStr, day_of_week: days[newDay] }
-      saveSchedule(updated)
+      // fire-and-forget
+      void saveSchedule(updated)
     } catch (err) {
       console.error('nudge error', err)
     }
-  }
+  }, [fixedDuration, slotMinutes, startHour, endHour, days, saveSchedule])
+
+  // expose current nudge function to a ref so earlier effects can call it without TDZ
+  useEffect(() => {
+    nudgeRef.current = nudgeSchedule
+    return () => { nudgeRef.current = null }
+  }, [nudgeSchedule])
 
   const clearFilters = () => {
     setSearchQuery('')
@@ -564,222 +584,55 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
 
   return (
     <div className={`w-full ${isFullscreen ? 'fixed inset-0 z-50 bg-white p-6' : ''}`}>
-      {/* Header with Search and Filters */}
-      <div className="mb-4 space-y-3">
-          <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Schedule Editor</h2>
-            <div className="flex items-center gap-2">
-            <button
-              onClick={() => setStackingMode(m => m === 'vertical' ? 'columns' : 'vertical')}
-              className="px-3 py-1 text-sm border rounded hover:bg-gray-100"
-              title="Toggle stacking mode"
-            >
-              {stackingMode === 'vertical' ? 'Stack: Vertical' : 'Stack: Columns'}
-            </button>
-            <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Statistics */}
-        {showStats && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-4 gap-3"
-          >
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-xs text-blue-600 font-medium">Total Classes</div>
-              <div className="text-2xl font-bold text-blue-900">{stats.totalClasses}</div>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="text-xs text-green-600 font-medium">Rooms Used</div>
-              <div className="text-2xl font-bold text-green-900">{stats.roomsUsed}</div>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="text-xs text-purple-600 font-medium">Groups</div>
-              <div className="text-2xl font-bold text-purple-900">{stats.groupsScheduled}</div>
-            </div>
-            <div className="bg-yellow-50 p-3 rounded-lg">
-              <div className="text-xs text-yellow-600 font-medium">Locked</div>
-              <div className="text-2xl font-bold text-yellow-900">{stats.lockedClasses}</div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Search and Filters */}
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by class, room, or group..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              ref={searchRef}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex flex-col">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setDeptOpen(v => !v)}
-                className="w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {selectedDepartment ? (departments.find(d => String(d.id || d.pk || d.name) === String(selectedDepartment))?.name || selectedDepartment) : 'All Departments'}
-              </button>
-              {deptOpen && (
-                <div className="absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm">
-                  <Command className="w-full">
-                    <CommandInput
-                      value={deptSearchTerm}
-                      onValueChange={(v: string) => setDeptSearch(v)}
-                      placeholder="Search departments..."
-                    />
-                    <CommandList>
-                      <CommandEmpty>No departments</CommandEmpty>
-                      <CommandGroup>
-                        <div key="dept-all" className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onMouseDown={() => { setSelectedDepartment(''); setSelectedProgramme(undefined); setSelectedGroup(''); setDeptOpen(false) }}>All Departments</div>
-                        {departments.map(d => (
-                          <CommandItem key={d.id || d.pk || d.name} onMouseDown={() => { setSelectedDepartment(d.id || d.pk || d.name); setSelectedProgramme(undefined); setSelectedGroup(''); setDeptOpen(false) }}>{d.name || d.title || String(d)}</CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setProgrammeOpen(v => !v)}
-                className="w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {selectedProgramme ? (programmes.find(p => String(p.id || p.pk || p.name) === String(selectedProgramme))?.name || selectedProgramme) : 'All Programmes'}
-              </button>
-              {programmeOpen && (
-                <div className="absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm">
-                  <Command className="w-full">
-                    <CommandInput
-                      value={programmeSearchTerm}
-                      onValueChange={(v: string) => setProgrammeSearch(v)}
-                      placeholder="Search programmes..."
-                    />
-                    <CommandList>
-                      <CommandEmpty>No programmes</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem onMouseDown={() => { setSelectedProgramme(undefined); setSelectedGroup(''); setProgrammeOpen(false) }}>All Programmes</CommandItem>
-                        {programmes.map((p: any) => (
-                          <CommandItem key={p.id || p.pk || p.name} onMouseDown={() => { setSelectedProgramme(p.id || p.pk || p.name); setSelectedGroup(''); setProgrammeOpen(false) }}>{p.name || p.title || String(p)}</CommandItem>
-                        ))}
-                        {programmesHasMore && (
-                          <div className="px-3 py-2 text-center border-t"><button onMouseDown={(e) => { e.preventDefault(); setProgrammesPage(p => p + 1) }} className="text-sm text-blue-600">Load more</button></div>
-                        )}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setGroupOpen(v => !v)}
-                className="w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {selectedGroup ? (classGroupsOptions.find((g:any) => String(g.id || g.pk || g.name) === String(selectedGroup))?.name || selectedGroup) : 'All Groups'}
-              </button>
-              {groupOpen && (
-                <div className="absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm">
-                  <Command className="w-full">
-                    <CommandInput
-                      value={groupSearchTerm}
-                      onValueChange={(v: string) => setGroupSearch(v)}
-                      placeholder="Search groups..."
-                    />
-                    <CommandList>
-                      <CommandEmpty>No groups</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem onMouseDown={() => { setSelectedGroup(''); setGroupOpen(false) }}>All Groups</CommandItem>
-                        {classGroupsOptions.map((g: any) => (
-                          <CommandItem key={g.id || g.pk || g.name} onMouseDown={() => {
-                            const gid = g.id || g.pk || g.name
-                            setSelectedGroup(gid)
-                            // derive programme/department from group if available
-                            const prog = g.programme?.id || g.programme?.pk || g.programme || g.programme_id
-                            const dept = g.programme?.department || g.programme?.department_id || g.department || g.department_id
-                            if (prog) setSelectedProgramme(prog)
-                            if (dept) setSelectedDepartment(dept)
-                            setGroupOpen(false)
-                          }}>{g.name || g.title || String(g)}</CommandItem>
-                        ))}
-                        {classGroupsHasMore && (
-                          <div className="px-3 py-2 text-center border-t"><button onMouseDown={(e) => { e.preventDefault(); setClassGroupsPage(p => p + 1) }} className="text-sm text-blue-600">Load more</button></div>
-                        )}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setRoomOpen(v => !v)}
-                className="w-full text-left px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {selectedRoom ? (roomsOptions.find((r:any) => String(r.id || r.pk || r.name) === String(selectedRoom))?.name || selectedRoom) : 'All Rooms'}
-              </button>
-              {roomOpen && (
-                <div className="absolute z-30 mt-1 w-full max-h-60 overflow-hidden border rounded bg-white shadow-sm">
-                  <Command className="w-full">
-                    <CommandInput
-                      value={roomSearchTerm}
-                      onValueChange={(v: string) => setRoomSearch(v)}
-                      placeholder="Search rooms..."
-                    />
-                    <CommandList>
-                      <CommandEmpty>No rooms</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem onMouseDown={() => { setSelectedRoom(''); setRoomOpen(false) }}>All Rooms</CommandItem>
-                        {roomsOptions.map((r: any) => (
-                          <CommandItem key={r.id || r.pk || r.name} onMouseDown={() => { setSelectedRoom(r.id || r.pk || r.name); setRoomOpen(false) }}>{r.name || r.title || String(r)}</CommandItem>
-                        ))}
-                        {roomsHasMore && (
-                          <div className="px-3 py-2 text-center border-t"><button onMouseDown={(e) => { e.preventDefault(); setRoomsPage(p => p + 1) }} className="text-sm text-blue-600">Load more</button></div>
-                        )}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {(searchQuery || selectedRoom || selectedGroup || selectedDepartment) && (
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Toolbar and Filters - modular components */}
+      <ScheduleToolbar
+        stackingMode={stackingMode}
+        setStackingMode={setStackingMode}
+        isFullscreen={isFullscreen}
+        setIsFullscreen={setIsFullscreen}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        stats={stats}
+        clearFilters={clearFilters}
+        selectedDepartment={selectedDepartment}
+        selectedProgramme={selectedProgramme}
+        selectedGroup={selectedGroup}
+        selectedRoom={selectedRoom}
+        selectedDepartmentLabel={(() => {
+          const it = departments.find(d => String(d.id || d.pk || d.name) === String(selectedDepartment))
+          return it ? (it.name || it.title || it.label || String(it.id || it.pk || '')) : undefined
+        })()}
+        selectedProgrammeLabel={(() => {
+          const it = programmes.find(p => String(p.id || p.pk || p.name) === String(selectedProgramme))
+          return it ? (it.name || it.title || it.label || String(it.id || it.pk || '')) : undefined
+        })()}
+        selectedGroupLabel={(() => {
+          const it = classGroupsOptions.find(g => String(g.id || g.pk || g.name) === String(selectedGroup))
+          return it ? (it.name || it.title || it.class_group_name || String(it.id || it.pk || '')) : undefined
+        })()}
+        selectedRoomLabel={(() => {
+          const it = roomsOptions.find(r => String(r.id || r.pk || r.name) === String(selectedRoom))
+          return it ? (it.name || it.title || it.label || String(it.id || it.pk || '')) : undefined
+        })()}
+        clearDepartment={() => setSelectedDepartment(undefined)}
+        clearProgramme={() => setSelectedProgramme(undefined)}
+        clearGroup={() => setSelectedGroup('')}
+        clearRoom={() => setSelectedRoom('')}
+      />
+      <ScheduleFilters
+        departments={departments}
+        programmes={programmes}
+        classGroups={visibleClassGroups}
+        rooms={roomsOptions}
+        selectedDepartment={selectedDepartment}
+        selectedProgramme={selectedProgramme}
+        selectedGroup={selectedGroup}
+        selectedRoom={selectedRoom}
+        setSelectedDepartment={(v?: string) => setSelectedDepartment(v)}
+        setSelectedProgramme={(v?: string) => setSelectedProgramme(v)}
+        setSelectedGroup={(v: string) => setSelectedGroup(v)}
+        setSelectedRoom={(v: string) => setSelectedRoom(v)}
+      />
 
       {/* Notifications */}
       <AnimatePresence>
@@ -805,291 +658,37 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
         )}
       </AnimatePresence>
 
-      {/* Schedule Grid */}
-      <div className="overflow-auto border rounded-lg shadow-sm">
-        <div ref={containerRef} className="grid" style={{ gridTemplateColumns: `80px repeat(${days.length}, minmax(150px, 1fr))` }}>
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-3 font-semibold text-gray-700 sticky left-0 z-20 border-r">
-            <Clock className="w-4 h-4 inline mr-2" />
-            Time
-          </div>
-          {days.map(d => (
-            <div key={d} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 text-center font-semibold text-gray-700">
-              <Calendar className="w-4 h-4 inline mr-2" />
-              {d.charAt(0).toUpperCase() + d.slice(1)}
-            </div>
-          ))}
-
-          <div className="flex flex-col sticky left-0 z-10 bg-white border-r">
-            {slots.map(slot => (
-              <div key={`label-${slot.index}`} className="p-3 text-xs text-gray-500 font-medium border-b" style={{ height: slotHeights[slot.index] }}>
-                {slot.label}
-              </div>
-            ))}
-          </div>
-
-          {days.map((day, dayIdx) => {
-            const daySchedules = filteredSchedules.filter(s => s.day_of_week === day).map(s => {
-              const start = timeStrToMinutes(s.start_time)
-              return { s, start, end: start + fixedDuration }
-            }).sort((a, b) => a.start - b.start)
-
-            // Compute visual placements: we want to guarantee no visual overlap even for long events
-            // Approach: find overlapping clusters (connected components by time overlap) and within
-            // each cluster assign a vertical offset to each event so their visual boxes do not
-            // intersect. Offsets are computed in pixels and we respect a small padding from slot lines.
-            const n = daySchedules.length
-            // offsets (px) for each event index (default zero)
-            const offsets: number[] = Array.from({ length: n }).map(() => 0)
-            // placementMap will be populated when in columns mode so renderer can access column info
-            let placementMap: Map<number, { col: number, totalCols: number }> | undefined = undefined
-            let dayHeight = Math.max(48, totalHeight)
-
-            if (stackingMode === 'columns') {
-              // legacy columns mode: compute horizontal columns so overlapping events share rows
-              const columns: number[] = []
-              const placement = new Map<number, { col: number, totalCols: number }>()
-              for (const item of daySchedules) {
-                let placed = false
-                for (let ci = 0; ci < columns.length; ci++) {
-                  if (item.start >= columns[ci]) {
-                    placement.set(Number(item.s.id), { col: ci, totalCols: 0 })
-                    columns[ci] = item.end
-                    placed = true
-                    break
-                  }
-                }
-                if (!placed) {
-                  columns.push(item.end)
-                  placement.set(Number(item.s.id), { col: columns.length - 1, totalCols: 0 })
-                }
-              }
-              const totalCols = columns.length || 1
-              for (const key of placement.keys()) placement.set(key, { col: placement.get(key)!.col, totalCols })
-              placementMap = placement
-              // dayHeight remains default (no extra vertical stacking)
-            } else {
-              // VERTICAL stacking: compute non-overlapping vertical offsets per connected cluster
-              // build graph of overlaps
-              const adj: number[][] = Array.from({ length: n }, () => [])
-              for (let i = 0; i < n; i++) {
-                for (let j = i + 1; j < n; j++) {
-                  const a = daySchedules[i]
-                  const b = daySchedules[j]
-                  if (a.start < b.end && a.end > b.start) { adj[i].push(j); adj[j].push(i) }
-                }
-              }
-              // find clusters
-              const visited = new Array(n).fill(false)
-              const clusters: number[][] = []
-              for (let i = 0; i < n; i++) {
-                if (visited[i]) continue
-                const stack = [i]
-                const comp: number[] = []
-                visited[i] = true
-                while (stack.length) {
-                  const u = stack.pop()!
-                  comp.push(u)
-                  for (const v of adj[u]) if (!visited[v]) { visited[v] = true; stack.push(v) }
-                }
-                clusters.push(comp)
-              }
-
-              let maxBottom = totalHeight
-              // process each cluster independently
-              for (const comp of clusters) {
-                // sort by start time (stable)
-                comp.sort((a, b) => daySchedules[a].start - daySchedules[b].start)
-                const placed: { idx: number, top: number, height: number, offset: number }[] = []
-                for (const idx of comp) {
-                  const item = daySchedules[idx]
-                  const topPx = (item.start - startHour * 60) * pixelsPerMinute
-                  const heightPx = Math.max(1, (item.end - item.start) * pixelsPerMinute) - 2 * PADDING_PX
-                  let off = 0
-                  // incrementally raise off until no overlap with already placed items
-                  while (true) {
-                    let conflictFound = false
-                    let neededOff = off
-                    for (const p of placed) {
-                      // check vertical overlap between item at candidate offset and placed p
-                      const itemTop = topPx + off + PADDING_PX
-                      const itemBottom = itemTop + heightPx
-                      const pTop = p.top + p.offset + PADDING_PX
-                      const pBottom = pTop + p.height
-                      if (itemTop < pBottom && itemBottom > pTop) {
-                        // overlapping visually, raise below this placed item
-                        neededOff = Math.max(neededOff, (pBottom - topPx) + STACK_OFFSET_PX)
-                        conflictFound = true
-                      }
-                    }
-                    if (!conflictFound) break
-                    off = neededOff
-                  }
-                  offsets[idx] = off
-                  placed.push({ idx, top: topPx, height: heightPx, offset: off })
-                  maxBottom = Math.max(maxBottom, topPx + off + PADDING_PX + heightPx)
-                }
-              }
-              dayHeight = Math.max(48, Math.max(totalHeight, Math.ceil(maxBottom)))
-            }
-
-            return (
-              <div key={`day-${day}`} className="p-3 border-l border-t relative bg-white" style={{ minHeight: Math.max(48, dayHeight), height: dayHeight }}>
-                {slotTopOffsets.map((topOff, si) => (
-                  <div key={`sep-${si}`} style={{ position: 'absolute', left: 0, right: 0, top: topOff, height: 0, borderTop: '1px solid rgba(0,0,0,0.04)' }} aria-hidden />
-                ))}
-                {daySchedules.map(({ s, start }, idx) => {
-                  const startTotal = start
-                  const duration = fixedDuration
-                  // compute absolute top/height in pixels so schedule blocks match time slots exactly
-                  let top = (startTotal - startHour * 60) * pixelsPerMinute
-                  // visual padding so items don't touch slot borders
-                  let height = Math.max(1, duration * pixelsPerMinute) - 2 * PADDING_PX
-                  // clamp into grid bounds (account for extra stacking height)
-                  top = clamp(top, 0, Math.max(0, dayHeight))
-                  height = Math.max(1, Math.min(height, Math.max(0, dayHeight - top)))
-                  // compute rendering metrics depending on stacking mode
-                  let styleTop = top + PADDING_PX
-                  let styleHeight = Math.max(1, height)
-                  let styleLeft = `${8}px`
-                  let styleWidth = `calc(100% - ${8 + 8}px)`
-
-                  if (stackingMode === 'columns') {
-                    // compute horizontal columns layout
-                    const layout = placementMap?.get(Number(s.id)) || { col: 0, totalCols: 1 }
-                    const actualCol = layout.col % Math.max(1, layout.totalCols || 1)
-                    const colsForThis = Math.max(1, layout.totalCols || 1)
-                    const leftPct = (actualCol / colsForThis) * 100
-                    const widthPct = (1 / colsForThis) * 100
-                    styleLeft = `calc(${leftPct}% + 8px)`
-                    styleWidth = `calc(${widthPct}% - 12px)`
-                    styleTop = top + PADDING_PX
-                    styleHeight = Math.max(1, duration * pixelsPerMinute - 2 * PADDING_PX)
-                  } else {
-                    const offsetPx = (offsets && offsets[idx]) ? offsets[idx] : 0
-                    styleTop = top + PADDING_PX + offsetPx
-                    styleHeight = Math.max(1, height)
-                    styleLeft = `${8}px`
-                    styleWidth = `calc(100% - ${8 + 8}px)`
-                  }
-                  const isDragging = draggingId === Number(s.id)
-                  const isHovered = hoveredSchedule === Number(s.id)
-                  const hasConflict = conflictIds && conflictIds.has(Number(s.id))
-
-                    return (
-                    <motion.div
-                      key={s.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`${s.class_group_name || ('Class ' + s.class_group)} ${s.start_time} to ${s.end_time}`}
-                      className={`rounded-lg p-3 text-sm select-none absolute transition-all cursor-move  ${
-                        hasConflict 
-                          ? 'bg-red-100 border-2 border-red-500 shadow-lg' 
-                          : isHovered 
-                          ? 'bg-blue-100 border-2 border-blue-400 shadow-xl scale-105' 
-                          : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-md hover:shadow-lg'
-                      }`}
-                      style={{ top: styleTop, height: styleHeight, zIndex: isDragging ? 30 : isHovered ? 20 : 10, left: styleLeft, width: styleWidth }}
-                      drag="y"
-                      onMouseEnter={() => setHoveredSchedule(Number(s.id))}
-                      onMouseLeave={() => setHoveredSchedule(null)}
-                      whileHover={{ scale: isDragging ? 1 : 1.02 }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowUp') { e.preventDefault(); nudgeSchedule(s, -slotMinutes, 0) }
-                        else if (e.key === 'ArrowDown') { e.preventDefault(); nudgeSchedule(s, slotMinutes, 0) }
-                        else if (e.key === 'ArrowLeft') { e.preventDefault(); nudgeSchedule(s, 0, -1) }
-                        else if (e.key === 'ArrowRight') { e.preventDefault(); nudgeSchedule(s, 0, 1) }
-                      }}
-                      dragElastic={0}
-                      onDragStart={() => { setDraggingId(Number(s.id)); setPreview(null) }}
-                      onDrag={(e, info) => {
-                        try {
-                          const offsetY = info.offset.y
-                          const offsetX = info.offset.x
-                          const deltaMinutes = Math.round(offsetY / pixelsPerMinute)
-                          const deltaDays = Math.round(offsetX / columnWidth)
-                          const origTotalMins = startTotal
-                          const durationMins = fixedDuration
-                          const newTotalMins = origTotalMins + deltaMinutes
-                          let newDayIdx = dayIdx + deltaDays
-                          newDayIdx = clamp(newDayIdx, 0, days.length - 1)
-                          const snappedStart = Math.round(newTotalMins / slotMinutes) * slotMinutes
-                          setPreview({ dayIdx: newDayIdx, startMin: snappedStart, durationMins })
-
-                          const newStart = snappedStart
-                          const newEnd = newStart + durationMins
-                          const conflictSet = new Set<number>()
-                          for (const other of schedules) {
-                            if (Number(other.id) === Number(s.id)) continue
-                            if (other.day_of_week !== days[newDayIdx]) continue
-                            const oStart = timeStrToMinutes(other.start_time)
-                            const oEnd = oStart + fixedDuration
-                            if (oStart < newEnd && oEnd > newStart) {
-                              conflictSet.add(Number(other.id))
-                            }
-                          }
-                          setConflictIds(conflictSet)
-                        } catch {}
-                      }}
-                      onDragEnd={(e, info) => {
-                        try {
-                          const offsetY = info.offset.y
-                          const offsetX = info.offset.x
-                          const minutesDelta = Math.round(offsetY / pixelsPerMinute)
-                          let newTotalMins = startTotal + minutesDelta
-                          newTotalMins = Math.round(newTotalMins / slotMinutes) * slotMinutes
-                          let newHour = Math.floor(newTotalMins / 60)
-                          let newMin = newTotalMins % 60
-                          let newDayIdx = dayIdx + Math.round(offsetX / columnWidth)
-                          newDayIdx = clamp(newDayIdx, 0, days.length - 1)
-                          const durationMins = fixedDuration
-                          newHour = clamp(newHour, startHour, endHour - Math.ceil(durationMins / 60))
-                          if (newHour + Math.ceil(durationMins / 60) > endHour) { newHour = endHour - Math.ceil(durationMins / 60); newMin = 0 }
-                          const newStart = formatTime(newHour, newMin)
-                          const newEndTotal = newHour * 60 + newMin + durationMins
-                          const newEnd = formatTime(Math.floor(newEndTotal / 60), newEndTotal % 60)
-                          const updated: ClassGroupSchedule = { ...s, day_of_week: days[newDayIdx], start_time: newStart, end_time: newEnd }
-                          if (updated.start_time !== s.start_time || updated.day_of_week !== s.day_of_week) {
-                            saveSchedule(updated)
-                          }
-                        } catch (err) {
-                          console.error('drag end error', err)
-                        } finally {
-                          setDraggingId(null)
-                          setPreview(null)
-                          setConflictIds(new Set())
-                        }
-                      }}
-                    >
-                      <div className="flex items-center justify-between ">
-                        <div className="font-medium">{s.class_group_name || ('Class ' + s.class_group)}</div>
-                        {s.is_locked && <div className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800">Locked</div>}
-                      </div>
-                      <div className="text-xs text-gray-600">{s.start_time} - {s.end_time} • {s.room_name || ''}</div>
-                      {/* resizing disabled: sessions have fixed duration defined by timetable settings */}
-                    </motion.div>
-                  )
-                })}
-
-                {preview && preview.dayIdx === dayIdx && (() => {
-                  const pTop = (preview.startMin - startHour * 60) * pixelsPerMinute + PADDING_PX
-                  const pHeight = Math.max(1, preview.durationMins * pixelsPerMinute - 2 * PADDING_PX)
-                  return (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.12 }}
-                      style={{ position: 'absolute', left: 8, top: pTop, width: 'calc(100% - 12px)', height: pHeight, pointerEvents: 'none', zIndex: 25 }}
-                      className="bg-primary/20 border border-primary/40 rounded h-full shadow-sm "
-                    />
-                  )
-                })()}
-              </div>
-            )
-          })}
-
-        </div>
-      </div>
+      {/* Schedule Grid (scaffolded) */}
+      <ScheduleGrid
+        containerRef={containerRef}
+        days={days}
+        slots={slots}
+        slotHeights={slotHeights}
+        slotTopOffsets={slotTopOffsets}
+        slotMinutes={slotMinutes}
+        pixelsPerMinute={pixelsPerMinute}
+        startHour={startHour}
+        totalHeight={totalHeight}
+        dayData={useMemo(() => {
+          const map: { [key: string]: any[] } = {}
+          days.forEach(d => {
+            map[d] = filteredSchedules.filter(s => s.day_of_week === d).map(s => ({ s, start: timeStrToMinutes(s.start_time), end: timeStrToMinutes(s.start_time) + fixedDuration }))
+          })
+          return map
+        }, [filteredSchedules, days, fixedDuration, timeStrToMinutes])}
+        stackingMode={stackingMode}
+        columnWidth={columnWidth}
+        draggingId={draggingId}
+        setDraggingId={setDraggingId}
+        preview={preview}
+        setPreview={setPreview}
+        conflictIds={conflictIds}
+        setConflictIds={setConflictIds}
+        setSelectedId={setSelectedId}
+        schedules={schedules}
+        saveSchedule={saveSchedule}
+        nudgeSchedule={nudgeSchedule}
+      />
 
       {/* Inline warnings / pending save banner */}
       {pendingSave && (
@@ -1107,11 +706,47 @@ export default function ScheduleEditor({ timetableId }: ScheduleEditorProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
+                {pendingSave.serverConflicts && pendingSave.serverConflicts.length > 0 && (
+                  <button className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded text-sm" onClick={() => { setShowConflictModal(true) }}>View conflicts</button>
+                )}
               <button className="px-3 py-1 bg-gray-200 text-gray-800 rounded text-sm" onClick={() => { setPendingSave(null) }}>Dismiss</button>
             </div>
           </div>
         </div>
       )}
+
+        {/* Conflict modal */}
+        {showConflictModal && pendingSave && pendingSave.serverConflicts && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg w-[min(900px,95%)] p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Conflicting schedules</h3>
+                <button className="text-sm text-gray-500" onClick={() => setShowConflictModal(false)}>Close</button>
+              </div>
+              <div className="max-h-[50vh] overflow-auto">
+                {pendingSave.serverConflicts.map((c: any, i: number) => (
+                  <div key={`conf-${i}`} className="p-3 border-b last:border-b-0 flex items-start justify-between gap-4">
+                    <div>
+                      <div className="font-medium">{c.class_group_name || `Class ${c.id}`}</div>
+                      <div className="text-sm text-gray-600">{c.day_of_week} • {c.start_time} - {c.end_time} • {c.room_name}</div>
+                      <div className="text-sm text-gray-700 mt-2">{c.note || ''}</div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <button className="px-3 py-1 bg-blue-50 text-blue-800 rounded text-sm" onClick={() => {
+                        try {
+                          const di = days.indexOf(c.day_of_week as DayOfWeek)
+                          if (di >= 0) setPreview({ dayIdx: di, startMin: timeStrToMinutes(c.start_time), durationMins: fixedDuration })
+                          setConflictIds(prev => new Set([...(prev ? Array.from(prev) : []), Number(c.id)]))
+                        } catch (e) { console.error(e) }
+                      }}>Preview</button>
+                      <button className="px-3 py-1 bg-gray-100 text-gray-800 rounded text-sm" onClick={() => { setShowConflictModal(false) }}>Close</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
       <div className="mt-3 flex items-center justify-between">
         <div className="text-sm text-gray-600">Arrow keys nudge by <strong>{String(slotMinutes)}</strong> minutes (slots are fixed)</div>
