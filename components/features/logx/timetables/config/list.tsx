@@ -57,12 +57,11 @@ export const TimetableListConfig: EntityListConfig<Timetable> = {
       label: 'Generation Status',
       width: '15%',
       align: 'center',
-      render: (entity) => {
-        const timetable = entity as Timetable;
-        const status = timetable.generation_status || 'pending';
+      render: (value) => {
+        const status = value || 'pending';
         return (
           <GenerationStatusBadge 
-            status={status as any} 
+            status={status as string} 
             isGenerating={status === 'in_progress'} 
           />
         );

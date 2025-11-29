@@ -8,6 +8,7 @@ exports.__esModule = true;
 exports.timetableListConfig = exports.timetableColumns = exports.TimetableListConfig = void 0;
 var badge_1 = require("@/components/ui/badge");
 var lucide_react_1 = require("lucide-react");
+var GenerationStatusDisplay_1 = require("../components/GenerationStatusDisplay");
 // navigation is handled by the consuming component; avoid calling hooks in config modules
 exports.TimetableListConfig = {
     columns: [
@@ -54,7 +55,11 @@ exports.TimetableListConfig = {
             key: 'generation_status',
             label: 'Generation Status',
             width: '15%',
-            align: 'center'
+            align: 'center',
+            render: function (value) {
+                var status = value || 'pending';
+                return (React.createElement(GenerationStatusDisplay_1.GenerationStatusBadge, { status: status, isGenerating: status === 'in_progress' }));
+            }
         },
         {
             key: 'version',
@@ -113,7 +118,11 @@ exports.TimetableListConfig = {
     onRowClick: function (timetable) {
         // Avoid React hooks in configuration files - perform navigation using window when running in browser
         if (typeof window !== 'undefined') {
-            window.location.href = "/dashboard/timetables/" + timetable.id + "/viewer";
+            // Navigate to viewer if generation is complete, otherwise to detail page
+            var destination = timetable.generation_status === 'completed'
+                ? "/dashboard/timetables/" + timetable.id + "/viewer"
+                : "/dashboard/timetables/" + timetable.id;
+            window.location.href = destination;
         }
     }
 };
